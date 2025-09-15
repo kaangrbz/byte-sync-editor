@@ -1,0 +1,17 @@
+{
+  "name": "bytesync-editor-web",
+  "version": "1.0.0",
+  "description": "ByteSync Editor - Web Version",
+  "main": "index.html",
+  "scripts": {
+    "start": "npx http-server . -p 3000 -o",
+    "build": "echo 'Web version - no build needed'",
+    "dev": "npx http-server . -p 3000 -o"
+  },
+  "keywords": ["byte", "editor", "hex", "ascii", "binary", "decimal"],
+  "author": "ByteSync",
+  "license": "MIT",
+  "devDependencies": {
+    "http-server": "^14.1.1"
+  }
+}

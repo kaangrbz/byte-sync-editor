@@ -1,0 +1,57 @@
+{
+  "name": "bytesync-editor",
+  "version": "1.0.0",
+  "description": "",
+  "main": "main.js",
+  "scripts": {
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "test:ci": "jest --ci --coverage --watchAll=false",
+    "start": "electron .",
+    "build": "electron-builder",
+    "build:mac": "electron-builder --mac",
+    "build:win": "electron-builder --win",
+    "build:linux": "electron-builder --linux",
+    "dist": "electron-builder --publish=never",
+    "pack": "electron-builder --dir"
+  },
+  "build": {
+    "appId": "com.bytesync.editor",
+    "productName": "ByteSync Editor",
+    "copyright": "Copyright © 2025 ByteSync",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "**/*",
+      "!node_modules/**/*",
+      "!dist/**/*",
+      "!*.md"
+    ],
+    "mac": {
+      "target": "dmg",
+      "category": "public.app-category.developer-tools"
+    },
+    "win": {
+      "target": "nsis",
+      "icon": "assets/logo.png"
+    },
+    "linux": {
+      "target": "AppImage",
+      "category": "Development"
+    }
+  },
+  "author": "ByteSync",
+  "license": "ISC",
+  "type": "commonjs",
+  "keywords": [],
+  "devDependencies": {
+    "@babel/preset-env": "^7.28.3",
+    "electron": "^38.0.0",
+    "electron-builder": "^26.0.12",
+    "identity-obj-proxy": "^3.0.0",
+    "jest": "^30.1.3",
+    "jest-environment-jsdom": "^30.1.2"
+  }
+}
