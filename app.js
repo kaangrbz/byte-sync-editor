@@ -282,20 +282,22 @@ const handlePaste = (event) => {
     updateAllViews();
 };
 
-// Ok tuşu navigasyonu ve Ctrl+A işlemleri
+// Input seviyesinde sadece navigasyon ve hücre işlemleri
 const handleKeydown = (event) => {
-    // Ctrl+A (veya Cmd+A) - Tümünü seç
-    if ((event.ctrlKey || event.metaKey) && event.key === 'a') {
-        event.preventDefault();
-        selectAllCells();
-        return;
+    // Global işlemleri document seviyesine bırak
+    if (event.shiftKey && !event.ctrlKey && !event.metaKey && 
+        ['Digit1', 'Digit2', 'Digit3', 'Digit4', 'Digit5'].includes(event.code)) {
+        return; // Document seviyesindeki event listener'a bırak
     }
 
-    // Delete tuşu - Tüm seçili ise temizle (Mac'te Fn+Delete veya normal Delete)
+    // Ctrl+A (veya Cmd+A) - Tümünü seç (global işlem, document seviyesine bırak)
+    if ((event.ctrlKey || event.metaKey) && event.key === 'a') {
+        return; // Document seviyesindeki event listener'a bırak
+    }
+
+    // Delete tuşu - Tüm seçili ise temizle (global işlem, document seviyesine bırak)
     if ((event.key === 'Delete' || event.key === 'Backspace') && allSelected) {
-        event.preventDefault();
-        clearAllCells();
-        return;
+        return; // Document seviyesindeki event listener'a bırak
     }
 
     // Cmd+Enter - CR (Carriage Return) karakteri ekle
@@ -1053,6 +1055,16 @@ window.onload = () => {
             if (activeIndex !== -1) {
                 const activeInput = document.querySelector(`#${targetTab}-tab [data-index="${activeIndex}"]`);
                 if (activeInput) activeInput.focus();
+            } else {
+                // Eğer aktif hücre yoksa ve grid boşsa, 1. input'a focus ol
+                const isGridEmpty = data.every(value => value === 0);
+                if (isGridEmpty) {
+                    const firstInput = document.querySelector(`#${targetTab}-tab [data-index="0"]`);
+                    if (firstInput) {
+                        firstInput.focus();
+                        firstInput.select();
+                    }
+                }
             }
         });
     });
@@ -1173,25 +1185,26 @@ window.onload = () => {
         }
     });
 
-    // Klavye kısayolları
+    // Global klavye kısayolları (document seviyesinde)
     document.addEventListener('keydown', (e) => {
-        // Shift + 1,2,3,4,5 - Mod değiştirme (document seviyesinde)
+        // Shift + 1,2,3,4,5 - Mod değiştirme
         if (e.shiftKey && !e.ctrlKey && !e.metaKey) {
             let targetTab = null;
-            switch (e.key) {
-                case '1':
+            // Shift basılıyken key değeri değişir (!, ", #, $, %) bu yüzden code kullanıyoruz
+            switch (e.code) {
+                case 'Digit1':
                     targetTab = 'ascii';
                     break;
-                case '2':
+                case 'Digit2':
                     targetTab = 'hex';
                     break;
-                case '3':
+                case 'Digit3':
                     targetTab = 'decimal';
                     break;
-                case '4':
+                case 'Digit4':
                     targetTab = 'binary';
                     break;
-                case '5':
+                case 'Digit5':
                     targetTab = 'four-in-one';
                     break;
             }
@@ -1204,6 +1217,20 @@ window.onload = () => {
                 }
                 return;
             }
+        }
+
+        // Ctrl+A (veya Cmd+A) - Tümünü seç (global işlem)
+        if ((e.ctrlKey || e.metaKey) && e.key === 'a') {
+            e.preventDefault();
+            selectAllCells();
+            return;
+        }
+
+        // Delete tuşu - Tüm seçili ise temizle (global işlem)
+        if ((e.key === 'Delete' || e.key === 'Backspace') && allSelected) {
+            e.preventDefault();
+            clearAllCells();
+            return;
         }
         
         // F12 - DevTools (sadece geliştirici modunda)

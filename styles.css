@@ -234,3 +234,16 @@ body {
     --theme-inputFocus: #4b4b4b;
     --theme-zeroValue: #7d7d7d;
 }
+
+/* Dark theme tab button styles */
+.theme-dark .tab-button:not(.active) {
+    background-color: #111827 !important;
+    color: #6b7280 !important;
+    border-color: #374151 !important;
+}
+
+.theme-dark .tab-button:not(.active):hover {
+    background-color: #1f2937 !important;
+    color: #9ca3af !important;
+    border-color: #4b5563 !important;
+}

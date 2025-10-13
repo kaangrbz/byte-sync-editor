@@ -16,11 +16,26 @@
         
         <!-- Tab Buttons -->
         <div class="flex justify-center space-x-2 mb-6">
-            <button class="tab-button px-6 py-2 rounded-lg transition-colors duration-200" data-tab="ascii" style="background-color: var(--theme-secondary); color: var(--theme-text);">ASCII</button>
-            <button class="tab-button px-6 py-2 rounded-lg transition-colors duration-200" data-tab="hex" style="background-color: var(--theme-secondary); color: var(--theme-text);">Hex</button>
-            <button class="tab-button px-6 py-2 rounded-lg transition-colors duration-200" data-tab="decimal" style="background-color: var(--theme-secondary); color: var(--theme-text);">Decimal</button>
-            <button class="tab-button px-6 py-2 rounded-lg transition-colors duration-200" data-tab="binary" style="background-color: var(--theme-secondary); color: var(--theme-text);">Binary</button>
-            <button class="tab-button px-6 py-2 rounded-lg transition-colors duration-200" data-tab="four-in-one" style="background-color: var(--theme-secondary); color: var(--theme-text);">4 in 1</button>
+            <button class="tab-button px-6 py-2 rounded-lg transition-colors duration-200" data-tab="ascii" style="background-color: var(--theme-secondary); color: var(--theme-text);" title="ASCII karakterleri (Shift+1)">
+                <div class="text-sm font-medium">ASCII</div>
+                <div class="text-xs opacity-70">Karakterler</div>
+            </button>
+            <button class="tab-button px-6 py-2 rounded-lg transition-colors duration-200" data-tab="hex" style="background-color: var(--theme-secondary); color: var(--theme-text);" title="Hexadecimal format (Shift+2)">
+                <div class="text-sm font-medium">Hex</div>
+                <div class="text-xs opacity-70">0x00-0xFF</div>
+            </button>
+            <button class="tab-button px-6 py-2 rounded-lg transition-colors duration-200" data-tab="decimal" style="background-color: var(--theme-secondary); color: var(--theme-text);" title="Decimal sayılar (Shift+3)">
+                <div class="text-sm font-medium">Decimal</div>
+                <div class="text-xs opacity-70">0-255</div>
+            </button>
+            <button class="tab-button px-6 py-2 rounded-lg transition-colors duration-200" data-tab="binary" style="background-color: var(--theme-secondary); color: var(--theme-text);" title="Binary format (Shift+4)">
+                <div class="text-sm font-medium">Binary</div>
+                <div class="text-xs opacity-70">8-bit</div>
+            </button>
+            <button class="tab-button px-6 py-2 rounded-lg transition-colors duration-200" data-tab="four-in-one" style="background-color: var(--theme-secondary); color: var(--theme-text);" title="Tüm formatlar birlikte (Shift+5)">
+                <div class="text-sm font-medium">4 in 1</div>
+                <div class="text-xs opacity-70">Hepsi</div>
+            </button>
             <button id="dev-mode-button" class="px-4 py-2 rounded-lg transition-colors duration-200 text-xs" style="background-color: var(--theme-warning); color: var(--theme-text);" title="Geliştirici Modu - F12 ile DevTools açılır">
                 🔧 Dev
             </button>

@@ -6,8 +6,8 @@ let mainWindow;
 function createWindow() {
   // Tarayıcı penceresi oluşturun.
   mainWindow = new BrowserWindow({
-    width: 1000,
-    height: 800,
+    width: 1366,
+    height: 900,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -20,10 +20,14 @@ function createWindow() {
 
   // Pencere hazır olduğunda DevTools'u aç
   mainWindow.on("ready-to-show", () => {
-    mainWindow.webContents.openDevTools();
-    
     // Geliştirici modu bilgisini renderer'a gönder
     const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
+    
+    // Sadece geliştirme ortamında DevTools'u aç
+    if (isDev) {
+      mainWindow.webContents.openDevTools();
+    }
+    
     mainWindow.webContents.send('dev-mode-info', isDev);
   });
 }
