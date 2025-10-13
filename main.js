@@ -18,8 +18,14 @@ function createWindow() {
   // index.html dosyasını yükleyin.
   mainWindow.loadFile('index.html');
 
-  // DevTools'u açın (isteğe bağlı).
-  // mainWindow.webContents.openDevTools();
+  // Pencere hazır olduğunda DevTools'u aç
+  mainWindow.on("ready-to-show", () => {
+    mainWindow.webContents.openDevTools();
+    
+    // Geliştirici modu bilgisini renderer'a gönder
+    const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
+    mainWindow.webContents.send('dev-mode-info', isDev);
+  });
 }
 
 // DevTools açma IPC handler

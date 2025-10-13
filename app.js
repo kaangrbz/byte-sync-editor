@@ -10,44 +10,51 @@ import {
     isValidValue, 
     parseValue, 
     getSmartCopyData, 
-    getCopyDataInFormat,
     analyzeData,
     calculateEntropy,
     getByteFrequency,
     detectPatterns,
     parseTextToBytes,
     formatBytesToText,
-    getDelimiter,
-    exportToJSON,
-    exportToCSV,
-    exportToBase64,
-    exportToURLEncoded,
-    importFromJSON,
-    importFromBase64,
-    importFromURLEncoded,
-    getTemplateData
+    getDelimiter
 } from './src/utils.js';
 
-// DOM elementleri
-const tabButtons = document.querySelectorAll('.tab-button');
-const tabContents = document.querySelectorAll('.tab-content');
-const hexGrid = document.getElementById('hex-grid');
-const asciiGrid = document.getElementById('ascii-grid');
-const decimalGrid = document.getElementById('decimal-grid');
-const binaryGrid = document.getElementById('binary-grid');
-const copyButtons = document.querySelectorAll('.copy-button');
-const clearButtons = document.querySelectorAll('.clear-button');
-const pasteOptionRadios = document.querySelectorAll('.paste-option-radio');
-const customValueInputs = document.querySelectorAll('.custom-value-input');
-const devtoolsButton = document.getElementById('devtools-button');
+// DOM elementleri - window.onload içinde tanımlanacak
+let tabButtons, tabContents, hexGrid, asciiGrid, decimalGrid, binaryGrid, copyButtons, clearButtons, pasteOptionRadios, customValueInputs;
 
 // Veri ve durum değişkenleri
 let data = new Uint8Array(256);
 let activeIndex = -1;
 let allSelected = false;
 
+// Geliştirici modunu tespit et
+const isDeveloperMode = () => {
+    // Electron API'si mevcutsa kullan
+    if (window.electronAPI && window.electronAPI.isDeveloperMode) {
+        return window.electronAPI.isDeveloperMode();
+    }
+    
+    // Web ortamında çalışıyorsa
+    // Localhost veya 127.0.0.1 üzerinde çalışıyor mu?
+    const isLocalhost = window.location.hostname === 'localhost' || 
+                       window.location.hostname === '127.0.0.1' || 
+                       window.location.hostname === '0.0.0.0';
+    
+    // URL'de dev parametresi var mı?
+    const hasDevParam = window.location.search.includes('dev=true');
+    
+    // localStorage'da dev mode aktif mi?
+    const hasDevMode = localStorage.getItem('bytesync-dev-mode') === 'true';
+    
+    return isLocalhost || hasDevParam || hasDevMode;
+};
+
 // Grid oluşturma fonksiyonu
 const createGrid = (grid, className, type) => {
+    if (!grid) {
+        alert(`Grid bulunamadı: ${type}`);
+        return;
+    }
     grid.innerHTML = '';
     for (let i = 0; i < data.length; i++) {
         const input = document.createElement('input');
@@ -358,6 +365,18 @@ const handleKeydown = (event) => {
         case 'ArrowUp':
             newIndex = (index - 16 + data.length) % data.length;
             break;
+        case ' ':
+            // Space tuşu - hücreyi sıfırla
+            event.preventDefault();
+            data[index] = 0;
+            updateAllViews();
+            // Focus on current cell
+            const currentInput = document.querySelector(`[data-index="${index}"]`);
+            if (currentInput) {
+                currentInput.focus();
+                currentInput.select();
+            }
+            return;
         default:
             return;
     }
@@ -526,172 +545,8 @@ const copyAllFourInOneFormats = () => {
     });
 };
 
-// Export/Import Functions
-const downloadFile = (content, filename, mimeType) => {
-    const blob = new Blob([content], { type: mimeType });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-};
-
-const exportData = (format) => {
-    try {
-        let content, filename, mimeType;
-        
-        switch (format) {
-            case 'json':
-                content = exportToJSON(data);
-                filename = 'bytesync-data.json';
-                mimeType = 'application/json';
-                break;
-            case 'csv':
-                content = exportToCSV(data);
-                filename = 'bytesync-data.csv';
-                mimeType = 'text/csv';
-                break;
-            case 'base64':
-                content = exportToBase64(data);
-                filename = 'bytesync-data.txt';
-                mimeType = 'text/plain';
-                break;
-            case 'url':
-                content = exportToURLEncoded(data);
-                filename = 'bytesync-data.txt';
-                mimeType = 'text/plain';
-                break;
-            default:
-                throw new Error('Unknown export format');
-        }
-        
-        downloadFile(content, filename, mimeType);
-        console.log(`Data exported as ${format.toUpperCase()}`);
-    } catch (error) {
-        console.error('Export failed:', error);
-        alert('Export failed: ' + error.message);
-    }
-};
-
-const importData = (format, content) => {
-    try {
-        let newData;
-        
-        switch (format) {
-            case 'json':
-                newData = importFromJSON(content);
-                break;
-            case 'base64':
-                newData = importFromBase64(content);
-                break;
-            case 'url':
-                newData = importFromURLEncoded(content);
-                break;
-            default:
-                throw new Error('Unknown import format');
-        }
-        
-        // Resize data array if needed
-        if (newData.length !== data.length) {
-            const resizedData = new Uint8Array(data.length);
-            const copyLength = Math.min(newData.length, data.length);
-            resizedData.set(newData.slice(0, copyLength));
-            data.set(resizedData);
-        } else {
-            data.set(newData);
-        }
-        
-        updateAllViews();
-        console.log(`Data imported from ${format.toUpperCase()}`);
-    } catch (error) {
-        console.error('Import failed:', error);
-        alert('Import failed: ' + error.message);
-    }
-};
-
-const loadTemplate = (templateName) => {
-    try {
-        const templateData = getTemplateData(templateName);
-        data.set(templateData);
-        updateAllViews();
-        console.log(`Template '${templateName}' loaded`);
-    } catch (error) {
-        console.error('Template load failed:', error);
-        alert('Template load failed: ' + error.message);
-    }
-};
-
-// Initialize Export/Import functionality
-const initializeExportImport = () => {
-    // Export buttons
-    document.getElementById('export-json')?.addEventListener('click', () => exportData('json'));
-    document.getElementById('export-csv')?.addEventListener('click', () => exportData('csv'));
-    document.getElementById('export-base64')?.addEventListener('click', () => exportData('base64'));
-    document.getElementById('export-url')?.addEventListener('click', () => exportData('url'));
-    
-    // Import buttons
-    document.getElementById('import-json')?.addEventListener('click', () => {
-        const content = prompt('Paste JSON content:');
-        if (content) importData('json', content);
-    });
-    
-    document.getElementById('import-base64')?.addEventListener('click', () => {
-        const content = prompt('Paste Base64 content:');
-        if (content) importData('base64', content);
-    });
-    
-    document.getElementById('import-url')?.addEventListener('click', () => {
-        const content = prompt('Paste URL encoded content:');
-        if (content) importData('url', content);
-    });
-    
-    // File import
-    document.getElementById('import-file')?.addEventListener('change', (event) => {
-        const file = event.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const content = e.target.result;
-                const extension = file.name.split('.').pop().toLowerCase();
-                
-                try {
-                    switch (extension) {
-                        case 'json':
-                            importData('json', content);
-                            break;
-                        case 'txt':
-                            // Try to detect format
-                            if (content.includes('{') && content.includes('}')) {
-                                importData('json', content);
-                            } else if (/^[A-Za-z0-9+/=]+$/.test(content.trim())) {
-                                importData('base64', content);
-                            } else {
-                                importData('url', content);
-                            }
-                            break;
-                        default:
-                            alert('Unsupported file format');
-                    }
-                } catch (error) {
-                    alert('Failed to import file: ' + error.message);
-                }
-            };
-            reader.readAsText(file);
-        }
-    });
-    
-    // Template buttons
-    document.querySelectorAll('.template-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const template = btn.dataset.template;
-            loadTemplate(template);
-        });
-    });
-    
-    // 4 in 1 mode individual copy buttons
+// 4 in 1 mode individual copy buttons
+const initializeFourInOneCopyButtons = () => {
     document.querySelectorAll('.four-in-one-copy-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             const format = btn.dataset.format;
@@ -855,9 +710,16 @@ const pasteToAllSelected = (pastedText) => {
     clearAllSelection();
 };
 
-// DevTools açma fonksiyonu (Web versiyonu)
+// DevTools açma fonksiyonu
 const openDevTools = () => {
     console.log('DevTools açılıyor...');
+    
+    // Electron API'si mevcutsa kullan
+    if (window.electronAPI && window.electronAPI.openDevTools) {
+        window.electronAPI.openDevTools();
+        return;
+    }
+    
     // Web ortamında DevTools açmak için F12 simülasyonu
     const event = new KeyboardEvent('keydown', {
         key: 'F12',
@@ -881,21 +743,34 @@ const createContextMenu = (x, y) => {
     menu.className = 'context-menu';
     menu.style.left = x + 'px';
     menu.style.top = y + 'px';
+    menu.style.display = 'block'; // Menüyü görünür yap
 
-    // Menü öğeleri
+    // Menü öğeleri - daha organize
     const menuItems = [
+        // Kopyalama/Yapıştırma grubu
         { text: '📋 Kopyala', action: 'copy', shortcut: 'Ctrl+C' },
         { text: '📄 Yapıştır', action: 'paste', shortcut: 'Ctrl+V' },
         { text: '✂️ Kes', action: 'cut', shortcut: 'Ctrl+X' },
         { separator: true },
+        
+        // Seçim grubu
         { text: '🔍 Hepsini Seç', action: 'selectAll', shortcut: 'Ctrl+A' },
         { text: '🗑️ Temizle', action: 'clear', shortcut: 'Delete' },
         { separator: true },
-        { text: '↩️ CR Ekle', action: 'addCR', shortcut: 'Cmd+Enter' },
-        { text: '↵ LF Ekle', action: 'addLF', shortcut: 'Cmd+Shift+Enter' },
-        { separator: true },
-        { text: '🔧 DevTools', action: 'devtools', shortcut: 'F12' }
+        
+        // Özel karakterler grubu
+        { text: '↩️ CR Ekle (\\r)', action: 'addCR', shortcut: 'Cmd+Enter' },
+        { text: '↵ LF Ekle (\\n)', action: 'addLF', shortcut: 'Cmd+Shift+Enter' },
+        { text: '🔄 Sıfırla (0)', action: 'reset', shortcut: 'Space' }
     ];
+    
+    // Geliştirici modunda DevTools seçeneğini ekle
+    if (isDeveloperMode()) {
+        menuItems.push(
+            { separator: true },
+            { text: '🔧 DevTools Aç', action: 'devtools', shortcut: 'F12' }
+        );
+    }
 
     menuItems.forEach(item => {
         if (item.separator) {
@@ -1041,148 +916,77 @@ const handleContextMenuAction = (action) => {
                 }, 10);
             }
             break;
+        case 'reset':
+            if (activeIndex !== -1) {
+                data[activeIndex] = 0; // Reset to 0
+                updateAllViews();
+                // Focus on current cell
+                const currentInput = document.querySelector(`[data-index="${activeIndex}"]`);
+                if (currentInput) {
+                    currentInput.focus();
+                    currentInput.select();
+                }
+            }
+            break;
         case 'devtools':
             openDevTools();
             break;
     }
 };
 
-// Tab switching logic
-tabButtons.forEach(button => {
-    button.addEventListener('click', () => {
-        const targetTab = button.dataset.tab;
+// Tab switching logic - window.onload içinde tanımlanacak
+
+// Copy all data from a specific format - window.onload içinde tanımlanacak
+
+
+// Clear all cells event listeners - window.onload içinde tanımlanacak
+
+// Paste options event listeners - window.onload içinde tanımlanacak
+
+// Geliştirici modu butonunu başlat
+const initializeDeveloperMode = () => {
+    const devModeButton = document.getElementById('dev-mode-button');
+    if (devModeButton) {
+        // Geliştirici modu tespiti
+        const isDev = isDeveloperMode();
         
-        // Remove active class from all tabs and buttons
-        tabButtons.forEach(btn => {
-            btn.classList.remove('active');
-            btn.style.backgroundColor = 'var(--theme-secondary)';
-            btn.style.color = 'var(--theme-text)';
-        });
-        tabContents.forEach(content => content.classList.remove('active'));
-
-        // Add active class to the clicked tab and button
-        button.classList.add('active');
-        button.style.backgroundColor = 'var(--theme-primary)';
-        button.style.color = 'white';
-        document.getElementById(`${targetTab}-tab`).classList.add('active');
-
-        // Save active tab to localStorage
-        try {
-            localStorage.setItem('bytesync-active-tab', targetTab);
-        } catch (err) {
-            console.warn('localStorage yazılamıyor:', err);
-        }
-
-        // Clear all selection when switching tabs
-        clearAllSelection();
-
-        // Re-apply highlight to the current active cell
-        if (activeIndex !== -1) {
-            const activeInput = document.querySelector(`#${targetTab}-tab [data-index="${activeIndex}"]`);
-            if (activeInput) activeInput.focus();
-        }
-    });
-});
-
-// Copy all data from a specific format
-copyButtons.forEach(button => {
-    button.addEventListener('click', () => {
-        const type = button.dataset.type;
-        const smartData = getSmartCopyData(type);
-        let textToCopy = '';
+        // Test için: Her zaman görünür yap
+        devModeButton.style.display = 'block';
+        devModeButton.addEventListener('click', openDevTools);
         
-        if (type === 'ascii') {
-            textToCopy = smartData.join('');
-        } else {
-            textToCopy = smartData.join(' ');
+        // Geliştirici modu aktif değilse buton rengini değiştir
+        if (!isDev) {
+            devModeButton.style.backgroundColor = 'var(--theme-secondary)';
+            devModeButton.title = 'Geliştirici Modu (Test) - F12 ile DevTools açılır';
         }
-        
-        // Use the clipboard API for modern browsers
-        navigator.clipboard.writeText(textToCopy).then(() => {
-            console.log('Content copied to clipboard!');
-            const originalText = button.textContent;
-            button.textContent = 'Copied!';
-            setTimeout(() => {
-                button.textContent = originalText;
-            }, 1500);
-        }).catch(err => {
-            console.error('Failed to copy: ', err);
-        });
-    });
-});
-
-// Advanced copy format buttons
-document.addEventListener('DOMContentLoaded', () => {
-    const copyFormatButtons = document.querySelectorAll('.copy-format-btn');
-    copyFormatButtons.forEach(button => {
-        button.addEventListener('click', () => {
-            const format = button.dataset.format;
-            const textToCopy = getCopyDataInFormat(format);
-            
-            navigator.clipboard.writeText(textToCopy).then(() => {
-                console.log(`Content copied in ${format} format!`);
-                const originalText = button.textContent;
-                button.textContent = 'Copied!';
-                button.style.backgroundColor = 'var(--theme-success)';
-                setTimeout(() => {
-                    button.textContent = originalText;
-                    button.style.backgroundColor = 'var(--theme-secondary)';
-                }, 1500);
-            }).catch(err => {
-                console.error('Failed to copy: ', err);
-            });
-        });
-    });
-});
-
-// Clear all cells event listeners
-clearButtons.forEach(button => {
-    button.addEventListener('click', () => {
-        clearAllCells();
-        // Show feedback
-        const originalText = button.textContent;
-        const originalBg = button.style.backgroundColor;
-        button.textContent = 'Cleared!';
-        button.style.backgroundColor = 'var(--theme-success)';
-        setTimeout(() => {
-            button.textContent = originalText;
-            button.style.backgroundColor = originalBg;
-        }, 1500);
-    });
-});
-
-// Paste options event listeners
-pasteOptionRadios.forEach(radio => {
-    radio.addEventListener('change', (e) => {
-        const customInput = document.getElementById('custom-value');
-        if (customInput) {
-            customInput.disabled = e.target.value !== 'custom';
-        }
-        
-        // Save to localStorage
-        try {
-            localStorage.setItem('bytesync-paste-option', e.target.value);
-        } catch (err) {
-            console.warn('localStorage yazılamıyor:', err);
-        }
-    });
-});
-
-// Custom value input event listeners
-customValueInputs.forEach(input => {
-    input.addEventListener('input', (e) => {
-        try {
-            localStorage.setItem('bytesync-custom-value', e.target.value);
-        } catch (err) {
-            console.warn('localStorage yazılamıyor:', err);
-        }
-    });
-});
+    }
+};
 
 // Initialize the app
 window.onload = () => {
+    // DOM elementlerini bul
+    tabButtons = document.querySelectorAll('.tab-button');
+    tabContents = document.querySelectorAll('.tab-content');
+    hexGrid = document.getElementById('hex-grid');
+    asciiGrid = document.getElementById('ascii-grid');
+    decimalGrid = document.getElementById('decimal-grid');
+    binaryGrid = document.getElementById('binary-grid');
+    copyButtons = document.querySelectorAll('.copy-button');
+    clearButtons = document.querySelectorAll('.clear-button');
+    pasteOptionRadios = document.querySelectorAll('.paste-option-radio');
+    customValueInputs = document.querySelectorAll('.custom-value-input');
+    
+    // DOM elementlerini kontrol et
+    if (!hexGrid || !asciiGrid || !decimalGrid || !binaryGrid) {
+        alert('Grid elementleri bulunamadı!');
+        return;
+    }
+    
     // Initialize theme system
     window.themeManager = new ThemeManager();
+    
+    // Initialize developer mode
+    initializeDeveloperMode();
     
     // Load paste options from localStorage
     try {
@@ -1213,8 +1017,116 @@ window.onload = () => {
     // Initialize 4 in 1 mode
     initializeFourInOneMode();
     
-    // Initialize export/import
-    initializeExportImport();
+    // Initialize 4 in 1 copy buttons
+    initializeFourInOneCopyButtons();
+    
+    // Tab switching logic
+    tabButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            const targetTab = button.dataset.tab;
+            
+            // Remove active class from all tabs and buttons
+            tabButtons.forEach(btn => {
+                btn.classList.remove('active');
+                btn.style.backgroundColor = 'var(--theme-secondary)';
+                btn.style.color = 'var(--theme-text)';
+            });
+            tabContents.forEach(content => content.classList.remove('active'));
+
+            // Add active class to the clicked tab and button
+            button.classList.add('active');
+            button.style.backgroundColor = 'var(--theme-primary)';
+            button.style.color = 'white';
+            document.getElementById(`${targetTab}-tab`).classList.add('active');
+
+            // Save active tab to localStorage
+            try {
+                localStorage.setItem('bytesync-active-tab', targetTab);
+            } catch (err) {
+                console.warn('localStorage yazılamıyor:', err);
+            }
+
+            // Clear all selection when switching tabs
+            clearAllSelection();
+
+            // Re-apply highlight to the current active cell
+            if (activeIndex !== -1) {
+                const activeInput = document.querySelector(`#${targetTab}-tab [data-index="${activeIndex}"]`);
+                if (activeInput) activeInput.focus();
+            }
+        });
+    });
+
+    // Copy all data from a specific format
+    copyButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            const type = button.dataset.type;
+            const smartData = getSmartCopyData(data, type);
+            let textToCopy = '';
+            
+            if (type === 'ascii') {
+                textToCopy = smartData.join('');
+            } else {
+                textToCopy = smartData.join(' ');
+            }
+            
+            // Use the clipboard API for modern browsers
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                console.log('Content copied to clipboard!');
+                const originalText = button.textContent;
+                button.textContent = 'Copied!';
+                setTimeout(() => {
+                    button.textContent = originalText;
+                }, 1500);
+            }).catch(err => {
+                console.error('Failed to copy: ', err);
+            });
+        });
+    });
+
+    // Clear all cells event listeners
+    clearButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            clearAllCells();
+            // Show feedback
+            const originalText = button.textContent;
+            const originalBg = button.style.backgroundColor;
+            button.textContent = 'Cleared!';
+            button.style.backgroundColor = 'var(--theme-success)';
+            setTimeout(() => {
+                button.textContent = originalText;
+                button.style.backgroundColor = originalBg;
+            }, 1500);
+        });
+    });
+
+    // Paste options event listeners
+    pasteOptionRadios.forEach(radio => {
+        radio.addEventListener('change', (e) => {
+            const customInput = document.getElementById('custom-value');
+            if (customInput) {
+                customInput.disabled = e.target.value !== 'custom';
+            }
+            
+            // Save to localStorage
+            try {
+                localStorage.setItem('bytesync-paste-option', e.target.value);
+            } catch (err) {
+                console.warn('localStorage yazılamıyor:', err);
+            }
+        });
+    });
+
+    // Custom value input event listeners
+    customValueInputs.forEach(input => {
+        input.addEventListener('input', (e) => {
+            try {
+                localStorage.setItem('bytesync-custom-value', e.target.value);
+            } catch (err) {
+                console.warn('localStorage yazılamıyor:', err);
+            }
+        });
+    });
     
     // Load and set active tab from localStorage
     try {
@@ -1243,15 +1155,22 @@ window.onload = () => {
         hexButton.click();
     }
     
-    // DevTools butonu event listener
-    if (devtoolsButton) {
-        devtoolsButton.addEventListener('click', openDevTools);
-    }
 
-    // Context menu event listener (sağ tık)
+
+    // Context menu event listener (sağ tık) - MacOS uyumlu
     document.addEventListener('contextmenu', (e) => {
         e.preventDefault();
+        e.stopPropagation();
         createContextMenu(e.clientX, e.clientY);
+    });
+    
+    // MacOS için alternatif: Ctrl+Click
+    document.addEventListener('mousedown', (e) => {
+        if (e.ctrlKey && e.button === 0) { // Ctrl + sol tık
+            e.preventDefault();
+            e.stopPropagation();
+            createContextMenu(e.clientX, e.clientY);
+        }
     });
 
     // Klavye kısayolları
@@ -1287,20 +1206,20 @@ window.onload = () => {
             }
         }
         
-        // F12 - DevTools
-        if (e.key === 'F12') {
+        // F12 - DevTools (sadece geliştirici modunda)
+        if (e.key === 'F12' && isDeveloperMode()) {
             e.preventDefault();
             openDevTools();
         }
         
-        // Ctrl+Shift+I - DevTools (alternatif)
-        if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'I') {
+        // Ctrl+Shift+I - DevTools (alternatif, sadece geliştirici modunda)
+        if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'I' && isDeveloperMode()) {
             e.preventDefault();
             openDevTools();
         }
         
-        // Ctrl+Shift+C - DevTools (alternatif)
-        if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'C') {
+        // Ctrl+Shift+C - DevTools (alternatif, sadece geliştirici modunda)
+        if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'C' && isDeveloperMode()) {
             e.preventDefault();
             openDevTools();
         }

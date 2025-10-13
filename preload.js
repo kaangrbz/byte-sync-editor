@@ -5,10 +5,19 @@
 
 const { contextBridge, ipcRenderer } = require('electron');
 
+// Geliştirici modu bilgisini al
+let isDeveloperMode = false;
+ipcRenderer.on('dev-mode-info', (event, isDev) => {
+    isDeveloperMode = isDev;
+});
+
 // DevTools API'sini window objesine ekle
 contextBridge.exposeInMainWorld('electronAPI', {
     openDevTools: () => {
         ipcRenderer.send('open-devtools');
+    },
+    isDeveloperMode: () => {
+        return isDeveloperMode;
     }
 });
 
