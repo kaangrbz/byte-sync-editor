@@ -131,8 +131,8 @@ describe('ByteSync Editor - Utility Functions', () => {
       expect(convertValue(65, 'ascii')).toBe('A');
       expect(convertValue(97, 'ascii')).toBe('a');
       expect(convertValue(32, 'ascii')).toBe(' ');
-      expect(convertValue(13, 'ascii')).toBe('CR');
-      expect(convertValue(10, 'ascii')).toBe('LF');
+      expect(convertValue(13, 'ascii')).toBe('\r'); // Carriage Return - gerçek CR karakteri
+      expect(convertValue(10, 'ascii')).toBe('\n'); // Line Feed - gerçek LF karakteri
       expect(convertValue(0, 'ascii')).toBe(''); // 0 için boş
     });
 

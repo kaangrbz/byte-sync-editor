@@ -11,8 +11,135 @@
 <body class="min-h-screen p-8" style="background-color: var(--theme-background); color: var(--theme-text);">
 
     <div class="max-w-4xl mx-auto p-8 rounded-xl shadow-lg" style="background-color: var(--theme-surface);">
-        <h1 class="text-3xl font-bold text-center mb-6" style="color: var(--theme-primary);">ByteSync Editor v1.0.0</h1>
+        <h1 class="text-3xl font-bold text-center mb-6" style="color: var(--theme-primary);">ByteSync Editor v1.2.0</h1>
         <p class="text-center text-sm mb-8" style="color: var(--theme-textSecondary);">Edit a byte in any view, and watch all other views update automatically. The selected cell remains highlighted across tabs. Now with copy/paste functionality and a larger data grid.</p>
+        
+        <!-- Tab Buttons -->
+        <div class="flex justify-center space-x-2 mb-6">
+            <button class="tab-button px-6 py-2 rounded-lg transition-colors duration-200" data-tab="ascii" style="background-color: var(--theme-secondary); color: var(--theme-text);">ASCII</button>
+            <button class="tab-button px-6 py-2 rounded-lg transition-colors duration-200" data-tab="hex" style="background-color: var(--theme-secondary); color: var(--theme-text);">Hex</button>
+            <button class="tab-button px-6 py-2 rounded-lg transition-colors duration-200" data-tab="decimal" style="background-color: var(--theme-secondary); color: var(--theme-text);">Decimal</button>
+            <button class="tab-button px-6 py-2 rounded-lg transition-colors duration-200" data-tab="binary" style="background-color: var(--theme-secondary); color: var(--theme-text);">Binary</button>
+            <button class="tab-button px-6 py-2 rounded-lg transition-colors duration-200" data-tab="four-in-one" style="background-color: var(--theme-secondary); color: var(--theme-text);">4 in 1</button>
+        </div>
+
+        <!-- Tab Content -->
+        <div id="hex-tab" class="tab-content active">
+            <div class="flex justify-center mb-4 space-x-2">
+                <button class="copy-button text-white px-4 py-1 rounded-lg transition-colors duration-200" data-type="hex" style="background-color: var(--theme-primary);">Copy All Hex</button>
+                <button class="clear-button text-white px-4 py-1 rounded-lg transition-colors duration-200" style="background-color: var(--theme-danger);">Clear All</button>
+            </div>
+            <h2 class="text-xl font-semibold mb-4 text-center">Hexadecimal View</h2>
+            <div id="hex-grid" class="grid-container hex-grid"></div>
+        </div>
+        <div id="ascii-tab" class="tab-content">
+            <div class="flex justify-center mb-4 space-x-2">
+                <button class="copy-button text-white px-4 py-1 rounded-lg transition-colors duration-200" data-type="ascii" style="background-color: var(--theme-primary);">Copy All ASCII</button>
+                <button class="clear-button text-white px-4 py-1 rounded-lg transition-colors duration-200" style="background-color: var(--theme-danger);">Clear All</button>
+            </div>
+            <h2 class="text-xl font-semibold mb-4 text-center">ASCII View</h2>
+            <div id="ascii-grid" class="grid-container ascii-grid"></div>
+        </div>
+        <div id="decimal-tab" class="tab-content">
+            <div class="flex justify-center mb-4 space-x-2">
+                <button class="copy-button text-white px-4 py-1 rounded-lg transition-colors duration-200" data-type="decimal" style="background-color: var(--theme-primary);">Copy All Decimal</button>
+                <button class="clear-button text-white px-4 py-1 rounded-lg transition-colors duration-200" style="background-color: var(--theme-danger);">Clear All</button>
+            </div>
+            <h2 class="text-xl font-semibold mb-4 text-center">Decimal View</h2>
+            <div id="decimal-grid" class="grid-container decimal-grid"></div>
+        </div>
+        <div id="binary-tab" class="tab-content">
+            <div class="flex justify-center mb-4 space-x-2">
+                <button class="copy-button text-white px-4 py-1 rounded-lg transition-colors duration-200" data-type="binary" style="background-color: var(--theme-primary);">Copy All Binary</button>
+                <button class="clear-button text-white px-4 py-1 rounded-lg transition-colors duration-200" style="background-color: var(--theme-danger);">Clear All</button>
+            </div>
+            <h2 class="text-xl font-semibold mb-4 text-center">Binary View</h2>
+            <div id="binary-grid" class="grid-container binary-grid"></div>
+        </div>
+        
+        <!-- 4 in 1 Mode -->
+        <div id="four-in-one-tab" class="tab-content">
+            <div class="mb-6">
+                <h2 class="text-xl font-semibold mb-4 text-center">4 in 1 Mode - Multi-Format View</h2>
+                
+                <!-- Number Delimiter Options -->
+                <div class="mb-4 p-3 rounded-lg" style="background-color: var(--theme-surface); border: 1px solid var(--theme-border);">
+                    <h3 class="text-sm font-medium mb-2 text-center" style="color: var(--theme-text);">Number Delimiter</h3>
+                    <div class="flex flex-wrap justify-center gap-3 items-center">
+                        <label class="flex items-center">
+                            <input type="radio" name="delimiter-option" value="none" class="mr-1">
+                            <span class="text-xs" style="color: var(--theme-text);">None</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="radio" name="delimiter-option" value="comma" class="mr-1" checked>
+                            <span class="text-xs" style="color: var(--theme-text);">Comma</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="radio" name="delimiter-option" value="space" class="mr-1">
+                            <span class="text-xs" style="color: var(--theme-text);">Space</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="radio" name="delimiter-option" value="custom" class="mr-1">
+                            <span class="text-xs" style="color: var(--theme-text);">Custom:</span>
+                        </label>
+                        <input type="text" id="custom-delimiter" placeholder="Enter delimiter" class="px-2 py-1 text-xs rounded border" style="background-color: var(--theme-background); color: var(--theme-text); border-color: var(--theme-border);" disabled>
+                    </div>
+                </div>
+                
+                <!-- 4 Textareas in 2x2 Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- ASCII -->
+                    <div class="space-y-2">
+                        <div class="flex justify-between items-center">
+                            <h3 class="text-sm font-medium" style="color: var(--theme-text);">ASCII</h3>
+                            <button class="four-in-one-copy-btn px-2 py-1 text-xs rounded border transition-colors" data-format="ascii" style="background-color: var(--theme-primary); color: white; border-color: var(--theme-primary);">
+                                📋 Copy
+                            </button>
+                        </div>
+                        <textarea id="four-in-one-ascii" class="w-full h-32 p-3 text-sm rounded border resize-none font-mono" style="background-color: var(--theme-background); color: var(--theme-text); border-color: var(--theme-border);" placeholder="ASCII text will appear here..."></textarea>
+                    </div>
+                    
+                    <!-- Hex -->
+                    <div class="space-y-2">
+                        <div class="flex justify-between items-center">
+                            <h3 class="text-sm font-medium" style="color: var(--theme-text);">Hexadecimal</h3>
+                            <button class="four-in-one-copy-btn px-2 py-1 text-xs rounded border transition-colors" data-format="hex" style="background-color: var(--theme-primary); color: white; border-color: var(--theme-primary);">
+                                📋 Copy
+                            </button>
+                        </div>
+                        <textarea id="four-in-one-hex" class="w-full h-32 p-3 text-sm rounded border resize-none font-mono" style="background-color: var(--theme-background); color: var(--theme-text); border-color: var(--theme-border);" placeholder="Hex values will appear here..."></textarea>
+                    </div>
+                    
+                    <!-- Decimal -->
+                    <div class="space-y-2">
+                        <div class="flex justify-between items-center">
+                            <h3 class="text-sm font-medium" style="color: var(--theme-text);">Decimal</h3>
+                            <button class="four-in-one-copy-btn px-2 py-1 text-xs rounded border transition-colors" data-format="decimal" style="background-color: var(--theme-primary); color: white; border-color: var(--theme-primary);">
+                                📋 Copy
+                            </button>
+                        </div>
+                        <textarea id="four-in-one-decimal" class="w-full h-32 p-3 text-sm rounded border resize-none font-mono" style="background-color: var(--theme-background); color: var(--theme-text); border-color: var(--theme-border);" placeholder="Decimal values will appear here..."></textarea>
+                    </div>
+                    
+                    <!-- Binary -->
+                    <div class="space-y-2">
+                        <div class="flex justify-between items-center">
+                            <h3 class="text-sm font-medium" style="color: var(--theme-text);">Binary</h3>
+                            <button class="four-in-one-copy-btn px-2 py-1 text-xs rounded border transition-colors" data-format="binary" style="background-color: var(--theme-primary); color: white; border-color: var(--theme-primary);">
+                                📋 Copy
+                            </button>
+                        </div>
+                        <textarea id="four-in-one-binary" class="w-full h-32 p-3 text-sm rounded border resize-none font-mono" style="background-color: var(--theme-background); color: var(--theme-text); border-color: var(--theme-border);" placeholder="Binary values will appear here..."></textarea>
+                    </div>
+                </div>
+                
+                <!-- Action Buttons -->
+                <div class="flex justify-center mt-4 space-x-2">
+                    <button id="four-in-one-copy-all" class="px-4 py-2 text-sm rounded-lg text-white transition-colors duration-200" style="background-color: var(--theme-primary);">Copy All Formats</button>
+                    <button id="four-in-one-clear-all" class="px-4 py-2 text-sm rounded-lg text-white transition-colors duration-200" style="background-color: var(--theme-danger);">Clear All</button>
+                </div>
+            </div>
+        </div>
         
         <!-- Keyboard Shortcuts Info -->
         <div class="mb-6 p-4 rounded-lg" style="background-color: var(--theme-surface); border: 1px solid var(--theme-border);">
@@ -174,15 +301,6 @@
             </button>
         </div>
 
-        <!-- Tab Buttons -->
-        <div class="flex justify-center space-x-2 mb-6">
-            <button class="tab-button px-6 py-2 rounded-lg transition-colors duration-200" data-tab="ascii" style="background-color: var(--theme-secondary); color: var(--theme-text);">ASCII</button>
-            <button class="tab-button px-6 py-2 rounded-lg transition-colors duration-200" data-tab="hex" style="background-color: var(--theme-secondary); color: var(--theme-text);">Hex</button>
-            <button class="tab-button px-6 py-2 rounded-lg transition-colors duration-200" data-tab="decimal" style="background-color: var(--theme-secondary); color: var(--theme-text);">Decimal</button>
-            <button class="tab-button px-6 py-2 rounded-lg transition-colors duration-200" data-tab="binary" style="background-color: var(--theme-secondary); color: var(--theme-text);">Binary</button>
-            <button class="tab-button px-6 py-2 rounded-lg transition-colors duration-200" data-tab="four-in-one" style="background-color: var(--theme-secondary); color: var(--theme-text);">4 in 1</button>
-        </div>
-
         <!-- Global Paste Options -->
         <div class="mb-6 p-4 rounded-lg" style="background-color: var(--theme-surface); border: 1px solid var(--theme-border);">
             <h3 class="text-sm font-medium mb-3 text-center" style="color: var(--theme-text);">Paste Options (For Invalid Characters)</h3>
@@ -200,124 +318,6 @@
                     <span class="text-sm" style="color: var(--theme-text);">Custom Value:</span>
                     <input type="text" id="custom-value" placeholder="0" class="custom-value-input" style="width: 60px; padding: 2px 6px; border-radius: 4px; border: 1px solid var(--theme-border); background-color: var(--theme-input); color: var(--theme-text);" disabled>
                 </label>
-            </div>
-        </div>
-
-        <!-- Tab Content -->
-        <div id="hex-tab" class="tab-content active">
-            <div class="flex justify-center mb-4 space-x-2">
-                <button class="copy-button text-white px-4 py-1 rounded-lg transition-colors duration-200" data-type="hex" style="background-color: var(--theme-primary);">Copy All Hex</button>
-                <button class="clear-button text-white px-4 py-1 rounded-lg transition-colors duration-200" style="background-color: var(--theme-danger);">Clear All</button>
-            </div>
-            <h2 class="text-xl font-semibold mb-4 text-center">Hexadecimal View</h2>
-            <div id="hex-grid" class="grid-container hex-grid"></div>
-        </div>
-        <div id="ascii-tab" class="tab-content">
-            <div class="flex justify-center mb-4 space-x-2">
-                <button class="copy-button text-white px-4 py-1 rounded-lg transition-colors duration-200" data-type="ascii" style="background-color: var(--theme-primary);">Copy All ASCII</button>
-                <button class="clear-button text-white px-4 py-1 rounded-lg transition-colors duration-200" style="background-color: var(--theme-danger);">Clear All</button>
-            </div>
-            <h2 class="text-xl font-semibold mb-4 text-center">ASCII View</h2>
-            <div id="ascii-grid" class="grid-container ascii-grid"></div>
-        </div>
-        <div id="decimal-tab" class="tab-content">
-            <div class="flex justify-center mb-4 space-x-2">
-                <button class="copy-button text-white px-4 py-1 rounded-lg transition-colors duration-200" data-type="decimal" style="background-color: var(--theme-primary);">Copy All Decimal</button>
-                <button class="clear-button text-white px-4 py-1 rounded-lg transition-colors duration-200" style="background-color: var(--theme-danger);">Clear All</button>
-            </div>
-            <h2 class="text-xl font-semibold mb-4 text-center">Decimal View</h2>
-            <div id="decimal-grid" class="grid-container decimal-grid"></div>
-        </div>
-        <div id="binary-tab" class="tab-content">
-            <div class="flex justify-center mb-4 space-x-2">
-                <button class="copy-button text-white px-4 py-1 rounded-lg transition-colors duration-200" data-type="binary" style="background-color: var(--theme-primary);">Copy All Binary</button>
-                <button class="clear-button text-white px-4 py-1 rounded-lg transition-colors duration-200" style="background-color: var(--theme-danger);">Clear All</button>
-            </div>
-            <h2 class="text-xl font-semibold mb-4 text-center">Binary View</h2>
-            <div id="binary-grid" class="grid-container binary-grid"></div>
-        </div>
-        
-        <!-- 4 in 1 Mode -->
-        <div id="four-in-one-tab" class="tab-content">
-            <div class="mb-6">
-                <h2 class="text-xl font-semibold mb-4 text-center">4 in 1 Mode - Multi-Format View</h2>
-                
-                <!-- Number Delimiter Options -->
-                <div class="mb-4 p-3 rounded-lg" style="background-color: var(--theme-surface); border: 1px solid var(--theme-border);">
-                    <h3 class="text-sm font-medium mb-2 text-center" style="color: var(--theme-text);">Number Delimiter</h3>
-                    <div class="flex flex-wrap justify-center gap-3 items-center">
-                        <label class="flex items-center">
-                            <input type="radio" name="delimiter-option" value="none" class="mr-1">
-                            <span class="text-xs" style="color: var(--theme-text);">None</span>
-                        </label>
-                        <label class="flex items-center">
-                            <input type="radio" name="delimiter-option" value="comma" class="mr-1" checked>
-                            <span class="text-xs" style="color: var(--theme-text);">Comma</span>
-                        </label>
-                        <label class="flex items-center">
-                            <input type="radio" name="delimiter-option" value="space" class="mr-1">
-                            <span class="text-xs" style="color: var(--theme-text);">Space</span>
-                        </label>
-                        <label class="flex items-center">
-                            <input type="radio" name="delimiter-option" value="custom" class="mr-1">
-                            <span class="text-xs" style="color: var(--theme-text);">Custom:</span>
-                        </label>
-                        <input type="text" id="custom-delimiter" placeholder="Enter delimiter" class="px-2 py-1 text-xs rounded border" style="background-color: var(--theme-background); color: var(--theme-text); border-color: var(--theme-border);" disabled>
-                    </div>
-                </div>
-                
-                <!-- 4 Textareas in 2x2 Grid -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <!-- ASCII -->
-                    <div class="space-y-2">
-                        <div class="flex justify-between items-center">
-                            <h3 class="text-sm font-medium" style="color: var(--theme-text);">ASCII</h3>
-                            <button class="four-in-one-copy-btn px-2 py-1 text-xs rounded border transition-colors" data-format="ascii" style="background-color: var(--theme-primary); color: white; border-color: var(--theme-primary);">
-                                📋 Copy
-                            </button>
-                        </div>
-                        <textarea id="four-in-one-ascii" class="w-full h-32 p-3 text-sm rounded border resize-none font-mono" style="background-color: var(--theme-background); color: var(--theme-text); border-color: var(--theme-border);" placeholder="ASCII text will appear here..."></textarea>
-                    </div>
-                    
-                    <!-- Hex -->
-                    <div class="space-y-2">
-                        <div class="flex justify-between items-center">
-                            <h3 class="text-sm font-medium" style="color: var(--theme-text);">Hexadecimal</h3>
-                            <button class="four-in-one-copy-btn px-2 py-1 text-xs rounded border transition-colors" data-format="hex" style="background-color: var(--theme-primary); color: white; border-color: var(--theme-primary);">
-                                📋 Copy
-                            </button>
-                        </div>
-                        <textarea id="four-in-one-hex" class="w-full h-32 p-3 text-sm rounded border resize-none font-mono" style="background-color: var(--theme-background); color: var(--theme-text); border-color: var(--theme-border);" placeholder="Hex values will appear here..."></textarea>
-                    </div>
-                    
-                    <!-- Decimal -->
-                    <div class="space-y-2">
-                        <div class="flex justify-between items-center">
-                            <h3 class="text-sm font-medium" style="color: var(--theme-text);">Decimal</h3>
-                            <button class="four-in-one-copy-btn px-2 py-1 text-xs rounded border transition-colors" data-format="decimal" style="background-color: var(--theme-primary); color: white; border-color: var(--theme-primary);">
-                                📋 Copy
-                            </button>
-                        </div>
-                        <textarea id="four-in-one-decimal" class="w-full h-32 p-3 text-sm rounded border resize-none font-mono" style="background-color: var(--theme-background); color: var(--theme-text); border-color: var(--theme-border);" placeholder="Decimal values will appear here..."></textarea>
-                    </div>
-                    
-                    <!-- Binary -->
-                    <div class="space-y-2">
-                        <div class="flex justify-between items-center">
-                            <h3 class="text-sm font-medium" style="color: var(--theme-text);">Binary</h3>
-                            <button class="four-in-one-copy-btn px-2 py-1 text-xs rounded border transition-colors" data-format="binary" style="background-color: var(--theme-primary); color: white; border-color: var(--theme-primary);">
-                                📋 Copy
-                            </button>
-                        </div>
-                        <textarea id="four-in-one-binary" class="w-full h-32 p-3 text-sm rounded border resize-none font-mono" style="background-color: var(--theme-background); color: var(--theme-text); border-color: var(--theme-border);" placeholder="Binary values will appear here..."></textarea>
-                    </div>
-                </div>
-                
-                <!-- Action Buttons -->
-                <div class="flex justify-center mt-4 space-x-2">
-                    <button id="four-in-one-copy-all" class="px-4 py-2 text-sm rounded-lg text-white transition-colors duration-200" style="background-color: var(--theme-primary);">Copy All Formats</button>
-                    <button id="four-in-one-clear-all" class="px-4 py-2 text-sm rounded-lg text-white transition-colors duration-200" style="background-color: var(--theme-danger);">Clear All</button>
-                </div>
             </div>
         </div>
     </div>

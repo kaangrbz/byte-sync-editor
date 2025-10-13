@@ -55,8 +55,8 @@ export const convertValue = (byte, type) => {
         case 'hex':
             return byte.toString(16).toUpperCase().padStart(2, '0');
         case 'ascii':
-            if (byte === 13) return 'CR'; // Carriage Return
-            if (byte === 10) return 'LF'; // Line Feed
+            if (byte === 13) return '\r'; // Carriage Return - gerçek CR karakteri
+            if (byte === 10) return '\n'; // Line Feed - gerçek LF karakteri
             if (byte === 0) return ''; // 0 için boş göster
             return (byte >= 32 && byte <= 126) ? String.fromCharCode(byte) : '';
         case 'decimal':
@@ -308,8 +308,8 @@ export const formatBytesToText = (bytes, format, delimiter = ' ') => {
             return byteArray.map(byte => {
                 // Ensure byte is a number
                 const numByte = Number(byte);
-                if (numByte === 13) return 'CR';
-                if (numByte === 10) return 'LF';
+                if (numByte === 13) return '\r'; // Carriage Return - gerçek CR karakteri
+                if (numByte === 10) return '\n'; // Line Feed - gerçek LF karakteri
                 if (numByte === 0) return '';
                 return (numByte >= 32 && numByte <= 126) ? String.fromCharCode(numByte) : '';
             }).join('');
