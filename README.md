@@ -1,10 +1,31 @@
 # ByteSync Editor v1.3.0
 
-A powerful byte editor that works directly in your web browser. Edit bytes in ASCII, Hex, Decimal, and Binary formats with real-time synchronization across all views.
+A powerful cross-platform byte editor available as both a desktop application and web application. Edit bytes in ASCII, Hex, Decimal, and Binary formats with real-time synchronization across all views.
 
-## 🌐 Live Demo
+## 🚀 Quick Start
 
-[Try ByteSync Editor Online](https://your-domain.com) <!-- Replace with your actual domain -->
+### Desktop Application (Electron)
+```bash
+# Install dependencies
+yarn install
+
+# Start the application
+yarn start
+
+# Build for your platform
+yarn build
+```
+
+### Web Application
+```bash
+# Install dependencies
+yarn install
+
+# Start local server
+yarn start
+
+# Or simply open index.html in your browser
+```
 
 ## ✨ Features
 
@@ -21,7 +42,7 @@ A powerful byte editor that works directly in your web browser. Edit bytes in AS
 - **Context menu**: Right-click for quick actions (copy, paste, select all, clear)
 - **Keyboard shortcuts**: Full keyboard navigation and shortcuts
 - **Theme support**: Light and dark themes with CSS custom properties
-- **Responsive design**: Works on desktop and mobile devices
+- **Cross-platform**: Works on Windows, macOS, and Linux
 
 ### Navigation & Editing
 - **Tab switching**: Shift + 1,2,3,4,5 for quick mode switching
@@ -53,78 +74,37 @@ A powerful byte editor that works directly in your web browser. Edit bytes in AS
 - `Right-click` - Open context menu with quick actions
 - `Ctrl+Click` - Alternative context menu (Mac compatible)
 
-## 🚀 Quick Start
-
-### Option 1: Direct File Access
-1. Download all files
-2. Open `index.html` in your browser
-3. Start editing bytes!
-
-### Option 2: Local Server
-```bash
-# Install dependencies
-yarn install
-
-# Start local server
-yarn start
-
-# Open http://localhost:3000
-```
-
-## 📦 Deployment Options
-
-### GitHub Pages
-1. Push code to GitHub repository
-2. Go to Settings > Pages
-3. Select source branch
-4. Your app will be available at `https://username.github.io/repository-name`
-
-### Netlify
-1. Connect your GitHub repository
-2. Set build command: `echo "No build needed"`
-3. Set publish directory: `.`
-4. Deploy!
-
-### Vercel
-1. Import your GitHub repository
-2. Set framework: "Other"
-3. Set build command: `echo "No build needed"`
-4. Deploy!
-
-### Firebase Hosting
-```bash
-# Install Firebase CLI
-npm install -g firebase-tools
-
-# Initialize Firebase
-firebase init hosting
-
-# Deploy
-firebase deploy
-```
-
 ## 🛠️ Development
 
 ```bash
 # Install dependencies
 yarn install
 
+# Run tests
+yarn test
+
 # Start development server
 yarn dev
 
-# Open http://localhost:3000
+# Build application
+yarn build
 ```
 
-## 📱 Browser Support
+## 📦 Building
 
-- Chrome 60+
-- Firefox 55+
-- Safari 12+
-- Edge 79+
+### Desktop Application
+```bash
+# Build for current platform
+yarn build
 
-## 🔧 Customization
+# Build for specific platforms
+yarn build:mac
+yarn build:win
+yarn build:linux
+```
 
-The app uses CSS custom properties for theming. Modify `styles.css` to change colors and appearance.
+### Web Application
+The web version requires no build process. Simply serve the files or open `index.html` directly in a browser.
 
 ## 📋 Version History
 
@@ -156,6 +136,33 @@ The app uses CSS custom properties for theming. Modify `styles.css` to change co
 - 🎉 Copy/paste functionality
 - 🎉 Theme support and responsive design
 - 🎉 Keyboard shortcuts and navigation
+
+## 🧪 Testing
+
+```bash
+# Run all tests
+yarn test
+
+# Run tests in watch mode
+yarn test:watch
+
+# Run tests with coverage
+yarn test:coverage
+
+# Run tests for CI
+yarn test:ci
+```
+
+## 📱 Browser Support
+
+- Chrome 60+
+- Firefox 55+
+- Safari 12+
+- Edge 79+
+
+## 🔧 Customization
+
+The app uses CSS custom properties for theming. Modify `styles.css` to change colors and appearance.
 
 ## 📄 License
 

@@ -20,7 +20,7 @@ import {
 } from './src/utils.js';
 
 // DOM elementleri - window.onload içinde tanımlanacak
-let tabButtons, tabContents, hexGrid, asciiGrid, decimalGrid, binaryGrid, copyButtons, clearButtons, pasteOptionRadios, customValueInputs;
+let tabButtons, tabContents, hexGrid, asciiGrid, decimalGrid, binaryGrid, copyButtons, clearButtons;
 
 // Veri ve durum değişkenleri
 let data = new Uint8Array(256);
@@ -135,10 +135,19 @@ const handleInput = (event) => {
         event.target.value = value; // Input'u büyük harfle güncelle
         
         if (!/^[0-9A-F]{0,2}$/.test(value)) {
-            event.target.value = ''; // Clear invalid input
-            return;
-        }
-        if (value.length > 0) {
+            // Geçersiz hex değeri - maksimum değeri yaz (FF)
+            if (value.length >= maxLength) {
+                event.target.value = 'FF';
+                byteValue = 255;
+                // Sonraki input'a geç
+                setTimeout(() => {
+                    focusNextInput(index, type);
+                }, 10);
+            } else {
+                event.target.value = ''; // Kısa değerler için temizle
+                return;
+            }
+        } else if (value.length > 0) {
             byteValue = parseInt(value, 16);
         } else {
             // Boş hex input - değeri değiştirme
@@ -153,10 +162,19 @@ const handleInput = (event) => {
         }
     } else if (type === 'decimal') {
         if (!/^\d{0,3}$/.test(value) || (value.length > 0 && parseInt(value) > 255)) {
-            event.target.value = '';
-            return;
-        }
-        if (value.length > 0) {
+            // Geçersiz decimal değeri - maksimum değeri yaz (255)
+            if (value.length >= maxLength) {
+                event.target.value = '255';
+                byteValue = 255;
+                // Sonraki input'a geç
+                setTimeout(() => {
+                    focusNextInput(index, type);
+                }, 10);
+            } else {
+                event.target.value = ''; // Kısa değerler için temizle
+                return;
+            }
+        } else if (value.length > 0) {
             byteValue = parseInt(value, 10);
         } else {
             // Boş decimal input - değeri değiştirme
@@ -164,10 +182,19 @@ const handleInput = (event) => {
         }
     } else if (type === 'binary') {
         if (!/^[01]{0,8}$/.test(value)) {
-            event.target.value = '';
-            return;
-        }
-        if (value.length > 0) {
+            // Geçersiz binary değeri - maksimum değeri yaz (11111111)
+            if (value.length >= maxLength) {
+                event.target.value = '11111111';
+                byteValue = 255;
+                // Sonraki input'a geç
+                setTimeout(() => {
+                    focusNextInput(index, type);
+                }, 10);
+            } else {
+                event.target.value = ''; // Kısa değerler için temizle
+                return;
+            }
+        } else if (value.length > 0) {
             byteValue = parseInt(value, 2);
         } else {
             // Boş binary input - değeri değiştirme
@@ -205,21 +232,6 @@ const focusNextInput = (currentIndex, type) => {
 
 
 
-// Global paste seçeneği alma
-const getPasteOption = () => {
-    const selectedOption = document.querySelector('input[name="paste-option"]:checked');
-    return selectedOption ? selectedOption.value : 'skip';
-};
-
-// Global özel değer alma
-const getCustomValue = () => {
-    const customInput = document.getElementById('custom-value');
-    if (customInput && !customInput.disabled) {
-        const value = parseInt(customInput.value, 10);
-        return (!isNaN(value) && value >= 0 && value <= 255) ? value : 0;
-    }
-    return 0;
-};
 
 
 
@@ -236,12 +248,10 @@ const handlePaste = (event) => {
     
     const startIndex = parseInt(event.target.dataset.index, 10);
     const type = event.target.dataset.type;
-    const pasteOption = getPasteOption();
-    const customValue = getCustomValue();
 
     let valuesToParse = [];
     if (type === 'ascii') {
-        // ASCII için karakter karakter işle, paste seçeneklerini uygula
+        // ASCII için karakter karakter işle
         const characters = pastedText.split('');
         for (let i = 0; i < characters.length; i++) {
             const char = characters[i];
@@ -250,25 +260,8 @@ const handlePaste = (event) => {
             // Yazdırılabilir karakterler (32-126) veya CR/LF ise normal işle
             if ((charCode >= 32 && charCode <= 126) || charCode === 13 || charCode === 10) {
                 valuesToParse.push(char);
-            } else {
-                // Geçersiz karakter için paste seçeneğini uygula
-                switch (pasteOption) {
-                    case 'skip':
-                        // Atla - bu karakteri ekleme
-                        break;
-                    case 'empty':
-                        // Boş değer (0) ekle
-                        valuesToParse.push(String.fromCharCode(0));
-                        break;
-                    case 'custom':
-                        // Özel değer ekle
-                        valuesToParse.push(String.fromCharCode(customValue));
-                        break;
-                    default:
-                        // Varsayılan olarak atla
-                        break;
-                }
             }
+            // Geçersiz karakterleri atla
         }
     } else if (type === 'hex') {
         const cleanText = pastedText.replace(/\s/g, ''); // Remove all whitespace
@@ -277,7 +270,6 @@ const handlePaste = (event) => {
         }
     } else if (type === 'decimal') {
         // Decimal için hem virgül hem boşluk ile ayrılmış değerleri destekle
-        // 0 değerlerini de dahil et
         valuesToParse = pastedText.trim().split(/[,\s]+/).filter(val => val.length > 0);
     } else {
         valuesToParse = pastedText.trim().split(/\s+/);
@@ -299,19 +291,8 @@ const handlePaste = (event) => {
             // 0 değerlerini de kabul et
             byteValue = 0;
         } else {
-            // Invalid value - handle based on paste option
-            switch (pasteOption) {
-                case 'skip':
-                    continue; // Skip this value
-                case 'empty':
-                    byteValue = 0;
-                    break;
-                case 'custom':
-                    byteValue = customValue;
-                    break;
-                default:
-                    continue;
-            }
+            // Invalid value - skip it
+            continue;
         }
 
         if (!isNaN(byteValue) && byteValue >= 0 && byteValue <= 255) {
@@ -395,40 +376,19 @@ const handleKeydown = (event) => {
     }
 
     switch (event.key) {
-        case 'ArrowRight':
-            newIndex = (index + 1) % data.length;
-            break;
-        case 'ArrowLeft':
-            newIndex = (index - 1 + data.length) % data.length;
-            break;
-        case 'ArrowDown':
-            newIndex = (index + 16) % data.length;
-            break;
-        case 'ArrowUp':
-            newIndex = (index - 16 + data.length) % data.length;
-            break;
         case 'Enter':
             // Enter tuşu - sonraki input'a geç
             event.preventDefault();
             focusNextInput(index, event.target.dataset.type);
             return;
         case ' ':
-            // Space tuşu - hücreyi sıfırla
+            // Space tuşu - sonraki input'a geç
             event.preventDefault();
-            data[index] = 0;
-            updateAllViews();
-            // Focus on current cell
-            const currentInput = document.querySelector(`[data-index="${index}"]`);
-            if (currentInput) {
-                currentInput.focus();
-                currentInput.select();
-            }
+            focusNextInput(index, event.target.dataset.type);
             return;
         default:
             return;
     }
-    event.preventDefault();
-    document.querySelector(`[data-index="${newIndex}"]`).focus();
 };
 
 
@@ -673,6 +633,26 @@ const clearAllCells = () => {
 
 // Tüm hücreleri seçme
 const selectAllCells = () => {
+    // 4in1 modunda mıyız kontrol et
+    const activeTab = document.querySelector('.tab-content.active');
+    if (activeTab && activeTab.id === 'four-in-one-tab') {
+        // 4in1 modunda aktif textarea'yı bul ve seç
+        const activeTextarea = document.activeElement;
+        if (activeTextarea && activeTextarea.tagName === 'TEXTAREA' && activeTab.contains(activeTextarea)) {
+            // Aktif textarea'yı seç
+            activeTextarea.select();
+        } else {
+            // Eğer hiçbir textarea aktif değilse, ilk textarea'yı seç
+            const firstTextarea = activeTab.querySelector('textarea');
+            if (firstTextarea) {
+                firstTextarea.focus();
+                firstTextarea.select();
+            }
+        }
+        return;
+    }
+    
+    // Normal grid modlarında
     allSelected = true;
     const allInputs = document.querySelectorAll('.input-cell');
     allInputs.forEach(input => {
@@ -682,6 +662,20 @@ const selectAllCells = () => {
 
 // Tüm seçimi temizleme
 const clearAllSelection = () => {
+    // 4in1 modunda mıyız kontrol et
+    const activeTab = document.querySelector('.tab-content.active');
+    if (activeTab && activeTab.id === 'four-in-one-tab') {
+        // 4in1 modunda aktif textarea'nın seçimini temizle
+        const activeTextarea = document.activeElement;
+        if (activeTextarea && activeTextarea.tagName === 'TEXTAREA' && activeTab.contains(activeTextarea)) {
+            // Cursor'u textarea'nın sonuna taşı
+            const length = activeTextarea.value.length;
+            activeTextarea.setSelectionRange(length, length);
+        }
+        return;
+    }
+    
+    // Normal grid modlarında
     allSelected = false;
     const allInputs = document.querySelectorAll('.input-cell');
     allInputs.forEach(input => {
@@ -693,12 +687,10 @@ const clearAllSelection = () => {
 const pasteToAllSelected = (pastedText) => {
     const activeTab = document.querySelector('.tab-content.active');
     const type = activeTab.querySelector('.input-cell').dataset.type;
-    const pasteOption = getPasteOption();
-    const customValue = getCustomValue();
 
     let valuesToParse = [];
     if (type === 'ascii') {
-        // ASCII için karakter karakter işle, paste seçeneklerini uygula
+        // ASCII için karakter karakter işle
         const characters = pastedText.split('');
         for (let i = 0; i < characters.length; i++) {
             const char = characters[i];
@@ -707,21 +699,8 @@ const pasteToAllSelected = (pastedText) => {
             // Yazdırılabilir karakterler (32-126) veya CR/LF ise normal işle
             if ((charCode >= 32 && charCode <= 126) || charCode === 13 || charCode === 10) {
                 valuesToParse.push(char);
-            } else {
-                // Geçersiz karakter için paste seçeneğini uygula
-                switch (pasteOption) {
-                    case 'skip':
-                        break;
-                    case 'empty':
-                        valuesToParse.push(String.fromCharCode(0));
-                        break;
-                    case 'custom':
-                        valuesToParse.push(String.fromCharCode(customValue));
-                        break;
-                    default:
-                        break;
-                }
             }
+            // Geçersiz karakterleri atla
         }
     } else if (type === 'hex') {
         const cleanText = pastedText.replace(/\s/g, '');
@@ -748,18 +727,8 @@ const pasteToAllSelected = (pastedText) => {
             // 0 değerlerini de kabul et
             byteValue = 0;
         } else {
-            switch (pasteOption) {
-                case 'skip':
-                    continue;
-                case 'empty':
-                    byteValue = 0;
-                    break;
-                case 'custom':
-                    byteValue = customValue;
-                    break;
-                default:
-                    continue;
-            }
+            // Invalid value - skip it
+            continue;
         }
 
         if (!isNaN(byteValue) && byteValue >= 0 && byteValue <= 255) {
@@ -1009,8 +978,6 @@ window.onload = () => {
     binaryGrid = document.getElementById('binary-grid');
     copyButtons = document.querySelectorAll('.copy-button');
     clearButtons = document.querySelectorAll('.clear-button');
-    pasteOptionRadios = document.querySelectorAll('.paste-option-radio');
-    customValueInputs = document.querySelectorAll('.custom-value-input');
     
     // DOM elementlerini kontrol et
     if (!hexGrid || !asciiGrid || !decimalGrid || !binaryGrid) {
@@ -1023,26 +990,6 @@ window.onload = () => {
     
     // Dev butonu kaldırıldı
     
-    // Load paste options from localStorage
-    try {
-        const savedPasteOption = localStorage.getItem('bytesync-paste-option') || 'skip';
-        const savedCustomValue = localStorage.getItem('bytesync-custom-value') || '0';
-        
-        // Apply saved options
-        document.querySelectorAll('input[name="paste-option"]').forEach(radio => {
-            if (radio.value === savedPasteOption) {
-                radio.checked = true;
-            }
-        });
-        
-        const customInput = document.getElementById('custom-value');
-        if (customInput) {
-            customInput.disabled = savedPasteOption !== 'custom';
-            customInput.value = savedCustomValue;
-        }
-    } catch (err) {
-        console.warn('localStorage okunamıyor:', err);
-    }
     
     createGrid(hexGrid, 'hex-cell', 'hex');
     createGrid(asciiGrid, 'ascii-cell', 'ascii');
@@ -1145,33 +1092,6 @@ window.onload = () => {
         });
     });
 
-    // Paste options event listeners
-    pasteOptionRadios.forEach(radio => {
-        radio.addEventListener('change', (e) => {
-            const customInput = document.getElementById('custom-value');
-            if (customInput) {
-                customInput.disabled = e.target.value !== 'custom';
-            }
-            
-            // Save to localStorage
-            try {
-                localStorage.setItem('bytesync-paste-option', e.target.value);
-            } catch (err) {
-                console.warn('localStorage yazılamıyor:', err);
-            }
-        });
-    });
-
-    // Custom value input event listeners
-    customValueInputs.forEach(input => {
-        input.addEventListener('input', (e) => {
-            try {
-                localStorage.setItem('bytesync-custom-value', e.target.value);
-            } catch (err) {
-                console.warn('localStorage yazılamıyor:', err);
-            }
-        });
-    });
     
     // Load and set active tab from localStorage
     try {

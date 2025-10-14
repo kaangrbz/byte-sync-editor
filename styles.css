@@ -172,7 +172,7 @@ body {
 .input-cell.hex-cell { width: 32px; }
 .input-cell.ascii-cell { width: 50px; }
 .input-cell.decimal-cell { width: 40px; }
-.input-cell.binary-cell { width: 70px; }
+.input-cell.binary-cell { width: 90px; }
 
 .grid-container {
     display: grid;
@@ -326,4 +326,44 @@ body {
 .char-tooltip:hover::after {
     opacity: 1;
     visibility: visible;
+}
+
+/* 4-in-1 Mode Textarea Resize Styling */
+#four-in-one-ascii,
+#four-in-one-hex,
+#four-in-one-decimal,
+#four-in-one-binary {
+    resize: both;
+    min-height: 8rem; /* 128px - h-32 equivalent */
+    min-width: 100%;
+    max-width: 100%;
+}
+
+/* Custom resize handle styling */
+#four-in-one-ascii::-webkit-resizer,
+#four-in-one-hex::-webkit-resizer,
+#four-in-one-decimal::-webkit-resizer,
+#four-in-one-binary::-webkit-resizer {
+    background: var(--theme-border);
+    border-radius: 0 0 0.25rem 0;
+    border: 1px solid var(--theme-border);
+}
+
+/* Firefox resize handle styling */
+#four-in-one-ascii,
+#four-in-one-hex,
+#four-in-one-decimal,
+#four-in-one-binary {
+    scrollbar-width: thin;
+    scrollbar-color: var(--theme-border) transparent;
+}
+
+/* Responsive adjustments for smaller screens */
+@media (max-width: 768px) {
+    #four-in-one-ascii,
+    #four-in-one-hex,
+    #four-in-one-decimal,
+    #four-in-one-binary {
+        min-height: 6rem; /* Smaller min height on mobile */
+    }
 }

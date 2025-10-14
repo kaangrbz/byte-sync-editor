@@ -11,7 +11,7 @@
 <body class="min-h-screen p-8" style="background-color: var(--theme-background); color: var(--theme-text);">
 
     <div class="max-w-4xl mx-auto p-8 rounded-xl shadow-lg" style="background-color: var(--theme-surface);">
-        <h1 class="text-3xl font-bold text-center mb-6" style="color: var(--theme-primary);">ByteSync Editor v1.3.0</h1>
+        <h1 class="text-3xl font-bold text-center mb-6" style="color: var(--theme-primary);">ByteSync Editor v1.3.2</h1>
         <p class="text-center text-sm mb-8" style="color: var(--theme-textSecondary);">Edit a byte in any view, and watch all other views update automatically. The selected cell remains highlighted across tabs. Now with copy/paste functionality and a larger data grid.</p>
         
         <!-- Tab Buttons -->
@@ -19,22 +19,27 @@
             <button class="tab-button px-6 py-2 rounded-lg transition-colors duration-200" data-tab="ascii" style="background-color: var(--theme-secondary); color: var(--theme-text);" title="ASCII karakterleri (Shift+1)">
                 <div class="text-sm font-medium">ASCII</div>
                 <div class="text-xs opacity-70">Karakterler</div>
+                <div class="text-xs opacity-70"><code>shift</code>+<code>1</code></div>
             </button>
             <button class="tab-button px-6 py-2 rounded-lg transition-colors duration-200" data-tab="hex" style="background-color: var(--theme-secondary); color: var(--theme-text);" title="Hexadecimal format (Shift+2)">
                 <div class="text-sm font-medium">Hex</div>
                 <div class="text-xs opacity-70">0x00-0xFF</div>
+                <div class="text-xs opacity-70"><code>shift</code>+<code>2</code></div>
             </button>
             <button class="tab-button px-6 py-2 rounded-lg transition-colors duration-200" data-tab="decimal" style="background-color: var(--theme-secondary); color: var(--theme-text);" title="Decimal sayılar (Shift+3)">
                 <div class="text-sm font-medium">Decimal</div>
                 <div class="text-xs opacity-70">0-255</div>
+                <div class="text-xs opacity-70"><code>shift</code>+<code>3</code></div>
             </button>
             <button class="tab-button px-6 py-2 rounded-lg transition-colors duration-200" data-tab="binary" style="background-color: var(--theme-secondary); color: var(--theme-text);" title="Binary format (Shift+4)">
                 <div class="text-sm font-medium">Binary</div>
                 <div class="text-xs opacity-70">8-bit</div>
+                <div class="text-xs opacity-70"><code>shift</code>+<code>4</code></div>
             </button>
             <button class="tab-button px-6 py-2 rounded-lg transition-colors duration-200" data-tab="four-in-one" style="background-color: var(--theme-secondary); color: var(--theme-text);" title="Tüm formatlar birlikte (Shift+5)">
                 <div class="text-sm font-medium">4 in 1</div>
                 <div class="text-xs opacity-70">All in one</div>
+                <div class="text-xs opacity-70"><code>shift</code>+<code>5</code></div>
             </button>
         </div>
 
@@ -108,10 +113,10 @@
                         <div class="flex justify-between items-center">
                             <h3 class="text-sm font-medium" style="color: var(--theme-text);">ASCII</h3>
                             <button class="four-in-one-copy-btn px-2 py-1 text-xs rounded border transition-colors" data-format="ascii" style="background-color: var(--theme-primary); color: white; border-color: var(--theme-primary);">
-                                📋 Copy
+                                Copy
                             </button>
                         </div>
-                        <textarea id="four-in-one-ascii" class="w-full h-32 p-3 text-sm rounded border resize-none font-mono" style="background-color: var(--theme-background); color: var(--theme-text); border-color: var(--theme-border);" placeholder="ASCII text will appear here..."></textarea>
+                        <textarea id="four-in-one-ascii" class="w-full h-32 p-3 text-sm rounded border font-mono" style="background-color: var(--theme-background); color: var(--theme-text); border-color: var(--theme-border);" placeholder="ASCII text will appear here..."></textarea>
                     </div>
                     
                     <!-- Hex -->
@@ -119,10 +124,10 @@
                         <div class="flex justify-between items-center">
                             <h3 class="text-sm font-medium" style="color: var(--theme-text);">Hexadecimal</h3>
                             <button class="four-in-one-copy-btn px-2 py-1 text-xs rounded border transition-colors" data-format="hex" style="background-color: var(--theme-primary); color: white; border-color: var(--theme-primary);">
-                                📋 Copy
+                                Copy
                             </button>
                         </div>
-                        <textarea id="four-in-one-hex" class="w-full h-32 p-3 text-sm rounded border resize-none font-mono" style="background-color: var(--theme-background); color: var(--theme-text); border-color: var(--theme-border);" placeholder="Hex values will appear here..."></textarea>
+                        <textarea id="four-in-one-hex" class="w-full h-32 p-3 text-sm rounded border font-mono" style="background-color: var(--theme-background); color: var(--theme-text); border-color: var(--theme-border);" placeholder="Hex values will appear here..."></textarea>
                     </div>
                     
                     <!-- Decimal -->
@@ -130,10 +135,10 @@
                         <div class="flex justify-between items-center">
                             <h3 class="text-sm font-medium" style="color: var(--theme-text);">Decimal</h3>
                             <button class="four-in-one-copy-btn px-2 py-1 text-xs rounded border transition-colors" data-format="decimal" style="background-color: var(--theme-primary); color: white; border-color: var(--theme-primary);">
-                                📋 Copy
+                                Copy
                             </button>
                         </div>
-                        <textarea id="four-in-one-decimal" class="w-full h-32 p-3 text-sm rounded border resize-none font-mono" style="background-color: var(--theme-background); color: var(--theme-text); border-color: var(--theme-border);" placeholder="Decimal values will appear here..."></textarea>
+                        <textarea id="four-in-one-decimal" class="w-full h-32 p-3 text-sm rounded border font-mono" style="background-color: var(--theme-background); color: var(--theme-text); border-color: var(--theme-border);" placeholder="Decimal values will appear here..."></textarea>
                     </div>
                     
                     <!-- Binary -->
@@ -141,10 +146,10 @@
                         <div class="flex justify-between items-center">
                             <h3 class="text-sm font-medium" style="color: var(--theme-text);">Binary</h3>
                             <button class="four-in-one-copy-btn px-2 py-1 text-xs rounded border transition-colors" data-format="binary" style="background-color: var(--theme-primary); color: white; border-color: var(--theme-primary);">
-                                📋 Copy
+                                Copy
                             </button>
                         </div>
-                        <textarea id="four-in-one-binary" class="w-full h-32 p-3 text-sm rounded border resize-none font-mono" style="background-color: var(--theme-background); color: var(--theme-text); border-color: var(--theme-border);" placeholder="Binary values will appear here..."></textarea>
+                        <textarea id="four-in-one-binary" class="w-full h-32 p-3 text-sm rounded border font-mono" style="background-color: var(--theme-background); color: var(--theme-text); border-color: var(--theme-border);" placeholder="Binary values will appear here..."></textarea>
                     </div>
                 </div>
                 
@@ -177,7 +182,7 @@
                     <div class="space-y-2">
                         <div><kbd class="px-1 py-0.5 rounded text-xs border">Cmd+Enter</kbd> Add CR (Carriage Return)</div>
                         <div><kbd class="px-1 py-0.5 rounded text-xs border">Cmd+Shift+Enter</kbd> Add LF (Line Feed)</div>
-                        <div><kbd class="px-1 py-0.5 rounded text-xs border">Space</kbd> Reset to 0</div>
+                        <div><kbd class="px-1 py-0.5 rounded text-xs border">Space</kbd> Next cell</div>
                         <div><kbd class="px-1 py-0.5 rounded text-xs border">Backspace</kbd> Previous cell (when empty)</div>
                         <div><kbd class="px-1 py-0.5 rounded text-xs border">Arrow Keys</kbd> Navigate cells</div>
                     </div>
@@ -221,26 +226,6 @@
                         <div>Control: <span id="control-chars" class="font-mono">0</span></div>
                     </div>
                 </div>
-            </div>
-        </div>
-        
-        <!-- Global Paste Options -->
-        <div class="mb-6 p-4 rounded-lg" style="background-color: var(--theme-surface); border: 1px solid var(--theme-border);">
-            <h3 class="text-sm font-medium mb-3 text-center" style="color: var(--theme-text);">Paste Options (For Invalid Characters)</h3>
-            <div class="flex flex-wrap justify-center gap-4 items-center">
-                <label class="flex items-center space-x-2">
-                    <input type="radio" name="paste-option" value="skip" class="paste-option-radio" checked>
-                    <span class="text-sm" style="color: var(--theme-text);">Skip (Skip invalid characters)</span>
-                </label>
-                <label class="flex items-center space-x-2">
-                    <input type="radio" name="paste-option" value="empty" class="paste-option-radio">
-                    <span class="text-sm" style="color: var(--theme-text);">Empty Value (Add as 0)</span>
-                </label>
-                <label class="flex items-center space-x-2">
-                    <input type="radio" name="paste-option" value="custom" class="paste-option-radio">
-                    <span class="text-sm" style="color: var(--theme-text);">Custom Value:</span>
-                    <input type="text" id="custom-value" placeholder="0" class="custom-value-input" style="width: 60px; padding: 2px 6px; border-radius: 4px; border: 1px solid var(--theme-border); background-color: var(--theme-input); color: var(--theme-text);" disabled>
-                </label>
             </div>
         </div>
     </div>
