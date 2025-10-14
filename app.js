@@ -10,10 +10,6 @@ import {
     isValidValue, 
     parseValue, 
     getSmartCopyData, 
-    analyzeData,
-    calculateEntropy,
-    getByteFrequency,
-    detectPatterns,
     parseTextToBytes,
     formatBytesToText,
     getDelimiter
@@ -418,8 +414,6 @@ const updateAllViews = (excludeActiveInput = false) => {
         // Varsayılan değerler için CSS sınıfı ekleme
     });
     
-    // Update data analysis
-    updateDataAnalysis();
     
     // If we just cleared all cells, ensure first input is focused
     if (activeIndex === -1 && allInputs.length > 0) {
@@ -437,35 +431,6 @@ const updateAllViews = (excludeActiveInput = false) => {
     }
 };
 
-// Data analysis update function
-const updateDataAnalysis = () => {
-    const analysis = analyzeData(data);
-    
-    // Update statistics
-    document.getElementById('total-bytes').textContent = analysis.totalBytes;
-    document.getElementById('non-zero-bytes').textContent = analysis.nonZeroBytes;
-    document.getElementById('unique-bytes').textContent = analysis.uniqueBytes;
-    document.getElementById('entropy').textContent = analysis.entropy;
-    
-    // Update most frequent bytes
-    const mostFrequentElements = [
-        document.getElementById('most-frequent-1'),
-        document.getElementById('most-frequent-2'),
-        document.getElementById('most-frequent-3')
-    ];
-    
-    mostFrequentElements.forEach((element, index) => {
-        if (element) {
-            element.textContent = analysis.mostFrequent[index] || '-';
-        }
-    });
-    
-    // Update patterns
-    document.getElementById('repeats').textContent = analysis.patterns.repeats;
-    document.getElementById('sequences').textContent = analysis.patterns.sequences;
-    document.getElementById('ascii-chars').textContent = analysis.patterns.asciiChars;
-    document.getElementById('control-chars').textContent = analysis.patterns.controlChars;
-};
 
 // 4 in 1 Mode Functions
 let fourInOneData = new Uint8Array(0);

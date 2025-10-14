@@ -213,43 +213,6 @@
         </div>
         
 
-        <!-- Data Analysis Panel -->
-        <div class="mb-6 p-4 rounded-lg" style="background-color: var(--theme-surface); border: 1px solid var(--theme-border);">
-            <h3 class="text-sm font-medium mb-3 text-center" style="color: var(--theme-text);">Data Analysis</h3>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <!-- Statistics -->
-                <div class="text-center">
-                    <h4 class="text-xs font-medium mb-2" style="color: var(--theme-text);">Statistics</h4>
-                    <div class="space-y-1 text-xs" style="color: var(--theme-textSecondary);">
-                        <div>Total Bytes: <span id="total-bytes" class="font-mono">0</span></div>
-                        <div>Non-Zero: <span id="non-zero-bytes" class="font-mono">0</span></div>
-                        <div>Unique: <span id="unique-bytes" class="font-mono">0</span></div>
-                        <div>Entropy: <span id="entropy" class="font-mono">0.00</span></div>
-                    </div>
-                </div>
-                
-                <!-- Byte Frequency -->
-                <div class="text-center">
-                    <h4 class="text-xs font-medium mb-2" style="color: var(--theme-text);">Most Frequent</h4>
-                    <div class="space-y-1 text-xs" style="color: var(--theme-textSecondary);">
-                        <div id="most-frequent-1" class="font-mono">-</div>
-                        <div id="most-frequent-2" class="font-mono">-</div>
-                        <div id="most-frequent-3" class="font-mono">-</div>
-                    </div>
-                </div>
-                
-                <!-- Pattern Detection -->
-                <div class="text-center">
-                    <h4 class="text-xs font-medium mb-2" style="color: var(--theme-text);">Patterns</h4>
-                    <div class="space-y-1 text-xs" style="color: var(--theme-textSecondary);">
-                        <div>Repeats: <span id="repeats" class="font-mono">0</span></div>
-                        <div>Sequences: <span id="sequences" class="font-mono">0</span></div>
-                        <div>ASCII: <span id="ascii-chars" class="font-mono">0</span></div>
-                        <div>Control: <span id="control-chars" class="font-mono">0</span></div>
-                    </div>
-                </div>
-            </div>
-        </div>
     </div>
 
     <script type="module" src="app.js"></script>
