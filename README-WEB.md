@@ -4,7 +4,7 @@ A powerful byte editor that works directly in your web browser. Edit bytes in AS
 
 ## 🌐 Live Demo
 
-[Try ByteSync Editor Online](https://your-domain.com) <!-- Replace with your actual domain -->
+[Try ByteSync Editor Online](https://kaangrbz.github.io/byte-sync-editor/) <!-- Replace with your actual domain -->
 
 ## ✨ Features
 
@@ -42,7 +42,7 @@ A powerful byte editor that works directly in your web browser. Edit bytes in AS
 - `Ctrl+A` / `Cmd+A` - Select All (works in all modes)
 - `Delete` / `Backspace` - Clear All (when all selected)
 - `Enter` - Move to next cell
-- `Space` - Move to next cell
+- `Space` - Add space character (ASCII 32, except in decimal mode)
 - `Backspace` - Move to previous cell (when current cell is empty)
 
 ### Special Characters

@@ -381,11 +381,6 @@ const handleKeydown = (event) => {
             event.preventDefault();
             focusNextInput(index, event.target.dataset.type);
             return;
-        case ' ':
-            // Space tuşu - sonraki input'a geç
-            event.preventDefault();
-            focusNextInput(index, event.target.dataset.type);
-            return;
         default:
             return;
     }

@@ -63,7 +63,6 @@ yarn start
 - `Ctrl+A` / `Cmd+A` - Select All (works in all modes)
 - `Delete` / `Backspace` - Clear All (when all selected)
 - `Enter` - Move to next cell
-- `Space` - Move to next cell
 - `Backspace` - Move to previous cell (when current cell is empty)
 
 ### Special Characters
