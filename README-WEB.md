@@ -21,6 +21,7 @@ A powerful byte editor that works directly in your web browser. Edit bytes in AS
 - **Context menu**: Right-click for quick actions (copy, paste, select all, clear)
 - **Keyboard shortcuts**: Full keyboard navigation and shortcuts
 - **Theme support**: Light and dark themes with CSS custom properties
+- **PWA Support**: Install as native app, works offline
 - **Responsive design**: Works on desktop and mobile devices
 
 ### Navigation & Editing

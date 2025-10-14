@@ -42,6 +42,7 @@ yarn start
 - **Context menu**: Right-click for quick actions (copy, paste, select all, clear)
 - **Keyboard shortcuts**: Full keyboard navigation and shortcuts
 - **Theme support**: Light and dark themes with CSS custom properties
+- **PWA Support**: Install as native app, works offline
 - **Cross-platform**: Works on Windows, macOS, and Linux
 
 ### Navigation & Editing

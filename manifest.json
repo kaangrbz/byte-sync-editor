@@ -1,0 +1,86 @@
+{
+  "name": "ByteSync Editor",
+  "short_name": "ByteSync",
+  "description": "A powerful byte editor for ASCII, Hex, Decimal, and Binary formats",
+  "version": "1.40.0",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1a1a1a",
+  "theme_color": "#3b82f6",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "lang": "en",
+  "categories": ["developer", "utilities", "productivity"],
+  "icons": [
+    {
+      "src": "assets/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "AppIcon.iconset/icon_128x128.png",
+      "sizes": "128x128",
+      "type": "image/png"
+    },
+    {
+      "src": "AppIcon.iconset/icon_256x256.png",
+      "sizes": "256x256",
+      "type": "image/png"
+    },
+    {
+      "src": "AppIcon.iconset/icon_512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "assets/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "ByteSync Editor main interface"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "ASCII Mode",
+      "short_name": "ASCII",
+      "description": "Open in ASCII mode",
+      "url": "/?mode=ascii",
+      "icons": [
+        {
+          "src": "AppIcon.iconset/icon_128x128.png",
+          "sizes": "128x128"
+        }
+      ]
+    },
+    {
+      "name": "Hex Mode",
+      "short_name": "Hex",
+      "description": "Open in Hex mode",
+      "url": "/?mode=hex",
+      "icons": [
+        {
+          "src": "AppIcon.iconset/icon_128x128.png",
+          "sizes": "128x128"
+        }
+      ]
+    },
+    {
+      "name": "4-in-1 Mode",
+      "short_name": "4in1",
+      "description": "Open in 4-in-1 mode",
+      "url": "/?mode=four-in-one",
+      "icons": [
+        {
+          "src": "AppIcon.iconset/icon_128x128.png",
+          "sizes": "128x128"
+        }
+      ]
+    }
+  ],
+  "related_applications": [],
+  "prefer_related_applications": false
+}

@@ -962,8 +962,98 @@ const handleContextMenuAction = (action) => {
 
 // Dev butonu kaldırıldı
 
+// PWA Service Worker Registration
+const registerServiceWorker = async () => {
+    if ('serviceWorker' in navigator) {
+        try {
+            const registration = await navigator.serviceWorker.register('/sw.js');
+            console.log('Service Worker registered successfully:', registration);
+            
+            // Handle updates
+            registration.addEventListener('updatefound', () => {
+                const newWorker = registration.installing;
+                newWorker.addEventListener('statechange', () => {
+                    if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                        // New version available
+                        if (confirm('New version available! Reload to update?')) {
+                            window.location.reload();
+                        }
+                    }
+                });
+            });
+            
+        } catch (error) {
+            console.error('Service Worker registration failed:', error);
+        }
+    }
+};
+
+// PWA Install Prompt
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt', (e) => {
+    console.log('PWA install prompt triggered');
+    e.preventDefault();
+    deferredPrompt = e;
+    
+    // Show install button or notification
+    showInstallPrompt();
+});
+
+const showInstallPrompt = () => {
+    // Create install button
+    const installButton = document.createElement('button');
+    installButton.textContent = '📱 Install App';
+    installButton.className = 'fixed bottom-4 right-4 px-4 py-2 bg-blue-600 text-white rounded-lg shadow-lg hover:bg-blue-700 transition-colors z-50';
+    installButton.style.display = 'none';
+    
+    installButton.addEventListener('click', async () => {
+        if (deferredPrompt) {
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            console.log('PWA install outcome:', outcome);
+            deferredPrompt = null;
+            installButton.remove();
+        }
+    });
+    
+    document.body.appendChild(installButton);
+    
+    // Show button after a delay
+    setTimeout(() => {
+        installButton.style.display = 'block';
+    }, 3000);
+    
+    // Auto-hide after 10 seconds
+    setTimeout(() => {
+        if (installButton.parentNode) {
+            installButton.remove();
+        }
+    }, 10000);
+};
+
+// Handle URL mode parameters
+const handleUrlMode = () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const mode = urlParams.get('mode');
+    
+    if (mode) {
+        // Wait for DOM to be ready
+        setTimeout(() => {
+            const tabButton = document.querySelector(`[data-tab="${mode}"]`);
+            if (tabButton) {
+                tabButton.click();
+            }
+        }, 100);
+    }
+};
+
 // Initialize the app
 window.onload = () => {
+    // Register service worker
+    registerServiceWorker();
+    
+    // Handle URL mode parameters
+    handleUrlMode();
     // DOM elementlerini bul
     tabButtons = document.querySelectorAll('.tab-button');
     tabContents = document.querySelectorAll('.tab-content');
