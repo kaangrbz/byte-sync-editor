@@ -107,7 +107,7 @@ describe('ByteSync Editor - 4 in 1 Mode', () => {
         it('should handle special ASCII characters', () => {
             const bytes = [13, 10, 0, 32, 65];
             const text = formatBytesToText(bytes, 'ascii');
-            expect(text).toBe('\r\n A'); // CR, LF, empty, space, A - gerçek satır sonu karakterleri
+            expect(text).toBe('[CR][LF][NULL] A'); // CR, LF, NULL, space, A - görsel gösterim
         });
 
         it('should handle empty bytes array', () => {

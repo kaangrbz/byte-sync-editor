@@ -42,7 +42,7 @@ describe('ByteSync Editor - Smart Copy Operations', () => {
     test('should trim trailing empty strings from ascii data', () => {
       const data = new Uint8Array([68, 101, 110, 101, 109, 101, 0, 0, 0]);
       const result = getSmartCopyData(data, 'ascii');
-      expect(result).toEqual(['D', 'e', 'n', 'e', 'm', 'e']);
+      expect(result).toEqual(['D', 'e', 'n', 'e', 'm', 'e', '[NULL]', '[NULL]', '[NULL]']);
     });
   });
 });

@@ -134,13 +134,15 @@ class ThemeManager {
             existingButton.remove();
         }
 
-        const theme = this.themes[this.currentTheme];
+        // Tersine çevir: mevcut tema değil, geçiş yapılacak tema gösterilsin
+        const nextTheme = this.currentTheme === 'dark' ? 'light' : 'dark';
+        const nextThemeData = this.themes[nextTheme];
         const button = document.createElement('button');
         button.id = 'theme-toggle';
         button.className = 'theme-toggle-btn';
         button.innerHTML = `
-            <span class="theme-icon">${theme.icon}</span>
-            <span class="theme-text">${theme.name}</span>
+            <span class="theme-icon">${nextThemeData.icon}</span>
+            <span class="theme-text">${nextThemeData.name}</span>
         `;
         
         // Başlık kısmına ekle
@@ -151,10 +153,12 @@ class ThemeManager {
     updateThemeButton() {
         const button = document.getElementById('theme-toggle');
         if (button) {
-            const theme = this.themes[this.currentTheme];
+            // Tersine çevir: mevcut tema değil, geçiş yapılacak tema gösterilsin
+            const nextTheme = this.currentTheme === 'dark' ? 'light' : 'dark';
+            const nextThemeData = this.themes[nextTheme];
             button.innerHTML = `
-                <span class="theme-icon">${theme.icon}</span>
-                <span class="theme-text">${theme.name}</span>
+                <span class="theme-icon">${nextThemeData.icon}</span>
+                <span class="theme-text">${nextThemeData.name}</span>
             `;
         }
     }

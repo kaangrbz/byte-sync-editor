@@ -11,7 +11,7 @@
 <body class="min-h-screen p-8" style="background-color: var(--theme-background); color: var(--theme-text);">
 
     <div class="max-w-4xl mx-auto p-8 rounded-xl shadow-lg" style="background-color: var(--theme-surface);">
-        <h1 class="text-3xl font-bold text-center mb-6" style="color: var(--theme-primary);">ByteSync Editor v1.2.0</h1>
+        <h1 class="text-3xl font-bold text-center mb-6" style="color: var(--theme-primary);">ByteSync Editor v1.3.0</h1>
         <p class="text-center text-sm mb-8" style="color: var(--theme-textSecondary);">Edit a byte in any view, and watch all other views update automatically. The selected cell remains highlighted across tabs. Now with copy/paste functionality and a larger data grid.</p>
         
         <!-- Tab Buttons -->
@@ -34,10 +34,7 @@
             </button>
             <button class="tab-button px-6 py-2 rounded-lg transition-colors duration-200" data-tab="four-in-one" style="background-color: var(--theme-secondary); color: var(--theme-text);" title="Tüm formatlar birlikte (Shift+5)">
                 <div class="text-sm font-medium">4 in 1</div>
-                <div class="text-xs opacity-70">Hepsi</div>
-            </button>
-            <button id="dev-mode-button" class="px-4 py-2 rounded-lg transition-colors duration-200 text-xs" style="background-color: var(--theme-warning); color: var(--theme-text);" title="Geliştirici Modu - F12 ile DevTools açılır">
-                🔧 Dev
+                <div class="text-xs opacity-70">All in one</div>
             </button>
         </div>
 
@@ -160,7 +157,7 @@
         </div>
         
         <!-- Keyboard Shortcuts Info -->
-        <div class="mb-6 p-4 rounded-lg" style="background-color: var(--theme-surface); border: 1px solid var(--theme-border);">
+        <div class="mb-6 mt-6 p-4 rounded-lg" style="background-color: var(--theme-surface); border: 1px solid var(--theme-border);">
             <h3 class="text-sm font-medium mb-3 text-center" style="color: var(--theme-text);">Keyboard Shortcuts</h3>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs" style="color: var(--theme-textSecondary);">
                 <div>
@@ -183,7 +180,6 @@
                         <div><kbd class="px-1 py-0.5 rounded text-xs border">Space</kbd> Reset to 0</div>
                         <div><kbd class="px-1 py-0.5 rounded text-xs border">Backspace</kbd> Previous cell (when empty)</div>
                         <div><kbd class="px-1 py-0.5 rounded text-xs border">Arrow Keys</kbd> Navigate cells</div>
-                        <div><kbd class="px-1 py-0.5 rounded text-xs border">F12</kbd> DevTools (Geliştirici Modu)</div>
                     </div>
                 </div>
             </div>

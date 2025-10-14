@@ -21,7 +21,6 @@
     --theme-warningHover: #d97706;
     --theme-input: #ffffff;
     --theme-inputFocus: #f0f9ff;
-    --theme-zeroValue: #9ca3af;
 }
 
 body {
@@ -119,19 +118,7 @@ body {
     box-shadow: 0 0 0 2px var(--theme-borderFocus);
 }
 
-.input-cell.zero-value {
-    color: var(--theme-zeroValue);
-}
-
-.input-cell.cr-value {
-    color: #3b82f6;
-    font-weight: bold;
-}
-
-.input-cell.lf-value {
-    color: #3b82f6;
-    font-weight: bold;
-}
+/* Varsayılan değer CSS sınıfları kaldırıldı */
 
 .input-cell.all-selected {
     background-color: var(--theme-primary);
@@ -139,12 +126,7 @@ body {
     border-color: var(--theme-primary);
 }
 
-.devtools-btn:hover {
-    background-color: var(--theme-surfaceHover);
-    border-color: var(--theme-primary);
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
+/* DevTools buton stilleri kaldırıldı */
 
 .context-menu {
     position: fixed;
@@ -188,7 +170,7 @@ body {
 }
 
 .input-cell.hex-cell { width: 32px; }
-.input-cell.ascii-cell { width: 20px; }
+.input-cell.ascii-cell { width: 50px; }
 .input-cell.decimal-cell { width: 40px; }
 .input-cell.binary-cell { width: 70px; }
 
@@ -219,7 +201,6 @@ body {
     --theme-border: #e5e7eb;
     --theme-input: #ffffff;
     --theme-inputFocus: #f0f9ff;
-    --theme-zeroValue: #9ca3af;
 }
 
 /* Dark theme specific styles */
@@ -232,7 +213,19 @@ body {
     --theme-border: #374151;
     --theme-input: #2b2b2b;
     --theme-inputFocus: #4b4b4b;
-    --theme-zeroValue: #7d7d7d;
+}
+
+/* Light theme tab button styles */
+.theme-light .tab-button:not(.active) {
+    background-color: #f8fafc !important;
+    color: #475569 !important;
+    border-color: #e2e8f0 !important;
+}
+
+.theme-light .tab-button:not(.active):hover {
+    background-color: #f1f5f9 !important;
+    color: #334155 !important;
+    border-color: #cbd5e1 !important;
 }
 
 /* Dark theme tab button styles */
@@ -246,4 +239,91 @@ body {
     background-color: #1f2937 !important;
     color: #9ca3af !important;
     border-color: #4b5563 !important;
+}
+
+/* Görsel Karakter Gösterimi Stilleri */
+.control-char {
+    background-color: #fef3c7;
+    color: #92400e;
+    padding: 1px 3px;
+    border-radius: 3px;
+    font-size: 0.75em;
+    font-weight: 600;
+    font-family: 'Courier New', monospace;
+    border: 1px solid #f59e0b;
+}
+
+.theme-dark .control-char {
+    background-color: #451a03;
+    color: #fbbf24;
+    border-color: #f59e0b;
+}
+
+.extended-char {
+    background-color: #dbeafe;
+    color: #1e40af;
+    padding: 1px 3px;
+    border-radius: 3px;
+    font-size: 0.8em;
+    font-weight: 500;
+    font-family: 'Courier New', monospace;
+    border: 1px solid #3b82f6;
+}
+
+.theme-dark .extended-char {
+    background-color: #1e3a8a;
+    color: #93c5fd;
+    border-color: #3b82f6;
+}
+
+.null-char {
+    background-color: #f3f4f6;
+    color: #6b7280;
+    padding: 1px 3px;
+    border-radius: 3px;
+    font-size: 0.75em;
+    font-weight: 600;
+    font-family: 'Courier New', monospace;
+    border: 1px solid #9ca3af;
+}
+
+.theme-dark .null-char {
+    background-color: #374151;
+    color: #9ca3af;
+    border-color: #6b7280;
+}
+
+/* ASCII input hücreleri için özel stiller */
+.ascii-input {
+    font-family: 'Courier New', monospace;
+    font-weight: 500;
+}
+
+/* Görsel karakter tooltip'leri */
+.char-tooltip {
+    position: relative;
+    cursor: help;
+}
+
+.char-tooltip::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 125%;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #1f2937;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s, visibility 0.2s;
+    z-index: 1000;
+}
+
+.char-tooltip:hover::after {
+    opacity: 1;
+    visibility: visible;
 }

@@ -28,7 +28,7 @@ describe('ByteSync Editor - Keyboard Shortcuts', () => {
       if (isCmdEnter) {
         mockData[currentIndex] = 13; // CR character
         expect(mockData[currentIndex]).toBe(13);
-        expect(convertValue(13, 'ascii')).toBe('\r'); // Carriage Return - gerçek CR karakteri
+        expect(convertValue(13, 'ascii')).toBe('[CR]'); // Carriage Return - görsel gösterim
       }
     });
 
@@ -57,7 +57,7 @@ describe('ByteSync Editor - Keyboard Shortcuts', () => {
       if (isCmdShiftEnter) {
         mockData[currentIndex] = 10; // LF character
         expect(mockData[currentIndex]).toBe(10);
-        expect(convertValue(10, 'ascii')).toBe('\n'); // Line Feed - gerçek LF karakteri
+        expect(convertValue(10, 'ascii')).toBe('[LF]'); // Line Feed - görsel gösterim
       }
     });
 
@@ -96,8 +96,8 @@ describe('ByteSync Editor - Keyboard Shortcuts', () => {
 
   describe('Character Display', () => {
     test('should display CR and LF correctly in ASCII view', () => {
-      expect(convertValue(13, 'ascii')).toBe('\r'); // Carriage Return - gerçek CR karakteri
-      expect(convertValue(10, 'ascii')).toBe('\n'); // Line Feed - gerçek LF karakteri
+      expect(convertValue(13, 'ascii')).toBe('[CR]'); // Carriage Return - görsel gösterim
+      expect(convertValue(10, 'ascii')).toBe('[LF]'); // Line Feed - görsel gösterim
     });
 
     test('should display CR and LF correctly in other formats', () => {

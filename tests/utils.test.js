@@ -131,9 +131,9 @@ describe('ByteSync Editor - Utility Functions', () => {
       expect(convertValue(65, 'ascii')).toBe('A');
       expect(convertValue(97, 'ascii')).toBe('a');
       expect(convertValue(32, 'ascii')).toBe(' ');
-      expect(convertValue(13, 'ascii')).toBe('\r'); // Carriage Return - gerçek CR karakteri
-      expect(convertValue(10, 'ascii')).toBe('\n'); // Line Feed - gerçek LF karakteri
-      expect(convertValue(0, 'ascii')).toBe(''); // 0 için boş
+      expect(convertValue(13, 'ascii')).toBe('[CR]'); // Carriage Return - görsel gösterim
+      expect(convertValue(10, 'ascii')).toBe('[LF]'); // Line Feed - görsel gösterim
+      expect(convertValue(0, 'ascii')).toBe('[NULL]'); // 0 için NULL gösterimi
     });
 
     test('should handle invalid input', () => {
@@ -164,7 +164,7 @@ describe('ByteSync Editor - Utility Functions', () => {
     test('should trim trailing empty strings for ascii data', () => {
       const data = new Uint8Array([68, 101, 110, 101, 109, 101, 0, 0, 0]);
       const result = getSmartCopyData(data, 'ascii');
-      expect(result).toEqual(['D', 'e', 'n', 'e', 'm', 'e']);
+      expect(result).toEqual(['D', 'e', 'n', 'e', 'm', 'e', '[NULL]', '[NULL]', '[NULL]']);
     });
 
     test('should return all data if no trailing zeros', () => {

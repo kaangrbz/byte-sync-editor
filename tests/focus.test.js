@@ -258,7 +258,7 @@ describe('ByteSync Editor - Focus Management', () => {
       expect(convertValue(0, 'hex')).toBe('00'); // Hex shows 00
       expect(convertValue(0, 'decimal')).toBe('0'); // Decimal shows 0
       expect(convertValue(0, 'binary')).toBe('00000000'); // Binary shows 00000000
-      expect(convertValue(0, 'ascii')).toBe(''); // ASCII shows empty
+      expect(convertValue(0, 'ascii')).toBe('[NULL]'); // ASCII shows NULL
     });
 
     test('should show proper values for non-zero inputs', () => {

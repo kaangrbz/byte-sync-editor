@@ -65,17 +65,10 @@ const createGrid = (grid, className, type) => {
         
         // Set the initial value and class
         const value = data[i];
-        // Tüm modlarda varsayılan değer boş olsun
-        input.value = value === 0 ? '' : convertValue(value, type);
+        // Inputları boş başlat
+        input.value = '';
         
-        // Add appropriate class based on value
-        if (value === 0) {
-            input.classList.add('zero-value');
-        } else if (value === 13) {
-            input.classList.add('cr-value');
-        } else if (value === 10) {
-            input.classList.add('lf-value');
-        }
+        // Varsayılan değerler için CSS sınıfı ekleme
         
         // Add event listeners for selection, input, and paste
         input.addEventListener('focus', handleFocus);
@@ -107,39 +100,86 @@ const handleInput = (event) => {
     // Karakter limiti kontrolü ve otomatik geçiş
     const maxLength = getMaxLengthForType(type);
     if (value.length >= maxLength) {
-        // Karakter limiti doldu, bir sonraki input'a geç
-        setTimeout(() => {
-            focusNextInput(index, type);
-        }, 10);
+
+        console.log('value:', value, 'type:', type, 'maxLength:', maxLength);
+        // Sadece geçerli bir değer tamamlandığında bir sonraki input'a geç
+        if (type === 'hex' && /^[0-9a-fA-F]{2}$/.test(value)) {
+            // Geçerli 2 karakterlik hex değeri tamamlandı
+            console.log('Hex geçiş yapılıyor:', value, index);
+            setTimeout(() => {
+                focusNextInput(index, type);
+            }, 10);
+        } else if (type === 'decimal' && /^\d{3}$/.test(value) && parseInt(value) <= 255) {
+            // Geçerli 3 karakterlik decimal değeri tamamlandı
+            setTimeout(() => {
+                focusNextInput(index, type);
+            }, 10);
+        } else if (type === 'binary' && /^[01]{8}$/.test(value)) {
+            // Geçerli 8 karakterlik binary değeri tamamlandı
+            setTimeout(() => {
+                focusNextInput(index, type);
+            }, 10);
+        } else if (type === 'ascii' && value.length === 1) {
+            // ASCII için 1 karakter tamamlandı
+            setTimeout(() => {
+                focusNextInput(index, type);
+            }, 10);
+        }
     }
 
     // Validate and update data
     let byteValue;
     if (type === 'hex') {
-        if (!/^[0-9a-fA-F]{0,2}$/.test(value)) {
+        // Hex değerlerini büyük harfe çevir
+        value = value.toUpperCase();
+        event.target.value = value; // Input'u büyük harfle güncelle
+        
+        if (!/^[0-9A-F]{0,2}$/.test(value)) {
             event.target.value = ''; // Clear invalid input
             return;
         }
-        byteValue = parseInt(value, 16);
+        if (value.length > 0) {
+            byteValue = parseInt(value, 16);
+        } else {
+            // Boş hex input - değeri değiştirme
+            return;
+        }
     } else if (type === 'ascii') {
-        byteValue = value.charCodeAt(0);
+        if (value.length > 0) {
+            byteValue = value.charCodeAt(0);
+        } else {
+            // Boş ASCII input - değeri değiştirme
+            return;
+        }
     } else if (type === 'decimal') {
-        if (!/^\d{0,3}$/.test(value) || parseInt(value) > 255) {
+        if (!/^\d{0,3}$/.test(value) || (value.length > 0 && parseInt(value) > 255)) {
             event.target.value = '';
             return;
         }
-        byteValue = parseInt(value, 10);
+        if (value.length > 0) {
+            byteValue = parseInt(value, 10);
+        } else {
+            // Boş decimal input - değeri değiştirme
+            return;
+        }
     } else if (type === 'binary') {
         if (!/^[01]{0,8}$/.test(value)) {
             event.target.value = '';
             return;
         }
-        byteValue = parseInt(value, 2);
+        if (value.length > 0) {
+            byteValue = parseInt(value, 2);
+        } else {
+            // Boş binary input - değeri değiştirme
+            return;
+        }
     }
 
+    // 0 değerleri de dahil olmak üzere tüm geçerli değerleri kaydet
     if (!isNaN(byteValue) && byteValue >= 0 && byteValue <= 255) {
         data[index] = byteValue;
-        updateAllViews();
+        // Aktif input'u güncelleme - 0 değerleri de korunacak
+        updateAllViews(true);
     }
 };
 
@@ -367,6 +407,11 @@ const handleKeydown = (event) => {
         case 'ArrowUp':
             newIndex = (index - 16 + data.length) % data.length;
             break;
+        case 'Enter':
+            // Enter tuşu - sonraki input'a geç
+            event.preventDefault();
+            focusNextInput(index, event.target.dataset.type);
+            return;
         case ' ':
             // Space tuşu - hücreyi sıfırla
             event.preventDefault();
@@ -388,27 +433,34 @@ const handleKeydown = (event) => {
 
 
 // Tüm input alanlarını tüm view'larda güncelleme
-const updateAllViews = () => {
+const updateAllViews = (excludeActiveInput = false) => {
     const allInputs = document.querySelectorAll('.input-cell');
+    const activeInput = document.activeElement;
+    
     allInputs.forEach(input => {
         const index = parseInt(input.dataset.index, 10);
         const type = input.dataset.type;
         const value = data[index];
         
-        // Tüm modlarda 0 değerleri boş gösterilsin
-        input.value = value === 0 ? '' : convertValue(value, type);
-        
-        // Remove all special value classes first
-        input.classList.remove('zero-value', 'cr-value', 'lf-value');
-        
-        // Add appropriate class based on value
-        if (value === 0) {
-            input.classList.add('zero-value');
-        } else if (value === 13) {
-            input.classList.add('cr-value');
-        } else if (value === 10) {
-            input.classList.add('lf-value');
+        // Eğer bu input aktif ise ve excludeActiveInput true ise, sadece değeri güncelle
+        if (excludeActiveInput && input === activeInput) {
+            // Aktif input'un değerini data'dan güncelle ama görsel değerini koru
+            return;
         }
+        
+        // Boş inputlar boş kalsın, sadece kullanıcı değer girdiğinde göster
+        if (value === 0 && input.value === '') {
+            // Boş input ve 0 değeri - boş bırak
+            input.value = '';
+        } else if (value !== 0) {
+            // 0 olmayan değerler - göster
+            input.value = convertValue(value, type);
+        } else if (value === 0 && input.value !== '') {
+            // 0 değeri ama input'ta bir şey var - kullanıcı 0 yazmış, göster
+            input.value = convertValue(value, type);
+        }
+        
+        // Varsayılan değerler için CSS sınıfı ekleme
     });
     
     // Update data analysis
@@ -592,6 +644,13 @@ const clearAllCells = () => {
     }
     // Clear all selection
     clearAllSelection();
+    
+    // Tüm inputları boş yap
+    const allInputs = document.querySelectorAll('.input-cell');
+    allInputs.forEach(input => {
+        input.value = '';
+    });
+    
     // Update all views
     updateAllViews();
     
@@ -750,29 +809,23 @@ const createContextMenu = (x, y) => {
     // Menü öğeleri - daha organize
     const menuItems = [
         // Kopyalama/Yapıştırma grubu
-        { text: '📋 Kopyala', action: 'copy', shortcut: 'Ctrl+C' },
-        { text: '📄 Yapıştır', action: 'paste', shortcut: 'Ctrl+V' },
-        { text: '✂️ Kes', action: 'cut', shortcut: 'Ctrl+X' },
+        { text: 'Copy', action: 'copy', shortcut: 'Ctrl+C' },
+        { text: 'Paste', action: 'paste', shortcut: 'Ctrl+V' },
+        { text: 'Cut', action: 'cut', shortcut: 'Ctrl+X' },
         { separator: true },
         
         // Seçim grubu
-        { text: '🔍 Hepsini Seç', action: 'selectAll', shortcut: 'Ctrl+A' },
-        { text: '🗑️ Temizle', action: 'clear', shortcut: 'Delete' },
+        { text: 'Select All', action: 'selectAll', shortcut: 'Ctrl+A' },
+        { text: 'Clear', action: 'clear', shortcut: 'Delete' },
         { separator: true },
         
         // Özel karakterler grubu
-        { text: '↩️ CR Ekle (\\r)', action: 'addCR', shortcut: 'Cmd+Enter' },
-        { text: '↵ LF Ekle (\\n)', action: 'addLF', shortcut: 'Cmd+Shift+Enter' },
-        { text: '🔄 Sıfırla (0)', action: 'reset', shortcut: 'Space' }
+        { text: 'Add CR (\\r)', action: 'addCR', shortcut: 'Cmd+Enter' },
+        { text: 'Add LF (\\n)', action: 'addLF', shortcut: 'Cmd+Shift+Enter' },
+        { text: 'Reset (0)', action: 'reset', shortcut: 'Space' }
     ];
     
-    // Geliştirici modunda DevTools seçeneğini ekle
-    if (isDeveloperMode()) {
-        menuItems.push(
-            { separator: true },
-            { text: '🔧 DevTools Aç', action: 'devtools', shortcut: 'F12' }
-        );
-    }
+    // DevTools seçeneği kaldırıldı
 
     menuItems.forEach(item => {
         if (item.separator) {
@@ -930,9 +983,7 @@ const handleContextMenuAction = (action) => {
                 }
             }
             break;
-        case 'devtools':
-            openDevTools();
-            break;
+        // DevTools case kaldırıldı
     }
 };
 
@@ -945,24 +996,7 @@ const handleContextMenuAction = (action) => {
 
 // Paste options event listeners - window.onload içinde tanımlanacak
 
-// Geliştirici modu butonunu başlat
-const initializeDeveloperMode = () => {
-    const devModeButton = document.getElementById('dev-mode-button');
-    if (devModeButton) {
-        // Geliştirici modu tespiti
-        const isDev = isDeveloperMode();
-        
-        // Test için: Her zaman görünür yap
-        devModeButton.style.display = 'block';
-        devModeButton.addEventListener('click', openDevTools);
-        
-        // Geliştirici modu aktif değilse buton rengini değiştir
-        if (!isDev) {
-            devModeButton.style.backgroundColor = 'var(--theme-secondary)';
-            devModeButton.title = 'Geliştirici Modu (Test) - F12 ile DevTools açılır';
-        }
-    }
-};
+// Dev butonu kaldırıldı
 
 // Initialize the app
 window.onload = () => {
@@ -987,8 +1021,7 @@ window.onload = () => {
     // Initialize theme system
     window.themeManager = new ThemeManager();
     
-    // Initialize developer mode
-    initializeDeveloperMode();
+    // Dev butonu kaldırıldı
     
     // Load paste options from localStorage
     try {
@@ -1233,23 +1266,7 @@ window.onload = () => {
             return;
         }
         
-        // F12 - DevTools (sadece geliştirici modunda)
-        if (e.key === 'F12' && isDeveloperMode()) {
-            e.preventDefault();
-            openDevTools();
-        }
-        
-        // Ctrl+Shift+I - DevTools (alternatif, sadece geliştirici modunda)
-        if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'I' && isDeveloperMode()) {
-            e.preventDefault();
-            openDevTools();
-        }
-        
-        // Ctrl+Shift+C - DevTools (alternatif, sadece geliştirici modunda)
-        if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'C' && isDeveloperMode()) {
-            e.preventDefault();
-            openDevTools();
-        }
+        // DevTools tuş kombinasyonları kaldırıldı
     });
 };
 
