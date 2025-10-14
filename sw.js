@@ -1,17 +1,17 @@
 // ByteSync Editor Service Worker
 const CACHE_NAME = 'bytesync-editor-v1.40.0';
 const urlsToCache = [
-  '/',
-  '/index.html',
-  '/app.js',
-  '/styles.css',
-  '/theme.js',
-  '/src/utils.js',
-  '/assets/logo.png',
-  '/AppIcon.iconset/icon_128x128.png',
-  '/AppIcon.iconset/icon_256x256.png',
-  '/AppIcon.iconset/icon_512x512.png',
-  '/manifest.json'
+  './',
+  './index.html',
+  './app.js',
+  './styles.css',
+  './theme.js',
+  './src/utils.js',
+  './assets/logo.png',
+  './AppIcon.iconset/icon_128x128.png',
+  './AppIcon.iconset/icon_256x256.png',
+  './AppIcon.iconset/icon_512x512.png',
+  './manifest.json'
 ];
 
 // Install event - cache resources
@@ -96,7 +96,7 @@ self.addEventListener('fetch', (event) => {
             console.log('Service Worker: Network fetch failed', error);
             // Return offline page for navigation requests
             if (event.request.destination === 'document') {
-              return caches.match('/index.html');
+              return caches.match('./index.html');
             }
           });
       })
@@ -121,7 +121,7 @@ self.addEventListener('notificationclick', (event) => {
   event.notification.close();
   
   event.waitUntil(
-    clients.openWindow('/')
+    clients.openWindow('./')
   );
 });
 

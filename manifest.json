@@ -3,12 +3,12 @@
   "short_name": "ByteSync",
   "description": "A powerful byte editor for ASCII, Hex, Decimal, and Binary formats",
   "version": "1.40.0",
-  "start_url": "/",
+  "start_url": "./",
   "display": "standalone",
   "background_color": "#1a1a1a",
   "theme_color": "#3b82f6",
   "orientation": "portrait-primary",
-  "scope": "/",
+  "scope": "./",
   "lang": "en",
   "categories": ["developer", "utilities", "productivity"],
   "icons": [
@@ -48,7 +48,7 @@
       "name": "ASCII Mode",
       "short_name": "ASCII",
       "description": "Open in ASCII mode",
-      "url": "/?mode=ascii",
+      "url": "./?mode=ascii",
       "icons": [
         {
           "src": "AppIcon.iconset/icon_128x128.png",
@@ -60,7 +60,7 @@
       "name": "Hex Mode",
       "short_name": "Hex",
       "description": "Open in Hex mode",
-      "url": "/?mode=hex",
+      "url": "./?mode=hex",
       "icons": [
         {
           "src": "AppIcon.iconset/icon_128x128.png",
@@ -72,7 +72,7 @@
       "name": "4-in-1 Mode",
       "short_name": "4in1",
       "description": "Open in 4-in-1 mode",
-      "url": "/?mode=four-in-one",
+      "url": "./?mode=four-in-one",
       "icons": [
         {
           "src": "AppIcon.iconset/icon_128x128.png",
