@@ -5,7 +5,12 @@ All notable changes to ByteSync Editor will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.3.0] - 2025-01-27
+## [1.3.2] - 2025-10-14
+
+### Changed
+- Minor ui changes
+
+## [1.3.0] - 2025-10-14
 
 ### Added
 - 4-in-1 Mode: All formats (ASCII, Hex, Decimal, Binary) displayed simultaneously in textarea view

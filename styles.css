@@ -334,9 +334,10 @@ body {
 #four-in-one-decimal,
 #four-in-one-binary {
     resize: both;
-    min-height: 8rem; /* 128px - h-32 equivalent */
+    min-height: 15rem; /* 128px - h-32 equivalent */
     min-width: 100%;
     max-width: 100%;
+    border-radius: 1rem;
 }
 
 /* Custom resize handle styling */
