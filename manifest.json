@@ -2,7 +2,7 @@
   "name": "ByteSync Editor",
   "short_name": "ByteSync",
   "description": "A powerful byte editor for ASCII, Hex, Decimal, and Binary formats",
-  "version": "1.40.02",
+  "version": "1.41.2",
   "start_url": "./",
   "display": "standalone",
   "background_color": "#1a1a1a",
@@ -10,7 +10,11 @@
   "orientation": "portrait-primary",
   "scope": "./",
   "lang": "en",
-  "categories": ["developer", "utilities", "productivity"],
+  "categories": [
+    "developer",
+    "utilities",
+    "productivity"
+  ],
   "icons": [
     {
       "src": "assets/logo.png",

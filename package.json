@@ -1,6 +1,6 @@
 {
   "name": "bytesync-editor",
-  "version": "1.41.0",
+  "version": "1.41.2",
   "description": "",
   "main": "main.js",
   "scripts": {
@@ -15,7 +15,10 @@
     "build:win": "electron-builder --win",
     "build:linux": "electron-builder --linux",
     "dist": "electron-builder --publish=never",
-    "pack": "electron-builder --dir"
+    "pack": "electron-builder --dir",
+    "version:patch": "node update-version.js patch",
+    "version:minor": "node update-version.js minor",
+    "version:major": "node update-version.js major"
   },
   "build": {
     "appId": "com.bytesync.editor",
