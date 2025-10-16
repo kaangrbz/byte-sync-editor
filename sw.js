@@ -1,5 +1,5 @@
 // ByteSync Editor Service Worker
-const CACHE_NAME = 'bytesync-editor-v1.40.0';
+const CACHE_NAME = 'bytesync-editor-v1.40.02';
 const urlsToCache = [
   './',
   './index.html',
@@ -25,6 +25,7 @@ self.addEventListener('install', (event) => {
       })
       .then(() => {
         console.log('Service Worker: All files cached');
+        // Yeni service worker'ı hemen aktif et
         return self.skipWaiting();
       })
       .catch((error) => {
@@ -48,7 +49,17 @@ self.addEventListener('activate', (event) => {
       );
     }).then(() => {
       console.log('Service Worker: Activated');
-      return self.clients.claim();
+      // Tüm client'lara güncelleme bildirimi gönder
+      return self.clients.claim().then(() => {
+        return self.clients.matchAll().then((clients) => {
+          clients.forEach((client) => {
+            client.postMessage({
+              type: 'UPDATE_AVAILABLE',
+              message: 'Yeni güncelleme mevcut!'
+            });
+          });
+        });
+      });
     })
   );
 });
@@ -131,3 +142,4 @@ self.addEventListener('message', (event) => {
     self.skipWaiting();
   }
 });
+

@@ -6,9 +6,6 @@
 // Import utility functions
 import { 
     getMaxLengthForType, 
-    convertValue, 
-    isValidValue, 
-    parseValue, 
     parseTextToBytes,
     formatBytesToText,
     getDelimiter
@@ -19,7 +16,6 @@ let tabButtons, tabContents, hexGrid, asciiGrid, decimalGrid, binaryGrid, copyBu
 
 // Veri ve durum değişkenleri
 let data = new Uint8Array(256);
-console.log("🚀 ~ data:", data)
 let activeIndex = -1;
 let allSelected = false;
 
@@ -91,119 +87,43 @@ const handleFocus = (event) => {
 const handleInput = (event) => {
     const index = parseInt(event.target.dataset.index, 10);
     const type = event.target.dataset.type;
-    let value = event.target.value;
+    const value = event.target.value;
 
-    // Karakter limiti kontrolü ve otomatik geçiş
-    const maxLength = getMaxLengthForType(type);
-    if (value.length >= maxLength) {
+    // Boş input - değeri değiştirme
+    if (value.length === 0) return;
 
-        console.log('value:', value, 'type:', type, 'maxLength:', maxLength);
-        // Sadece geçerli bir değer tamamlandığında bir sonraki input'a geç
-        if (type === 'hex' && /^[0-9a-fA-F]{2}$/.test(value)) {
-            // Geçerli 2 karakterlik hex değeri tamamlandı
-            console.log('Hex geçiş yapılıyor:', value, index);
-            setTimeout(() => {
-                focusNextInput(index, type);
-            }, 10);
-        } else if (type === 'decimal' && /^\d{3}$/.test(value) && parseInt(value) <= 255) {
-            // Geçerli 3 karakterlik decimal değeri tamamlandı
-            setTimeout(() => {
-                focusNextInput(index, type);
-            }, 10);
-        } else if (type === 'binary' && /^[01]{8}$/.test(value)) {
-            // Geçerli 8 karakterlik binary değeri tamamlandı
-            setTimeout(() => {
-                focusNextInput(index, type);
-            }, 10);
-        } else if (type === 'ascii' && value.length === 1) {
-            // ASCII için 1 karakter tamamlandı
-            setTimeout(() => {
-                focusNextInput(index, type);
-            }, 10);
-        }
-    }
-
-    // Validate and update data
-    let byteValue;
-    if (type === 'hex') {
-        // Hex değerlerini büyük harfe çevir
-        value = value.toUpperCase();
-        event.target.value = value; // Input'u büyük harfle güncelle
-        
-        if (!/^[0-9A-F]{0,2}$/.test(value)) {
-            // Geçersiz hex değeri - maksimum değeri yaz (FF)
-            if (value.length >= maxLength) {
-                event.target.value = 'FF';
-                byteValue = 255;
-                // Sonraki input'a geç
-                setTimeout(() => {
-                    focusNextInput(index, type);
-                }, 10);
-            } else {
-                event.target.value = ''; // Kısa değerler için temizle
-                return;
-            }
-        } else if (value.length > 0) {
-            byteValue = parseInt(value, 16);
-        } else {
-            // Boş hex input - değeri değiştirme
-            return;
-        }
-    } else if (type === 'ascii') {
-        if (value.length > 0) {
-            byteValue = value.charCodeAt(0);
-        } else {
-            // Boş ASCII input - değeri değiştirme
-            return;
-        }
-    } else if (type === 'decimal') {
-        if (!/^\d{0,3}$/.test(value) || (value.length > 0 && parseInt(value) > 255)) {
-            // Geçersiz decimal değeri - maksimum değeri yaz (255)
-            if (value.length >= maxLength) {
-                event.target.value = '255';
-                byteValue = 255;
-                // Sonraki input'a geç
-                setTimeout(() => {
-                    focusNextInput(index, type);
-                }, 10);
-            } else {
-                event.target.value = ''; // Kısa değerler için temizle
-                return;
-            }
-        } else if (value.length > 0) {
-            byteValue = parseInt(value, 10);
-        } else {
-            // Boş decimal input - değeri değiştirme
-            return;
-        }
-    } else if (type === 'binary') {
-        if (!/^[01]{0,8}$/.test(value)) {
-            // Geçersiz binary değeri - maksimum değeri yaz (11111111)
-            if (value.length >= maxLength) {
-                event.target.value = '11111111';
-                byteValue = 255;
-                // Sonraki input'a geç
-                setTimeout(() => {
-                    focusNextInput(index, type);
-                }, 10);
-            } else {
-                event.target.value = ''; // Kısa değerler için temizle
-                return;
-            }
-        } else if (value.length > 0) {
-            byteValue = parseInt(value, 2);
-        } else {
-            // Boş binary input - değeri değiştirme
-            return;
-        }
-    }
-
-    // 0 değerleri de dahil olmak üzere tüm geçerli değerleri kaydet
-    if (!isNaN(byteValue) && byteValue >= 0 && byteValue <= 255) {
-        data[index] = byteValue;
-        // Aktif input'u güncelleme - 0 değerleri de korunacak
+    // Parse ve kaydet
+    const bytes = parseTextToBytes(value, type);
+    if (bytes.length > 0) {
+        data[index] = bytes[0];
         updateAllViews(true);
+        
+        // Auto-navigation (basitleştirilmiş)
+        if (isCompleteValue(value, type)) {
+            setTimeout(() => focusNextInput(index, type), 10);
+        }
     }
+};
+
+// Yardımcı fonksiyon: Tamamlanmış değer kontrolü
+const isCompleteValue = (value, type) => {
+    const patterns = {
+        hex: /^[0-9a-fA-F]{2}$/,
+        decimal: /^\d{3}$/,
+        binary: /^[01]{8}$/,
+        ascii: /^.{1}$/
+    };
+    return patterns[type]?.test(value) || false;
+};
+
+// Utility helper fonksiyonları
+const getActiveTab = () => document.querySelector('.tab-content.active');
+const getActiveType = () => getActiveTab()?.querySelector('.input-cell')?.dataset.type;
+const getActiveInput = (index) => document.querySelector(`[data-index="${index}"]`);
+const getDelimiterSettings = () => {
+    const option = document.querySelector('input[name="delimiter-option"]:checked')?.value || 'comma';
+    const custom = document.getElementById('custom-delimiter')?.value || '';
+    return getDelimiter(option, custom);
 };
 
 
@@ -235,22 +155,6 @@ const focusNextInput = (currentIndex, type) => {
 
 
 
-// Ortak paste parsing fonksiyonu - utils.js'deki parseTextToBytes kullanıyor
-const parsePastedText = (pastedText, type) => {
-    if (!pastedText || pastedText.trim() === '') return [];
-    
-    // utils.js'deki standart parseTextToBytes fonksiyonunu kullan
-    return parseTextToBytes(pastedText, type);
-};
-
-// Ortak byte parsing fonksiyonu - utils.js'deki parseTextToBytes kullanıyor
-const parseValueToByte = (value, type) => {
-    if (!value || (typeof value === 'string' && value.trim() === '')) return null;
-    
-    // utils.js'deki standart parseTextToBytes fonksiyonunu kullan
-    const bytes = parseTextToBytes(String(value), type);
-    return bytes.length > 0 ? bytes[0] : null;
-};
 
 // Paste event handler
 const handlePaste = (event) => {
@@ -264,18 +168,13 @@ const handlePaste = (event) => {
     
     const startIndex = parseInt(event.target.dataset.index, 10);
     const type = event.target.dataset.type;
-    const valuesToParse = parsePastedText(pastedText, type);
+    const valuesToParse = parseTextToBytes(pastedText, type);
 
     for (let i = 0; i < valuesToParse.length; i++) {
         const globalIndex = startIndex + i;
         if (globalIndex >= data.length) break;
 
-        const value = valuesToParse[i];
-        const byteValue = parseValueToByte(value, type);
-
-        if (byteValue !== null && !isNaN(byteValue) && byteValue >= 0 && byteValue <= 255) {
-            data[globalIndex] = byteValue;
-        }
+        data[globalIndex] = valuesToParse[i];
     }
 
     updateAllViews();
@@ -374,10 +273,9 @@ const updateAllViews = (excludeActiveInput = false) => {
             return;
         }
         
-        // Değer 0-255 arası byte değeri ise convert et (0 dahil)
-        if (typeof value === 'number' && value >= 0 && value <= 255) {
-          console.log("🚀 ~ updateAllViews ~ value, type:", value, type)
-            input.value = convertValue(value, type);
+        // Değeri format et
+        if (typeof value === 'number') {
+            input.value = formatBytesToText([value], type, '');
         } else {
             input.value = '';
         }
@@ -410,9 +308,7 @@ const updateFourInOneMode = () => {
     isUpdatingFourInOne = true;
     
     // Get current delimiter setting
-    const delimiterOption = document.querySelector('input[name="delimiter-option"]:checked')?.value || 'comma';
-    const customDelimiter = document.getElementById('custom-delimiter')?.value || '';
-    const delimiter = getDelimiter(delimiterOption, customDelimiter);
+    const delimiter = getDelimiterSettings();
     
     // Update all textareas
     const formats = ['ascii', 'hex', 'decimal', 'binary'];
@@ -432,12 +328,10 @@ const handleFourInOneInput = (sourceFormat, text) => {
     isUpdatingFourInOne = true;
     
     // Get current delimiter setting
-    const delimiterOption = document.querySelector('input[name="delimiter-option"]:checked')?.value || 'comma';
-    const customDelimiter = document.getElementById('custom-delimiter')?.value || '';
-    const delimiter = getDelimiter(delimiterOption, customDelimiter);
+    const delimiter = getDelimiterSettings();
     
     // Parse the input text to bytes
-    const parsedBytes = parseTextToBytes(text, sourceFormat, delimiter);
+    const parsedBytes = parseTextToBytes(text, sourceFormat);
     fourInOneData = new Uint8Array(parsedBytes);
     
     // Update all other textareas
@@ -466,9 +360,7 @@ const clearFourInOneMode = () => {
 };
 
 const copyAllFourInOneFormats = () => {
-    const delimiterOption = document.querySelector('input[name="delimiter-option"]:checked')?.value || 'space';
-    const customDelimiter = document.getElementById('custom-delimiter')?.value || '';
-    const delimiter = getDelimiter(delimiterOption, customDelimiter);
+    const delimiter = getDelimiterSettings();
     
     const formats = ['ascii', 'hex', 'decimal', 'binary'];
     let allFormats = '';
@@ -613,22 +505,16 @@ const clearAllSelection = () => {
 
 // Tüm seçili hücrelere paste yapma
 const pasteToAllSelected = (pastedText) => {
-    const activeTab = document.querySelector('.tab-content.active');
-    const type = activeTab.querySelector('.input-cell').dataset.type;
+    const type = getActiveType();
 
-    const valuesToParse = parsePastedText(pastedText, type);
+    const valuesToParse = parseTextToBytes(pastedText, type);
 
     // Tüm hücreleri temizle
     data.fill(0);
     
     // Paste edilen değerleri ekle
     for (let i = 0; i < Math.min(valuesToParse.length, data.length); i++) {
-        const value = valuesToParse[i];
-        const byteValue = parseValueToByte(value, type);
-
-        if (byteValue !== null && !isNaN(byteValue) && byteValue >= 0 && byteValue <= 255) {
-            data[i] = byteValue;
-        }
+        data[i] = valuesToParse[i];
     }
 
     updateAllViews();
@@ -734,14 +620,13 @@ const handleContextMenuAction = (action) => {
         case 'copy':
             if (allSelected) {
                 // Tüm grid'i kopyala
-                const activeTab = document.querySelector('.tab-content.active');
-                const type = activeTab.querySelector('.input-cell').dataset.type;
+        const type = getActiveType();
                 // utils.js'deki standart formatBytesToText fonksiyonunu kullan
                 const textToCopy = formatBytesToText(data, type, ' ');
                 navigator.clipboard.writeText(textToCopy);
             } else if (activeIndex !== -1) {
                 // Aktif hücreyi kopyala
-                const activeInput = document.querySelector(`[data-index="${activeIndex}"]`);
+                const activeInput = getActiveInput(activeIndex);
                 if (activeInput) {
                     activeInput.select();
                     document.execCommand('copy');
@@ -757,7 +642,7 @@ const handleContextMenuAction = (action) => {
             } else if (activeIndex !== -1) {
                 // Aktif hücreye paste yap
                 navigator.clipboard.readText().then(text => {
-                    const activeInput = document.querySelector(`[data-index="${activeIndex}"]`);
+                    const activeInput = getActiveInput(activeIndex);
                     if (activeInput) {
                         const event = new ClipboardEvent('paste', {
                             clipboardData: new DataTransfer()
@@ -771,15 +656,14 @@ const handleContextMenuAction = (action) => {
         case 'cut':
             if (allSelected) {
                 // Tüm grid'i kes
-                const activeTab = document.querySelector('.tab-content.active');
-                const type = activeTab.querySelector('.input-cell').dataset.type;
+        const type = getActiveType();
                 // utils.js'deki standart formatBytesToText fonksiyonunu kullan
                 const textToCopy = formatBytesToText(data, type, ' ');
                 navigator.clipboard.writeText(textToCopy);
                 clearAllCells();
             } else if (activeIndex !== -1) {
                 // Aktif hücreyi kes
-                const activeInput = document.querySelector(`[data-index="${activeIndex}"]`);
+                const activeInput = getActiveInput(activeIndex);
                 if (activeInput) {
                     activeInput.select();
                     document.execCommand('copy');
@@ -942,27 +826,11 @@ const populateAsciiTable = () => {
     const tableBody = document.getElementById('ascii-table-body');
     if (!tableBody) return;
     
-    // ASCII karakter isimleri (kontrol karakterleri)
-    const controlCharNames = [
-        'NUL', 'SOH', 'STX', 'ETX', 'EOT', 'ENQ', 'ACK', 'BEL',
-        'BS', 'TAB', 'LF', 'VT', 'FF', 'CR', 'SO', 'SI',
-        'DLE', 'DC1', 'DC2', 'DC3', 'DC4', 'NAK', 'SYN', 'ETB',
-        'CAN', 'EM', 'SUB', 'ESC', 'FS', 'GS', 'RS', 'US'
-    ];
     
-    // Helper function to get ASCII display
+    // Helper function to get ASCII display - tüm karakterleri direkt göster
     const getAsciiDisplay = (value) => {
-        if (value < 32) {
-            return `<span style="color: var(--theme-warning); font-weight: bold; font-size: 0.9em;">${controlCharNames[value]}</span>`;
-        } else if (value === 32) {
-            return '<span style="color: var(--theme-textSecondary); font-weight: bold;">SP</span>';
-        } else if (value === 127) {
-            return '<span style="color: var(--theme-warning); font-weight: bold; font-size: 0.9em;">DEL</span>';
-        } else if (value < 127) {
-            return `<span style="font-weight: bold; font-size: 1.1em;">${String.fromCharCode(value)}</span>`;
-        } else {
-            return `<span style="color: var(--theme-textSecondary); font-size: 1.1em;">&#${value};</span>`;
-        }
+        const asciiChar = formatBytesToText([value], 'ascii', '');
+        return `<span style="font-weight: bold; font-size: 1.1em;">${asciiChar}</span>`;
     };
     
     // Helper function to create a cell group (DEC, HEX, ASCII)
@@ -986,7 +854,7 @@ const populateAsciiTable = () => {
         hexCell.style.color = 'var(--theme-text)';
         hexCell.style.fontWeight = 'bold';
         hexCell.style.fontSize = '0.95em';
-        hexCell.textContent = value.toString(16).toUpperCase().padStart(2, '0');
+        hexCell.textContent = formatBytesToText([value], 'hex', '');
         cells.push(hexCell);
         
         // ASCII cell
@@ -1250,6 +1118,9 @@ window.onload = () => {
         
         // DevTools tuş kombinasyonları kaldırıldı
     });
+    
+    // PWA güncelleme yöneticisini başlat
+    pwaUpdateManager = new PWAUpdateManager();
 };
 
 // Initialize 4 in 1 mode
@@ -1295,4 +1166,240 @@ const initializeFourInOneMode = () => {
         clearAllButton.addEventListener('click', clearFourInOneMode);
     }
 };
+
+// PWA Güncelleme Kontrolü ve Bildirimi
+class PWAUpdateManager {
+    constructor() {
+        this.updateAvailable = false;
+        this.registration = null;
+        this.init();
+    }
+
+    async init() {
+        if ('serviceWorker' in navigator) {
+            try {
+                this.registration = await navigator.serviceWorker.register('./sw.js');
+                console.log('Service Worker kayıtlı:', this.registration);
+                
+                // Service Worker mesajlarını dinle
+                navigator.serviceWorker.addEventListener('message', (event) => {
+                    if (event.data && event.data.type === 'UPDATE_AVAILABLE') {
+                        this.showUpdateNotification();
+                    }
+                });
+
+                // Güncelleme kontrolü
+                this.registration.addEventListener('updatefound', () => {
+                    const newWorker = this.registration.installing;
+                    newWorker.addEventListener('statechange', () => {
+                        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                            this.showUpdateNotification();
+                        }
+                    });
+                });
+
+                // Sayfa yüklendiğinde güncelleme kontrolü
+                this.checkForUpdates();
+            } catch (error) {
+                console.error('Service Worker kayıt hatası:', error);
+            }
+        }
+    }
+
+    async checkForUpdates() {
+        if (this.registration) {
+            try {
+                await this.registration.update();
+            } catch (error) {
+                console.error('Güncelleme kontrolü hatası:', error);
+            }
+        }
+    }
+
+    showUpdateNotification() {
+        if (this.updateAvailable) return; // Zaten gösterilmiş
+        
+        this.updateAvailable = true;
+        
+        // Güncelleme bildirimi oluştur
+        const notification = document.createElement('div');
+        notification.id = 'pwa-update-notification';
+        notification.innerHTML = `
+            <div class="update-notification">
+                <div class="update-content">
+                    <div class="update-icon">🔄</div>
+                    <div class="update-text">
+                        <h3>Yeni Güncelleme Mevcut!</h3>
+                        <p>ByteSync Editor'ün yeni bir sürümü mevcut. Güncellemek için sayfayı yenileyin.</p>
+                    </div>
+                    <div class="update-actions">
+                        <button id="update-now-btn" class="update-btn primary">Şimdi Güncelle</button>
+                        <button id="update-later-btn" class="update-btn secondary">Daha Sonra</button>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Stil ekle
+        const style = document.createElement('style');
+        style.textContent = `
+            #pwa-update-notification {
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                z-index: 10000;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+                animation: slideDown 0.3s ease-out;
+            }
+            
+            @keyframes slideDown {
+                from { transform: translateY(-100%); }
+                to { transform: translateY(0); }
+            }
+            
+            @keyframes slideUp {
+                from { transform: translateY(0); }
+                to { transform: translateY(-100%); }
+            }
+            
+            .update-notification {
+                padding: 16px 20px;
+                max-width: 1200px;
+                margin: 0 auto;
+            }
+            
+            .update-content {
+                display: flex;
+                align-items: center;
+                gap: 16px;
+            }
+            
+            .update-icon {
+                font-size: 24px;
+                animation: spin 2s linear infinite;
+            }
+            
+            @keyframes spin {
+                from { transform: rotate(0deg); }
+                to { transform: rotate(360deg); }
+            }
+            
+            .update-text {
+                flex: 1;
+            }
+            
+            .update-text h3 {
+                margin: 0 0 4px 0;
+                font-size: 16px;
+                font-weight: 600;
+            }
+            
+            .update-text p {
+                margin: 0;
+                font-size: 14px;
+                opacity: 0.9;
+            }
+            
+            .update-actions {
+                display: flex;
+                gap: 12px;
+            }
+            
+            .update-btn {
+                padding: 8px 16px;
+                border: none;
+                border-radius: 6px;
+                font-size: 14px;
+                font-weight: 500;
+                cursor: pointer;
+                transition: all 0.2s ease;
+            }
+            
+            .update-btn.primary {
+                background: #4CAF50;
+                color: white;
+            }
+            
+            .update-btn.primary:hover {
+                background: #45a049;
+                transform: translateY(-1px);
+            }
+            
+            .update-btn.secondary {
+                background: rgba(255,255,255,0.2);
+                color: white;
+                border: 1px solid rgba(255,255,255,0.3);
+            }
+            
+            .update-btn.secondary:hover {
+                background: rgba(255,255,255,0.3);
+            }
+            
+            @media (max-width: 768px) {
+                .update-content {
+                    flex-direction: column;
+                    text-align: center;
+                    gap: 12px;
+                }
+                
+                .update-actions {
+                    justify-content: center;
+                }
+            }
+        `;
+
+        document.head.appendChild(style);
+        document.body.appendChild(notification);
+
+        // Event listener'ları ekle
+        document.getElementById('update-now-btn').addEventListener('click', () => {
+            this.performUpdate();
+        });
+
+        document.getElementById('update-later-btn').addEventListener('click', () => {
+            this.hideUpdateNotification();
+        });
+
+        // 10 saniye sonra otomatik gizle
+        setTimeout(() => {
+            if (this.updateAvailable) {
+                this.hideUpdateNotification();
+            }
+        }, 10000);
+    }
+
+    hideUpdateNotification() {
+        const notification = document.getElementById('pwa-update-notification');
+        if (notification) {
+            notification.style.animation = 'slideUp 0.3s ease-out';
+            setTimeout(() => {
+                notification.remove();
+                this.updateAvailable = false;
+            }, 300);
+        }
+    }
+
+    async performUpdate() {
+        try {
+            // Service Worker'ı yenile
+            if (this.registration && this.registration.waiting) {
+                this.registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+            }
+            
+            // Hard refresh yap
+            window.location.reload(true);
+        } catch (error) {
+            console.error('Güncelleme hatası:', error);
+            // Hata durumunda normal refresh
+            window.location.reload();
+        }
+    }
+}
+
+// PWA güncelleme yöneticisini başlat
+let pwaUpdateManager;
+
 
