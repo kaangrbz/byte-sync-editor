@@ -9,7 +9,6 @@ import {
     convertValue, 
     isValidValue, 
     parseValue, 
-    getSmartCopyData, 
     parseTextToBytes,
     formatBytesToText,
     getDelimiter
@@ -20,6 +19,7 @@ let tabButtons, tabContents, hexGrid, asciiGrid, decimalGrid, binaryGrid, copyBu
 
 // Veri ve durum değişkenleri
 let data = new Uint8Array(256);
+console.log("🚀 ~ data:", data)
 let activeIndex = -1;
 let allSelected = false;
 
@@ -235,48 +235,21 @@ const focusNextInput = (currentIndex, type) => {
 
 
 
-// Ortak paste parsing fonksiyonu
+// Ortak paste parsing fonksiyonu - utils.js'deki parseTextToBytes kullanıyor
 const parsePastedText = (pastedText, type) => {
     if (!pastedText || pastedText.trim() === '') return [];
     
-    let valuesToParse = [];
-    if (type === 'ascii') {
-        // ASCII için karakter karakter işle
-        const characters = pastedText.split('');
-        for (let i = 0; i < characters.length; i++) {
-            const char = characters[i];
-            const charCode = char.charCodeAt(0);
-            
-            // Yazdırılabilir karakterler (32-126) veya CR/LF ise normal işle
-            if ((charCode >= 32 && charCode <= 126) || charCode === 13 || charCode === 10) {
-                valuesToParse.push(char);
-            }
-        }
-    } else if (type === 'hex') {
-        const cleanText = pastedText.replace(/\s/g, '');
-        for (let i = 0; i < cleanText.length; i += 2) {
-            valuesToParse.push(cleanText.substring(i, i + 2));
-        }
-    } else if (type === 'decimal') {
-        valuesToParse = pastedText.trim().split(/[,\s]+/).filter(val => val.length > 0);
-    } else {
-        valuesToParse = pastedText.trim().split(/\s+/);
-    }
-    
-    return valuesToParse;
+    // utils.js'deki standart parseTextToBytes fonksiyonunu kullan
+    return parseTextToBytes(pastedText, type);
 };
 
-// Ortak byte parsing fonksiyonu
+// Ortak byte parsing fonksiyonu - utils.js'deki parseTextToBytes kullanıyor
 const parseValueToByte = (value, type) => {
-    if (!value || value.trim() === '') return null;
+    if (!value || (typeof value === 'string' && value.trim() === '')) return null;
     
-    if (isValidValue(value, type)) {
-        return parseValue(value, type);
-    } else if (value === '0' || value === '00' || value === '00000000') {
-        return 0;
-    } else {
-        return null;
-    }
+    // utils.js'deki standart parseTextToBytes fonksiyonunu kullan
+    const bytes = parseTextToBytes(String(value), type);
+    return bytes.length > 0 ? bytes[0] : null;
 };
 
 // Paste event handler
@@ -396,13 +369,14 @@ const updateAllViews = (excludeActiveInput = false) => {
         }
         
         // Değer yoksa veya undefined/null ise boş string
-        if (value === undefined || value === null) {
+        if (value === '0' || value === 0) {
             input.value = '';
             return;
         }
         
         // Değer 0-255 arası byte değeri ise convert et (0 dahil)
         if (typeof value === 'number' && value >= 0 && value <= 255) {
+          console.log("🚀 ~ updateAllViews ~ value, type:", value, type)
             input.value = convertValue(value, type);
         } else {
             input.value = '';
@@ -762,13 +736,8 @@ const handleContextMenuAction = (action) => {
                 // Tüm grid'i kopyala
                 const activeTab = document.querySelector('.tab-content.active');
                 const type = activeTab.querySelector('.input-cell').dataset.type;
-                const smartData = getSmartCopyData(data, type);
-                let textToCopy = '';
-                if (type === 'ascii') {
-                    textToCopy = smartData.join('');
-                } else {
-                    textToCopy = smartData.join(' ');
-                }
+                // utils.js'deki standart formatBytesToText fonksiyonunu kullan
+                const textToCopy = formatBytesToText(data, type, ' ');
                 navigator.clipboard.writeText(textToCopy);
             } else if (activeIndex !== -1) {
                 // Aktif hücreyi kopyala
@@ -804,13 +773,8 @@ const handleContextMenuAction = (action) => {
                 // Tüm grid'i kes
                 const activeTab = document.querySelector('.tab-content.active');
                 const type = activeTab.querySelector('.input-cell').dataset.type;
-                const smartData = getSmartCopyData(data, type);
-                let textToCopy = '';
-                if (type === 'ascii') {
-                    textToCopy = smartData.join('');
-                } else {
-                    textToCopy = smartData.join(' ');
-                }
+                // utils.js'deki standart formatBytesToText fonksiyonunu kullan
+                const textToCopy = formatBytesToText(data, type, ' ');
                 navigator.clipboard.writeText(textToCopy);
                 clearAllCells();
             } else if (activeIndex !== -1) {
@@ -1157,14 +1121,8 @@ window.onload = () => {
     copyButtons.forEach(button => {
         button.addEventListener('click', () => {
             const type = button.dataset.type;
-            const smartData = getSmartCopyData(data, type);
-            let textToCopy = '';
-            
-            if (type === 'ascii') {
-                textToCopy = smartData.join('');
-            } else {
-                textToCopy = smartData.join(' ');
-            }
+            // utils.js'deki standart formatBytesToText fonksiyonunu kullan
+            const textToCopy = formatBytesToText(data, type, ' ');
             
             // Use the clipboard API for modern browsers
             navigator.clipboard.writeText(textToCopy).then(() => {
