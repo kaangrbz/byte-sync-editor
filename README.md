@@ -1,4 +1,4 @@
-# ByteSync Editor v1.3.0
+# ByteSync Editor v1.41.3
 
 A powerful cross-platform byte editor available as both a desktop application and web application. Edit bytes in ASCII, Hex, Decimal, and Binary formats with real-time synchronization across all views.
 
@@ -90,6 +90,43 @@ yarn dev
 yarn build
 ```
 
+## 🔄 Version Management
+
+ByteSync Editor includes an automated version management system that updates all version references across the project.
+
+### Available Commands
+
+```bash
+# Patch version (bug fixes, minor improvements)
+yarn version:patch   # 1.41.3 → 1.41.4
+
+# Minor version (new features, enhancements)
+yarn version:minor   # 1.41.3 → 1.42.0
+
+# Major version (breaking changes, major features)
+yarn version:major   # 1.41.3 → 2.0.0
+```
+
+### What Gets Updated
+
+The version script automatically updates:
+- 📦 **package.json** - `version` field
+- 📱 **manifest.json** - `version` field (for PWA)
+- 🔧 **sw.js** - `CACHE_NAME` for service worker cache
+- 🌐 **index.html** - Title version display
+
+### After Version Update
+
+```bash
+# Commit the changes
+git add .
+git commit -m "chore: versiyon 1.41.4 güncellendi"
+
+# Create and push tag
+git tag v1.41.4
+git push origin main --tags
+```
+
 ## 📦 Building
 
 ### Desktop Application
@@ -108,15 +145,21 @@ The web version requires no build process. Simply serve the files or open `index
 
 ## 📋 Version History
 
-### v1.3.0 (Current)
+### v1.41.3 (Current)
 **New Features:**
-- ✅ 4-in-1 Mode: All formats displayed simultaneously in textarea view
-- ✅ Data Analysis Panel: Real-time statistics, entropy calculation, and pattern detection
-- ✅ Enhanced Select All: Works properly in 4-in-1 mode, selects only active textarea
-- ✅ Improved Context Menu: Right-click support with quick actions
-- ✅ Smart Copy/Paste: Intelligent clipboard integration with format detection
+- ✅ **Automated Version Management**: Script-based version updating across all files
+- ✅ **Notification Helper**: Enhanced notification system for better user feedback
+- ✅ **UI Improvements**: Better user interface and experience enhancements
+- ✅ **4-in-1 Mode**: All formats displayed simultaneously in textarea view
+- ✅ **Data Analysis Panel**: Real-time statistics, entropy calculation, and pattern detection
+- ✅ **Enhanced Select All**: Works properly in 4-in-1 mode, selects only active textarea
+- ✅ **Improved Context Menu**: Right-click support with quick actions
+- ✅ **Smart Copy/Paste**: Intelligent clipboard integration with format detection
 
 **Improvements:**
+- 🔧 **Version Script**: Automated version management with `yarn version:patch/minor/major`
+- 🔧 **Service Worker**: Updated cache management for better PWA performance
+- 🔧 **Manifest**: Enhanced PWA manifest with proper versioning
 - 🔧 Fixed arrow key navigation to preserve default browser behavior
 - 🔧 Enhanced paste options for handling invalid characters
 - 🔧 Improved cross-tab highlighting and synchronization
