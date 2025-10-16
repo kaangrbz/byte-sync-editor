@@ -16,143 +16,17 @@ export const getMaxLengthForType = (type) => {
     }
 };
 
-// Değer validasyonu
-export const isValidValue = (value, type) => {
-    switch (type) {
-        case 'hex':
-            return /^[0-9A-Fa-f]{1,2}$/.test(value);
-        case 'decimal':
-            return /^\d{1,3}$/.test(value) && parseInt(value) <= 255;
-        case 'binary':
-            return /^[01]{1,8}$/.test(value);
-        case 'ascii':
-            return value.length === 1 && value.charCodeAt(0) >= 0 && value.charCodeAt(0) <= 255;
-        default:
-            return false;
-    }
-};
 
-// Değer parse etme
-export const parseValue = (value, type) => {
-    switch (type) {
-        case 'hex':
-            return parseInt(value, 16);
-        case 'decimal':
-            return parseInt(value, 10);
-        case 'binary':
-            return parseInt(value, 2);
-        case 'ascii':
-            return value.charCodeAt(0);
-        default:
-            return 0;
-    }
-};
-
-// Kontrol karakterleri için görsel gösterim mapping'i
+// Kontrol karakterleri için görsel gösterim mapping'i - artık sadece direkt karakter
 const getControlCharDisplay = (byte) => {
-    const controlChars = {
-        0: '[NULL]',    // Null karakter
-        1: '[SOH]',     // Start of Heading
-        2: '[STX]',     // Start of Text
-        3: '[ETX]',     // End of Text
-        4: '[EOT]',     // End of Transmission
-        5: '[ENQ]',     // Enquiry
-        6: '[ACK]',     // Acknowledge
-        7: '[BEL]',     // Bell
-        8: '[BS]',      // Backspace
-        9: '[TAB]',     // Horizontal Tab
-        10: '[LF]',     // Line Feed
-        11: '[VT]',     // Vertical Tab
-        12: '[FF]',     // Form Feed
-        13: '[CR]',     // Carriage Return
-        14: '[SO]',     // Shift Out
-        15: '[SI]',     // Shift In
-        16: '[DLE]',    // Data Link Escape
-        17: '[DC1]',    // Device Control 1
-        18: '[DC2]',    // Device Control 2
-        19: '[DC3]',    // Device Control 3
-        20: '[DC4]',    // Device Control 4
-        21: '[NAK]',    // Negative Acknowledge
-        22: '[SYN]',    // Synchronous Idle
-        23: '[ETB]',    // End of Transmission Block
-        24: '[CAN]',    // Cancel
-        25: '[EM]',     // End of Medium
-        26: '[SUB]',    // Substitute
-        27: '[ESC]',    // Escape
-        28: '[FS]',     // File Separator
-        29: '[GS]',     // Group Separator
-        30: '[RS]',     // Record Separator
-        31: '[US]',     // Unit Separator
-        127: '[DEL]',   // Delete
-        160: '[NBSP]',  // Non-breaking space
-        255: '[FF]'     // Form Feed (alternatif)
-    };
-    
-    return controlChars[byte] || `[${byte.toString(16).toUpperCase().padStart(2, '0')}]`;
+    // Tüm karakterleri direkt göster
+    return String.fromCharCode(byte);
 };
 
-// Byte değerini belirli formata çevirme (HTML ile birlikte)
-export const convertValue = (byte, type, includeHtml = false) => {
-    // Değer kontrolü - sadece NaN için boş döndür, 0 geçerli!
-    if (typeof byte !== 'number' || isNaN(byte)) return '';
-    
-    // Değer aralık kontrolü
-    if (byte < 0 || byte > 255) return '';
-    
-    switch (type) {
-        case 'hex':
-            return byte.toString(16).toUpperCase().padStart(2, '0');
-            
-        case 'ascii':
-            // Kontrol karakterleri (0-31, 127, 160)
-            if ((byte >= 0 && byte <= 31) || byte === 127 || byte === 160) {
-                const display = getControlCharDisplay(byte);
-                const hexValue = byte.toString(16).toUpperCase().padStart(2, '0');
-                const title = byte === 0 ? 'Null karakter' : 
-                            byte === 9 ? 'Tab karakteri' :
-                            byte === 10 ? 'Line Feed' :
-                            byte === 13 ? 'Carriage Return' :
-                            byte === 27 ? 'Escape' :
-                            byte === 127 ? 'Delete' :
-                            byte === 160 ? 'Non-breaking space' :
-                            'Kontrol karakteri';
-                
-                return includeHtml ? `<span class="control-char" title="${title} (0x${hexValue})">${display}</span>` : display;
-            }
-            
-            // Görünür ASCII karakterleri (32-126)
-            if (byte >= 32 && byte <= 126) {
-                return String.fromCharCode(byte);
-            }
-            
-            // Genişletilmiş ASCII (128-255)
-            if (byte >= 128 && byte <= 255) {
-                const char = String.fromCharCode(byte);
-                if (char && char.trim() !== '') {
-                    return char;
-                }
-                const display = `[${byte.toString(16).toUpperCase().padStart(2, '0')}]`;
-                return includeHtml ? `<span class="extended-char" title="Genişletilmiş ASCII (0x${byte.toString(16).toUpperCase().padStart(2, '0')})">${display}</span>` : display;
-            }
-            
-            // Fallback
-            const display = `[${byte.toString(16).toUpperCase().padStart(2, '0')}]`;
-            return includeHtml ? `<span class="extended-char" title="Bilinmeyen karakter (0x${byte.toString(16).toUpperCase().padStart(2, '0')})">${display}</span>` : display;
-            
-        case 'decimal':
-            return byte.toString(10);
-            
-        case 'binary':
-            return byte.toString(2).padStart(8, '0');
-            
-        default:
-            return '';
-    }
-};
 
 // Akıllı kopyalama - sondan başlayıp ilk geçerli karaktere kadar git
 export const getSmartCopyData = (data, type) => {
-    const values = Array.from(data).map(byte => convertValue(byte, type));
+    const values = formatBytesToText(data, type, ' ').split(' ');
     
     // Sondan başlayıp ilk geçerli karakteri bul
     let endIndex = values.length - 1;
@@ -292,59 +166,72 @@ const bigintToBytesBE = (nBigInt) => {
   return out;
 };
 
-// Lossless parser
+// Basit ve anlaşılır input parser
 export const parseTextToBytes = (text, format) => {
   if (!text || text.trim() === '') return [];
-  const trimmed = String(text);
+  const input = String(text).trim();
   const result = [];
 
   switch (format) {
     case 'ascii':
-      for (let i = 0; i < trimmed.length; i++) {
-        result.push(trimmed.charCodeAt(i) & 0xFF);
+      // ASCII: Her karakteri byte değerine çevir
+      for (let i = 0; i < input.length; i++) {
+        result.push(input.charCodeAt(i) & 0xFF);
       }
       break;
 
-    case 'hex': {
-      // Hex dışında tüm karakterleri atla
-      const s = trimmed.replace(/[^0-9a-fA-F]/g, '');
-      if (!s) break;
-      const padded = s.length % 2 ? '0' + s : s; // Left-pad if odd
-      const pairs = padded.match(/.{1,2}/g) || [];
-      for (const pair of pairs) {
-        result.push(parseInt(pair, 16) & 0xFF);
-      }
-      break;
-    }
-
-    case 'binary': {
-      // 0/1 dışında tüm karakterleri atla
-      const s = trimmed.replace(/[^01]/g, '');
-      if (!s) break;
-      const remainder = s.length % 8;
-      let padded = remainder ? '0'.repeat(remainder) + s : s; // sondan grupla
-      const chunks = [];
-      for (let i = padded.length; i > 0; i -= 8) {
-        const start = i - 8 < 0 ? 0 : i - 8;
-        chunks.unshift(padded.slice(start, i));
-      }
-      for (const ch of chunks) result.push(parseInt(ch, 2) & 0xFF);
-      break;
-    }
-
-    case 'decimal': {
-      const parts = trimmed.split(/\s+/).filter(p => p !== '');
-      for (const part of parts) {
-        try {
-          const big = BigInt(part.trim());
-          const bytes = bigintToBytesBE(big >= 0n ? big : -big); // negatif için opsiyonel
-          result.push(...bytes);
-        } catch (e) {
-          // invalid token skip
+    case 'hex':
+      // HEX: Virgül, boşluk, noktalı virgül ile ayrılmış değerleri işle
+      const hexParts = input.split(/[,\s;]+/).filter(part => part.trim() !== '');
+      
+      for (const part of hexParts) {
+        const cleanHex = part.trim().replace(/[^0-9a-fA-F]/g, '');
+        if (cleanHex) {
+          // 0x prefix varsa kaldır
+          const hexValue = cleanHex.replace(/^0x/i, '');
+          
+          // Tek karakter ise 0 ile başlat
+          const padded = hexValue.length % 2 ? '0' + hexValue : hexValue;
+          
+          // 2'şer karakter grupla
+          for (let i = 0; i < padded.length; i += 2) {
+            const hexPair = padded.substr(i, 2);
+            const byteValue = parseInt(hexPair, 16);
+            if (!isNaN(byteValue)) {
+              result.push(byteValue & 0xFF);
+            }
+          }
         }
       }
       break;
-    }
+
+    case 'decimal':
+      // DECIMAL: Boşluk, virgül ile ayrılmış sayıları işle
+      const decParts = input.split(/[,\s]+/).filter(part => part.trim() !== '');
+      
+      for (const part of decParts) {
+        const num = parseInt(part.trim(), 10);
+        if (!isNaN(num) && num >= 0 && num <= 255) {
+          result.push(num);
+        }
+      }
+      break;
+
+    case 'binary':
+      // BINARY: 0/1 karakterlerini 8'li gruplar halinde işle
+      const binaryStr = input.replace(/[^01]/g, '');
+      
+      // 8'li gruplar halinde böl
+      for (let i = 0; i < binaryStr.length; i += 8) {
+        const binaryGroup = binaryStr.substr(i, 8);
+        if (binaryGroup.length === 8) {
+          const byteValue = parseInt(binaryGroup, 2);
+          if (!isNaN(byteValue)) {
+            result.push(byteValue);
+          }
+        }
+      }
+      break;
 
     default:
       break;
@@ -363,6 +250,7 @@ export const formatBytesToText = (bytes, format, delimiter = ' ') => {
     case 'ascii':
       return arr.map(b => {
         const n = Number(b) & 0xFF;
+        // Tüm karakterleri direkt göster, [xx] formatı yok
         return String.fromCharCode(n);
       }).join('');
 

@@ -736,31 +736,6 @@ const handleContextMenuAction = (action) => {
 
 // Dev butonu kaldırıldı
 
-// PWA Service Worker Registration
-const registerServiceWorker = async () => {
-    if ('serviceWorker' in navigator) {
-        try {
-            const registration = await navigator.serviceWorker.register('./sw.js');
-            console.log('Service Worker registered successfully:', registration);
-            
-            // Handle updates
-            registration.addEventListener('updatefound', () => {
-                const newWorker = registration.installing;
-                newWorker.addEventListener('statechange', () => {
-                    if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                        // New version available
-                        if (confirm('New version available! Reload to update?')) {
-                            window.location.reload();
-                        }
-                    }
-                });
-            });
-            
-        } catch (error) {
-            console.error('Service Worker registration failed:', error);
-        }
-    }
-};
 
 // PWA Install Prompt
 let deferredPrompt;
@@ -896,8 +871,6 @@ const populateAsciiTable = () => {
 
 // Initialize the app
 window.onload = () => {
-    // Register service worker
-    registerServiceWorker();
     
     // Handle URL mode parameters
     handleUrlMode();
@@ -1179,7 +1152,6 @@ class PWAUpdateManager {
         if ('serviceWorker' in navigator) {
             try {
                 this.registration = await navigator.serviceWorker.register('./sw.js');
-                console.log('Service Worker kayıtlı:', this.registration);
                 
                 // Service Worker mesajlarını dinle
                 navigator.serviceWorker.addEventListener('message', (event) => {
@@ -1201,7 +1173,7 @@ class PWAUpdateManager {
                 // Sayfa yüklendiğinde güncelleme kontrolü
                 this.checkForUpdates();
             } catch (error) {
-                console.error('Service Worker kayıt hatası:', error);
+                // Service Worker kayıt hatası - sessizce geç
             }
         }
     }
@@ -1211,7 +1183,7 @@ class PWAUpdateManager {
             try {
                 await this.registration.update();
             } catch (error) {
-                console.error('Güncelleme kontrolü hatası:', error);
+                // Güncelleme kontrolü hatası - sessizce geç
             }
         }
     }
@@ -1392,7 +1364,6 @@ class PWAUpdateManager {
             // Hard refresh yap
             window.location.reload(true);
         } catch (error) {
-            console.error('Güncelleme hatası:', error);
             // Hata durumunda normal refresh
             window.location.reload();
         }
