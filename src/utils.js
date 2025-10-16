@@ -168,13 +168,17 @@ const bigintToBytesBE = (nBigInt) => {
 
 // Basit ve anlaşılır input parser
 export const parseTextToBytes = (text, format) => {
-  if (!text || text.trim() === '') return [];
-  const input = String(text).trim();
+  if (!text) return [];
+  
+  // ASCII için trim kullanma, diğer formatlar için trim kullan
+  const input = format === 'ascii' ? String(text) : String(text).trim();
+  if (input === '') return [];
+  
   const result = [];
 
   switch (format) {
     case 'ascii':
-      // ASCII: Her karakteri byte değerine çevir
+      // ASCII: Her karakteri byte değerine çevir (space dahil)
       for (let i = 0; i < input.length; i++) {
         result.push(input.charCodeAt(i) & 0xFF);
       }
@@ -282,5 +286,26 @@ export const getDelimiter = (delimiterOption, customDelimiter = '') => {
         default:
             return ' ';
     }
+};
+
+// Sadece görünmeyen ASCII karakterleri için özel display fonksiyonu
+export const getInvisibleAsciiDisplay = (value) => {
+  // Sadece kontrol karakterleri (görünmeyen karakterler)
+  const controlCharNames = {
+    0: 'NUL', 1: 'SOH', 2: 'STX', 3: 'ETX', 4: 'EOT', 5: 'ENQ', 6: 'ACK', 7: 'BEL',
+    8: 'BS', 9: 'TAB', 10: 'LF', 11: 'VT', 12: 'FF', 13: 'CR', 14: 'SO', 15: 'SI',
+    16: 'DLE', 17: 'DC1', 18: 'DC2', 19: 'DC3', 20: 'DC4', 21: 'NAK', 22: 'SYN', 23: 'ETB',
+    24: 'CAN', 25: 'EM', 26: 'SUB', 27: 'ESC', 28: 'FS', 29: 'GS', 30: 'RS', 31: 'US',
+    127: 'DEL'
+  };
+  
+  // Sadece kontrol karakteri ise özel isim göster
+  if (controlCharNames[value]) {
+    return `<span style="font-weight: bold; font-size: 0.9em; color: #666; background: rgba(0,0,0,0.1); padding: 2px 4px; border-radius: 3px;">${controlCharNames[value]}</span>`;
+  }
+  
+  // Diğer tüm karakterler normal gösterim
+  const asciiChar = formatBytesToText([value], 'ascii', '');
+  return `<span style="font-weight: bold; font-size: 1.1em;">${asciiChar}</span>`;
 };
 

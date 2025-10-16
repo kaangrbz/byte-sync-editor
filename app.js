@@ -8,7 +8,8 @@ import {
     getMaxLengthForType, 
     parseTextToBytes,
     formatBytesToText,
-    getDelimiter
+    getDelimiter,
+    getInvisibleAsciiDisplay
 } from './src/utils.js';
 
 // DOM elementleri - window.onload içinde tanımlanacak
@@ -18,6 +19,67 @@ let tabButtons, tabContents, hexGrid, asciiGrid, decimalGrid, binaryGrid, copyBu
 let data = new Uint8Array(256);
 let activeIndex = -1;
 let allSelected = false;
+
+// Dinamik genişletme fonksiyonu
+const expandDataArray = (newSize) => {
+    const oldData = data;
+    data = new Uint8Array(newSize);
+    
+    // Eski verileri kopyala
+    for (let i = 0; i < Math.min(oldData.length, newSize); i++) {
+        data[i] = oldData[i];
+    }
+    
+    // Yeni alanları 0 ile doldur
+    for (let i = oldData.length; i < newSize; i++) {
+        data[i] = 0;
+    }
+    
+    console.log(`Data array genişletildi: ${oldData.length} → ${newSize} bytes`);
+    
+    // Kullanıcıya bildirim göster
+    showExpansionNotification(oldData.length, newSize);
+};
+
+// Otomatik genişletme kontrolü
+const checkAndExpandIfNeeded = () => {
+    // Son 10 byte'ı kontrol et
+    const lastBytes = data.slice(-10);
+    const hasData = lastBytes.some(byte => byte !== 0);
+    
+    if (hasData && data.length < 1024) { // Maksimum 1024 byte
+        const newSize = data.length * 2;
+        expandDataArray(newSize);
+        return true;
+    }
+    return false;
+};
+
+// Tüm grid'leri yeniden oluştur
+const recreateAllGrids = () => {
+    if (hexGrid && asciiGrid && decimalGrid && binaryGrid) {
+        createGrid(hexGrid, 'hex-cell', 'hex');
+        createGrid(asciiGrid, 'ascii-cell', 'ascii');
+        createGrid(decimalGrid, 'decimal-cell', 'decimal');
+        createGrid(binaryGrid, 'binary-cell', 'binary');
+        
+        // Aktif index'i koru
+        if (activeIndex !== -1 && activeIndex < data.length) {
+            setTimeout(() => {
+                const activeInput = document.querySelector(`[data-index="${activeIndex}"]`);
+                if (activeInput) {
+                    activeInput.focus();
+                    activeInput.select();
+                }
+            }, 100);
+        }
+    }
+};
+
+// Genişletme bildirimi göster (eski fonksiyon - yeni helper kullanıyor)
+const showExpansionNotification = (oldSize, newSize) => {
+    NotificationHelper.showExpansion(oldSize, newSize);
+};
 
 // Geliştirici modunu tespit et
 const isDeveloperMode = () => {
@@ -94,14 +156,28 @@ const handleInput = (event) => {
 
     // Parse ve kaydet
     const bytes = parseTextToBytes(value, type);
+    console.log("🚀 ~ handleInput :",value, bytes, index, type)
     if (bytes.length > 0) {
         data[index] = bytes[0];
+        
+        // Otomatik genişletme kontrolü
+        const wasExpanded = checkAndExpandIfNeeded();
+        if (wasExpanded) {
+            // Grid'leri yeniden oluştur
+            recreateAllGrids();
+        }
+        
         updateAllViews(true);
         
         // Auto-navigation (basitleştirilmiş)
         if (isCompleteValue(value, type)) {
-            setTimeout(() => focusNextInput(index, type), 10);
+            setTimeout(() => {
+              focusNextInput(index, type);
+            }, 10);
         }
+    } else if (bytes.length === 0 && value.length > 0) {
+      console.log('bytes.length === 0', value, type);
+      event.target.value = '';
     }
 };
 
@@ -111,10 +187,12 @@ const isCompleteValue = (value, type) => {
         hex: /^[0-9a-fA-F]{2}$/,
         decimal: /^\d{3}$/,
         binary: /^[01]{8}$/,
-        ascii: /^.{1}$/
+        ascii: /^.{1}$/  // Boşluk karakteri de dahil olmak üzere herhangi bir karakter
     };
     return patterns[type]?.test(value) || false;
 };
+
+
 
 // Utility helper fonksiyonları
 const getActiveTab = () => document.querySelector('.tab-content.active');
@@ -172,7 +250,12 @@ const handlePaste = (event) => {
 
     for (let i = 0; i < valuesToParse.length; i++) {
         const globalIndex = startIndex + i;
-        if (globalIndex >= data.length) break;
+        if (globalIndex >= data.length) {
+            // Array'i genişlet
+            const newSize = Math.max(data.length * 2, globalIndex + 1);
+            expandDataArray(newSize);
+            recreateAllGrids();
+        }
 
         data[globalIndex] = valuesToParse[i];
     }
@@ -267,6 +350,9 @@ const updateAllViews = (excludeActiveInput = false) => {
             return;
         }
         
+        // CR/LF highlight sınıflarını kaldır
+        input.classList.remove('cr-character', 'lf-character', 'crlf-character');
+        
         // Değer yoksa veya undefined/null ise boş string
         if (value === '0' || value === 0) {
             input.value = '';
@@ -275,7 +361,15 @@ const updateAllViews = (excludeActiveInput = false) => {
         
         // Değeri format et
         if (typeof value === 'number') {
-            input.value = formatBytesToText([value], type, '');
+            let keyValue = formatBytesToText([value], type, '');
+            input.value = type == 'hex' ? keyValue.toUpperCase() : keyValue
+            
+            // CR ve LF karakterleri için highlight ekle
+            if (value === 13) {
+                input.classList.add('cr-character');
+            } else if (value === 10) {
+                input.classList.add('lf-character');
+            }
         } else {
             input.value = '';
         }
@@ -334,6 +428,18 @@ const handleFourInOneInput = (sourceFormat, text) => {
     const parsedBytes = parseTextToBytes(text, sourceFormat);
     fourInOneData = new Uint8Array(parsedBytes);
     
+    // Ana data array'ini de güncelle ve genişletme kontrolü yap
+    if (parsedBytes.length > data.length) {
+        const newSize = Math.max(data.length * 2, parsedBytes.length);
+        expandDataArray(newSize);
+        recreateAllGrids();
+    }
+    
+    // Ana data'ya kopyala
+    for (let i = 0; i < Math.min(parsedBytes.length, data.length); i++) {
+        data[i] = parsedBytes[i];
+    }
+    
     // Update all other textareas
     const formats = ['ascii', 'hex', 'decimal', 'binary'];
     formats.forEach(format => {
@@ -373,8 +479,9 @@ const copyAllFourInOneFormats = () => {
     });
     
     navigator.clipboard.writeText(allFormats.trim()).then(() => {
-        console.log('All formats copied to clipboard!');
+        NotificationHelper.showSuccess('Tüm formatlar panoya kopyalandı!');
     }).catch(err => {
+        NotificationHelper.showError('Kopyalama başarısız!');
         console.error('Failed to copy: ', err);
     });
 };
@@ -387,7 +494,7 @@ const initializeFourInOneCopyButtons = () => {
             const textarea = document.getElementById(`four-in-one-${format}`);
             if (textarea && textarea.value) {
                 navigator.clipboard.writeText(textarea.value).then(() => {
-                    console.log(`${format.toUpperCase()} copied to clipboard!`);
+                    NotificationHelper.showSuccess(`${format.toUpperCase()} formatı panoya kopyalandı!`);
                     // Visual feedback
                     const originalText = btn.textContent;
                     btn.textContent = '✅ Copied!';
@@ -415,8 +522,16 @@ const highlightCell = (index) => {
 
 // Tüm hücreleri temizleme
 const clearAllCells = () => {
-    // Reset all data to zero
-    data.fill(0);
+    // Array'i 256 byte'a düşür
+    if (data.length > 256) {
+        data = new Uint8Array(256);
+        // Grid'leri yeniden oluştur
+        recreateAllGrids();
+    } else {
+        // Reset all data to zero
+        data.fill(0);
+    }
+    
     // Remove highlight from active cell
     if (activeIndex !== -1) {
         document.querySelectorAll(`[data-index="${activeIndex}"]`).forEach(el => el.classList.remove('highlight'));
@@ -513,7 +628,13 @@ const pasteToAllSelected = (pastedText) => {
     data.fill(0);
     
     // Paste edilen değerleri ekle
-    for (let i = 0; i < Math.min(valuesToParse.length, data.length); i++) {
+    for (let i = 0; i < valuesToParse.length; i++) {
+        if (i >= data.length) {
+            // Array'i genişlet
+            const newSize = Math.max(data.length * 2, i + 1);
+            expandDataArray(newSize);
+            recreateAllGrids();
+        }
         data[i] = valuesToParse[i];
     }
 
@@ -802,19 +923,72 @@ const populateAsciiTable = () => {
     if (!tableBody) return;
     
     
-    // Helper function to get ASCII display - tüm karakterleri direkt göster
-    const getAsciiDisplay = (value) => {
+    // Helper function to get ASCII display for invisible characters
+    const getInvisibleAsciiDisplay = (value) => {
+        // Kontrol karakterleri için özel isimler
+        const controlCharNames = {
+            0: 'NUL', 1: 'SOH', 2: 'STX', 3: 'ETX', 4: 'EOT', 5: 'ENQ', 6: 'ACK', 7: 'BEL',
+            8: 'BS', 9: 'TAB', 10: 'LF', 11: 'VT', 12: 'FF', 13: 'CR', 14: 'SO', 15: 'SI',
+            16: 'DLE', 17: 'DC1', 18: 'DC2', 19: 'DC3', 20: 'DC4', 21: 'NAK', 22: 'SYN', 23: 'ETB',
+            24: 'CAN', 25: 'EM', 26: 'SUB', 27: 'ESC', 28: 'FS', 29: 'GS', 30: 'RS', 31: 'US',
+            127: 'DEL'
+        };
+        
+        // Genişletilmiş ASCII karakterleri için özel isimler
+        const extendedAsciiNames = {
+            128: '€', 129: '•', 130: '‚', 131: 'ƒ', 132: '„', 133: '…', 134: '†', 135: '‡',
+            136: 'ˆ', 137: '‰', 138: 'Š', 139: '‹', 140: 'Œ', 141: '•', 142: 'Ž', 143: '•',
+            144: '•', 145: '\'\'', 146: '\'', 147: '"', 148: '"', 149: '•', 150: '–', 151: '—',
+            152: '˜', 153: '™', 154: 'š', 155: '›', 156: 'œ', 157: '•', 158: 'ž', 159: 'Ÿ',
+            160: ' ', 161: '¡', 162: '¢', 163: '£', 164: '¤', 165: '¥', 166: '¦', 167: '§',
+            168: '¨', 169: '©', 170: 'ª', 171: '«', 172: '¬', 173: '­', 174: '®', 175: '¯',
+            176: '°', 177: '±', 178: '²', 179: '³', 180: '´', 181: 'µ', 182: '¶', 183: '·',
+            184: '¸', 185: '¹', 186: 'º', 187: '»', 188: '¼', 189: '½', 190: '¾', 191: '¿',
+            192: 'À', 193: 'Á', 194: 'Â', 195: 'Ã', 196: 'Ä', 197: 'Å', 198: 'Æ', 199: 'Ç',
+            200: 'È', 201: 'É', 202: 'Ê', 203: 'Ë', 204: 'Ì', 205: 'Í', 206: 'Î', 207: 'Ï',
+            208: 'Ð', 209: 'Ñ', 210: 'Ò', 211: 'Ó', 212: 'Ô', 213: 'Õ', 214: 'Ö', 215: '×',
+            216: 'Ø', 217: 'Ù', 218: 'Ú', 219: 'Û', 220: 'Ü', 221: 'Ý', 222: 'Þ', 223: 'ß',
+            224: 'à', 225: 'á', 226: 'â', 227: 'ã', 228: 'ä', 229: 'å', 230: 'æ', 231: 'ç',
+            232: 'è', 233: 'é', 234: 'ê', 235: 'ë', 236: 'ì', 237: 'í', 238: 'î', 239: 'ï',
+            240: 'ð', 241: 'ñ', 242: 'ò', 243: 'ó', 244: 'ô', 245: 'õ', 246: 'ö', 247: '÷',
+            248: 'ø', 249: 'ù', 250: 'ú', 251: 'û', 252: 'ü', 253: 'ý', 254: 'þ', 255: 'ÿ'
+        };
+        
+        // Kontrol karakteri ise özel isim göster
+        if (controlCharNames[value]) {
+            return `<span style="font-weight: bold; font-size: 0.9em; color: #666; background: rgba(0,0,0,0.1); padding: 2px 4px; border-radius: 3px;">${controlCharNames[value]}</span>`;
+        }
+        
+        // Genişletilmiş ASCII ise özel karakter göster
+        if (extendedAsciiNames[value]) {
+            return `<span style="font-weight: bold; font-size: 1.1em; color: #2196F3;">${extendedAsciiNames[value]}</span>`;
+        }
+        
+        // Normal görünür karakter
         const asciiChar = formatBytesToText([value], 'ascii', '');
         return `<span style="font-weight: bold; font-size: 1.1em;">${asciiChar}</span>`;
+    };
+    
+    // Helper function to get ASCII display - utils'den import edilen fonksiyonu kullan
+    const getAsciiDisplay = (value) => {
+        return getInvisibleAsciiDisplay(value);
     };
     
     // Helper function to create a cell group (DEC, HEX, ASCII)
     const createCellGroup = (value) => {
         const cells = [];
         
+        // CR/LF class belirleme
+        let crlfClass = '';
+        if (value === 13) {
+            crlfClass = 'cr-character';
+        } else if (value === 10) {
+            crlfClass = 'lf-character';
+        }
+        
         // DECIMAL cell
         const decCell = document.createElement('td');
-        decCell.className = 'px-4 py-3 border text-center decimal-cell';
+        decCell.className = `px-4 py-3 border text-center decimal-cell table-cell ${crlfClass}`;
         decCell.style.borderColor = 'var(--theme-border)';
         decCell.style.color = 'var(--theme-text)';
         decCell.style.fontWeight = 'bold';
@@ -824,7 +998,7 @@ const populateAsciiTable = () => {
         
         // HEX cell
         const hexCell = document.createElement('td');
-        hexCell.className = 'px-4 py-3 border text-center';
+        hexCell.className = `px-4 py-3 border text-center table-cell ${crlfClass}`;
         hexCell.style.borderColor = 'var(--theme-border)';
         hexCell.style.color = 'var(--theme-text)';
         hexCell.style.fontWeight = 'bold';
@@ -834,7 +1008,7 @@ const populateAsciiTable = () => {
         
         // ASCII cell
         const asciiCell = document.createElement('td');
-        asciiCell.className = 'px-4 py-3 border text-center';
+        asciiCell.className = `px-4 py-3 border text-center table-cell ${crlfClass}`;
         asciiCell.style.borderColor = 'var(--theme-border)';
         asciiCell.style.color = 'var(--theme-text)';
         asciiCell.innerHTML = getAsciiDisplay(value);
@@ -967,7 +1141,7 @@ window.onload = () => {
             
             // Use the clipboard API for modern browsers
             navigator.clipboard.writeText(textToCopy).then(() => {
-                console.log('Content copied to clipboard!');
+                NotificationHelper.showSuccess('İçerik panoya kopyalandı!');
                 const originalText = button.textContent;
                 button.textContent = 'Copied!';
                 setTimeout(() => {
@@ -1043,10 +1217,10 @@ window.onload = () => {
 
     // Global klavye kısayolları (document seviyesinde)
     document.addEventListener('keydown', (e) => {
-        // Shift + 1,2,3,4,5 - Mod değiştirme
-        if (e.shiftKey && !e.ctrlKey && !e.metaKey) {
+        // Command/Ctrl + 1,2,3,4,5 - Mod değiştirme (Mac: ⌘, Windows: Ctrl)
+        if ((e.metaKey || e.ctrlKey) && !e.shiftKey) {
             let targetTab = null;
-            // Shift basılıyken key değeri değişir (!, ", #, $, %) bu yüzden code kullanıyoruz
+            // Command + sayı tuşları ile tab değiştirme
             switch (e.code) {
                 case 'Digit1':
                     targetTab = 'ascii';
@@ -1088,7 +1262,6 @@ window.onload = () => {
             clearAllCells();
             return;
         }
-        
         // DevTools tuş kombinasyonları kaldırıldı
     });
     

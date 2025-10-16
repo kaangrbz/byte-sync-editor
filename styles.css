@@ -169,26 +169,47 @@ body {
     margin: 0.25rem 0;
 }
 
-.input-cell.hex-cell { width: 32px; }
-.input-cell.ascii-cell { width: 50px; }
-.input-cell.decimal-cell { width: 40px; }
-.input-cell.binary-cell { width: 90px; }
+.input-cell.ascii-cell { 
+    width: 24px; 
+    min-width: 24px;
+    max-width: 24px;
+}
+.input-cell.hex-cell { 
+    width: 32px; 
+    min-width: 32px;
+    max-width: 32px;
+}
+.input-cell.decimal-cell { 
+    width: 40px; 
+    min-width: 40px;
+    max-width: 40px;
+}
+.input-cell.binary-cell { 
+    width: 90px; 
+    min-width: 90px;
+    max-width: 90px;
+}
 
 .grid-container {
     display: grid;
     gap: 4px;
+    width: 100%;
+    max-width: 1200px; /* Sabit maksimum genişlik */
+    margin: 0 auto;
 }
+
+/* Esnek grid düzeni - sığdığı kadar */
 .grid-container.hex-grid {
-    grid-template-columns: repeat(16, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(32px, max-content));
 }
 .grid-container.ascii-grid {
-    grid-template-columns: repeat(16, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(24px, max-content));
 }
 .grid-container.decimal-grid {
-    grid-template-columns: repeat(16, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(40px, max-content));
 }
 .grid-container.binary-grid {
-    grid-template-columns: repeat(8, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(90px, max-content));
 }
 
 /* Light theme specific styles */
@@ -432,4 +453,118 @@ table thead th.dec-header {
 .overflow-auto {
     scrollbar-width: thin;
     scrollbar-color: var(--theme-border) var(--theme-surface);
+}
+
+/* Responsive grid düzeni */
+@media (max-width: 768px) {
+    .grid-container {
+        max-width: 100%;
+        gap: 2px;
+    }
+    
+    .input-cell.ascii-cell { 
+        width: 20px; 
+        min-width: 20px;
+        max-width: 20px;
+        font-size: 0.75rem;
+    }
+    .input-cell.hex-cell { 
+        width: 28px; 
+        min-width: 28px;
+        max-width: 28px;
+        font-size: 0.75rem;
+    }
+    .input-cell.decimal-cell { 
+        width: 36px; 
+        min-width: 36px;
+        max-width: 36px;
+        font-size: 0.75rem;
+    }
+    .input-cell.binary-cell { 
+        width: 80px; 
+        min-width: 80px;
+        max-width: 80px;
+        font-size: 0.7rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .grid-container {
+        gap: 1px;
+    }
+    
+    .input-cell.ascii-cell { 
+        width: 18px; 
+        min-width: 18px;
+        max-width: 18px;
+        font-size: 0.7rem;
+    }
+    .input-cell.hex-cell { 
+        width: 24px; 
+        min-width: 24px;
+        max-width: 24px;
+        font-size: 0.7rem;
+    }
+    .input-cell.decimal-cell { 
+        width: 32px; 
+        min-width: 32px;
+        max-width: 32px;
+        font-size: 0.7rem;
+    }
+    .input-cell.binary-cell { 
+        width: 70px; 
+        min-width: 70px;
+        max-width: 70px;
+        font-size: 0.65rem;
+    }
+}
+
+/* CR and LF character highlighting */
+.input-cell.cr-character {
+    background-color: rgba(255, 193, 7, 0.2) !important;
+    border: 2px solid #ffc107 !important;
+    color: #ff8f00 !important;
+    font-weight: bold !important;
+}
+
+.input-cell.lf-character {
+    background-color: rgba(76, 175, 80, 0.2) !important;
+    border: 2px solid #4caf50 !important;
+    color: #2e7d32 !important;
+    font-weight: bold !important;
+}
+
+.input-cell.crlf-character {
+    background-color: rgba(156, 39, 176, 0.2) !important;
+    border: 2px solid #9c27b0 !important;
+    color: #6a1b9a !important;
+    font-weight: bold !important;
+}
+
+/* Hex input specific highlighting */
+.hex-cell.cr-character {
+    background-color: rgba(255, 193, 7, 0.3) !important;
+    border: 2px solid #ffc107 !important;
+    color: #ff8f00 !important;
+    font-weight: bold !important;
+}
+
+.hex-cell.lf-character {
+    background-color: rgba(76, 175, 80, 0.3) !important;
+    border: 2px solid #4caf50 !important;
+    color: #2e7d32 !important;
+    font-weight: bold !important;
+}
+
+/* Reference table CR/LF highlighting */
+.table-cell.cr-character {
+    background-color: rgba(255, 193, 7, 0.2) !important;
+    border-color: #ffc107 !important;
+    color: #ff8f00 !important;
+}
+
+.table-cell.lf-character {
+    background-color: rgba(76, 175, 80, 0.2) !important;
+    border-color: #4caf50 !important;
+    color: #2e7d32 !important;
 }

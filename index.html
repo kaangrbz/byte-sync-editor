@@ -32,36 +32,36 @@
 </head>
 <body class="min-h-screen p-8" style="background-color: var(--theme-background); color: var(--theme-text);">
 
-    <div class="max-w-4xl mx-auto p-8 rounded-xl shadow-lg" style="background-color: var(--theme-surface); min-width: 900px;">
+    <div class="max-w-4xl mx-auto p-8 rounded-xl shadow-lg" style="background-color: var(--theme-surface); min-width: 1000px;">
         <h1 class="text-3xl font-bold text-center mb-6" style="color: var(--theme-primary);">ByteSync Editor v1.40.02</h1>
         <p class="text-center text-sm mb-8" style="color: var(--theme-textSecondary);">Edit a byte in any view, and watch all other views update automatically. The selected cell remains highlighted across tabs. Now with copy/paste functionality and a larger data grid.</p>
         
         <!-- Tab Buttons -->
         <div class="flex justify-center space-x-2 mb-6">
-            <button class="tab-button px-6 py-2 rounded-lg transition-colors duration-200" data-tab="ascii" style="background-color: var(--theme-secondary); color: var(--theme-text);" title="ASCII karakterleri (Shift+1)">
+            <button class="tab-button px-6 py-2 rounded-lg transition-colors duration-200" data-tab="ascii" style="background-color: var(--theme-secondary); color: var(--theme-text);" title="ASCII karakterleri (⌘+1)">
                 <div class="text-sm font-medium">ASCII</div>
                 <div class="text-xs opacity-70">Karakterler</div>
-                <div class="text-xs opacity-70"><code>shift</code>+<code>1</code></div>
+                <div class="text-xs opacity-70"><code>⌘</code>+<code>1</code></div>
             </button>
-            <button class="tab-button px-6 py-2 rounded-lg transition-colors duration-200" data-tab="hex" style="background-color: var(--theme-secondary); color: var(--theme-text);" title="Hexadecimal format (Shift+2)">
+            <button class="tab-button px-6 py-2 rounded-lg transition-colors duration-200" data-tab="hex" style="background-color: var(--theme-secondary); color: var(--theme-text);" title="Hexadecimal format (⌘+2)">
                 <div class="text-sm font-medium">Hex</div>
                 <div class="text-xs opacity-70">0x00-0xFF</div>
-                <div class="text-xs opacity-70"><code>shift</code>+<code>2</code></div>
+                <div class="text-xs opacity-70"><code>⌘</code>+<code>2</code></div>
             </button>
-            <button class="tab-button px-6 py-2 rounded-lg transition-colors duration-200" data-tab="decimal" style="background-color: var(--theme-secondary); color: var(--theme-text);" title="Decimal sayılar (Shift+3)">
+            <button class="tab-button px-6 py-2 rounded-lg transition-colors duration-200" data-tab="decimal" style="background-color: var(--theme-secondary); color: var(--theme-text);" title="Decimal sayılar (⌘+3)">
                 <div class="text-sm font-medium">Decimal</div>
                 <div class="text-xs opacity-70">0-255</div>
-                <div class="text-xs opacity-70"><code>shift</code>+<code>3</code></div>
+                <div class="text-xs opacity-70"><code>⌘</code>+<code>3</code></div>
             </button>
-            <button class="tab-button px-6 py-2 rounded-lg transition-colors duration-200" data-tab="binary" style="background-color: var(--theme-secondary); color: var(--theme-text);" title="Binary format (Shift+4)">
+            <button class="tab-button px-6 py-2 rounded-lg transition-colors duration-200" data-tab="binary" style="background-color: var(--theme-secondary); color: var(--theme-text);" title="Binary format (⌘+4)">
                 <div class="text-sm font-medium">Binary</div>
                 <div class="text-xs opacity-70">8-bit</div>
-                <div class="text-xs opacity-70"><code>shift</code>+<code>4</code></div>
+                <div class="text-xs opacity-70"><code>⌘</code>+<code>4</code></div>
             </button>
-            <button class="tab-button px-6 py-2 rounded-lg transition-colors duration-200" data-tab="four-in-one" style="background-color: var(--theme-secondary); color: var(--theme-text);" title="Tüm formatlar birlikte (Shift+5)">
+            <button class="tab-button px-6 py-2 rounded-lg transition-colors duration-200" data-tab="four-in-one" style="background-color: var(--theme-secondary); color: var(--theme-text);" title="Tüm formatlar birlikte (⌘+5)">
                 <div class="text-sm font-medium">4 in 1</div>
                 <div class="text-xs opacity-70">All in one</div>
-                <div class="text-xs opacity-70"><code>shift</code>+<code>5</code></div>
+                <div class="text-xs opacity-70"><code>⌘</code>+<code>5</code></div>
             </button>
         </div>
 
@@ -189,19 +189,19 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs" style="color: var(--theme-textSecondary);">
                 <div>
                     <div class="font-medium mb-2" style="color: var(--theme-text);">Navigation & Editing</div>
-                    <div class="space-y-2">
-                        <div><kbd class="px-1 py-0.5 rounded text-xs border">Shift + 1</kbd> ASCII Mode</div>
-                        <div><kbd class="px-1 py-0.5 rounded text-xs border">Shift + 2</kbd> Hex Mode</div>
-                        <div><kbd class="px-1 py-0.5 rounded text-xs border">Shift + 3</kbd> Decimal Mode</div>
-                        <div><kbd class="px-1 py-0.5 rounded text-xs border">Shift + 4</kbd> Binary Mode</div>
-                        <div><kbd class="px-1 py-0.5 rounded text-xs border">Shift + 5</kbd> 4 in 1 Mode</div>
+                    <div class="space-y-3">
+                        <div><kbd class="px-1 py-0.5 rounded text-xs border">⌘ + 1</kbd> ASCII Mode</div>
+                        <div><kbd class="px-1 py-0.5 rounded text-xs border">⌘ + 2</kbd> Hex Mode</div>
+                        <div><kbd class="px-1 py-0.5 rounded text-xs border">⌘ + 3</kbd> Decimal Mode</div>
+                        <div><kbd class="px-1 py-0.5 rounded text-xs border">⌘ + 4</kbd> Binary Mode</div>
+                        <div><kbd class="px-1 py-0.5 rounded text-xs border">⌘ + 5</kbd> 4 in 1 Mode</div>
                         <div><kbd class="px-1 py-0.5 rounded text-xs border">Cmd+A</kbd> Select All</div>
                         <div><kbd class="px-1 py-0.5 rounded text-xs border">Delete</kbd> Clear All (when selected)</div>
                     </div>
                 </div>
                 <div>
                     <div class="font-medium mb-2" style="color: var(--theme-text);">Special Characters</div>
-                    <div class="space-y-2">
+                    <div class="space-y-3">
                         <div><kbd class="px-1 py-0.5 rounded text-xs border">Cmd+Enter</kbd> Add CR (Carriage Return)</div>
                         <div><kbd class="px-1 py-0.5 rounded text-xs border">Cmd+Shift+Enter</kbd> Add LF (Line Feed)</div>
                         <div><kbd class="px-1 py-0.5 rounded text-xs border">Space</kbd> Add space character (except decimal)</div>
@@ -242,6 +242,42 @@
 
     </div>
 
+    <script src="src/notification-helper.js"></script>
+    <script>
+        // Platform tespiti ve klavye kısayolu güncellemesi
+        const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+        const modifierKey = isMac ? '⌘' : 'Ctrl';
+        
+        // Tab butonlarındaki kısayolları güncelle
+        document.addEventListener('DOMContentLoaded', () => {
+            const tabButtons = document.querySelectorAll('.tab-button');
+            tabButtons.forEach((button, index) => {
+                const shortcutElement = button.querySelector('code');
+                if (shortcutElement) {
+                    shortcutElement.textContent = modifierKey;
+                }
+                
+                // Tooltip'i güncelle
+                const tabNames = ['ascii', 'hex', 'decimal', 'binary', 'four-in-one'];
+                const tabTitles = [
+                    'ASCII karakterleri',
+                    'Hexadecimal format', 
+                    'Decimal sayılar',
+                    'Binary format',
+                    'Tüm formatlar birlikte'
+                ];
+                button.title = `${tabTitles[index]} (${modifierKey}+${index + 1})`;
+            });
+            
+            // Keyboard shortcuts bölümünü güncelle
+            const shortcutElements = document.querySelectorAll('kbd');
+            shortcutElements.forEach(kbd => {
+                if (kbd.textContent.includes('⌘')) {
+                    kbd.textContent = kbd.textContent.replace('⌘', modifierKey);
+                }
+            });
+        });
+    </script>
     <script type="module" src="app.js"></script>
 
 </body>
