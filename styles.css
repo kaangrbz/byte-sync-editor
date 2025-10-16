@@ -368,3 +368,68 @@ body {
         min-height: 6rem; /* Smaller min height on mobile */
     }
 }
+
+/* ASCII Reference Table Styles */
+#ascii-table-body tr {
+    transition: background-color 0.2s ease;
+}
+
+#ascii-table-body tr:hover {
+    background-color: var(--theme-surfaceHover) !important;
+}
+
+#ascii-table-body td {
+    transition: all 0.2s ease;
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+/* Decimal cells with distinctive background color */
+#ascii-table-body td.decimal-cell {
+    color: var(--theme-text);
+    font-weight: 700;
+    font-size: 1rem;
+    background-color: rgba(59, 130, 246, 0.20) !important;
+}
+
+.theme-dark #ascii-table-body td.decimal-cell {
+    background-color: rgba(59, 130, 246, 0.25) !important;
+}
+
+/* Table header bold styling */
+table thead th {
+    font-weight: 700;
+    font-size: 0.9rem;
+    letter-spacing: 0.5px;
+}
+
+/* DEC header columns with distinctive background */
+table thead th.dec-header {
+    background-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+/* Scrollbar styling for table container */
+.overflow-auto::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.overflow-auto::-webkit-scrollbar-track {
+    background: var(--theme-surface);
+    border-radius: 4px;
+}
+
+.overflow-auto::-webkit-scrollbar-thumb {
+    background: var(--theme-border);
+    border-radius: 4px;
+}
+
+.overflow-auto::-webkit-scrollbar-thumb:hover {
+    background: var(--theme-primary);
+}
+
+/* Firefox scrollbar */
+.overflow-auto {
+    scrollbar-width: thin;
+    scrollbar-color: var(--theme-border) var(--theme-surface);
+}

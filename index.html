@@ -33,7 +33,7 @@
 <body class="min-h-screen p-8" style="background-color: var(--theme-background); color: var(--theme-text);">
 
     <div class="max-w-4xl mx-auto p-8 rounded-xl shadow-lg" style="background-color: var(--theme-surface); min-width: 900px;">
-        <h1 class="text-3xl font-bold text-center mb-6" style="color: var(--theme-primary);">ByteSync Editor v1.40.0</h1>
+        <h1 class="text-3xl font-bold text-center mb-6" style="color: var(--theme-primary);">ByteSync Editor v1.40.01</h1>
         <p class="text-center text-sm mb-8" style="color: var(--theme-textSecondary);">Edit a byte in any view, and watch all other views update automatically. The selected cell remains highlighted across tabs. Now with copy/paste functionality and a larger data grid.</p>
         
         <!-- Tab Buttons -->
@@ -211,7 +211,34 @@
                 </div>
             </div>
         </div>
-        
+
+        <!-- ASCII/HEX/DECIMAL Reference Table -->
+        <div class="mb-6 mt-6 p-4 rounded-lg" style="background-color: var(--theme-surface); border: 1px solid var(--theme-border);">
+            <h3 class="text-lg font-bold mb-4 text-center" style="color: var(--theme-text);">ASCII/HEX/DECIMAL Referans Tablosu (0-255)</h3>
+            <div class="overflow-auto" style="max-height: 85vh; border-radius: 0.5rem;">
+                <table class="w-full text-sm" style="border-collapse: collapse; min-width: 100%;">
+                    <thead style="position: sticky; top: 0; background-color: var(--theme-primary); color: white; z-index: 10;">
+                        <tr>
+                            <th class="px-4 py-3 text-center font-bold border dec-header" style="border-color: var(--theme-border);">DEC</th>
+                            <th class="px-4 py-3 text-center font-bold border" style="border-color: var(--theme-border);">HEX</th>
+                            <th class="px-4 py-3 text-center font-bold border" style="border-color: var(--theme-border);">ASCII</th>
+                            <th class="px-4 py-3 text-center font-bold border dec-header" style="border-color: var(--theme-border);">DEC</th>
+                            <th class="px-4 py-3 text-center font-bold border" style="border-color: var(--theme-border);">HEX</th>
+                            <th class="px-4 py-3 text-center font-bold border" style="border-color: var(--theme-border);">ASCII</th>
+                            <th class="px-4 py-3 text-center font-bold border dec-header" style="border-color: var(--theme-border);">DEC</th>
+                            <th class="px-4 py-3 text-center font-bold border" style="border-color: var(--theme-border);">HEX</th>
+                            <th class="px-4 py-3 text-center font-bold border" style="border-color: var(--theme-border);">ASCII</th>
+                            <th class="px-4 py-3 text-center font-bold border dec-header" style="border-color: var(--theme-border);">DEC</th>
+                            <th class="px-4 py-3 text-center font-bold border" style="border-color: var(--theme-border);">HEX</th>
+                            <th class="px-4 py-3 text-center font-bold border" style="border-color: var(--theme-border);">ASCII</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ascii-table-body" style="font-family: 'Courier New', monospace;">
+                        <!-- Tablo içeriği JavaScript ile doldurulacak -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
 
     </div>
 

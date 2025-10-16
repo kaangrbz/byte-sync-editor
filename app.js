@@ -207,23 +207,27 @@ const handleInput = (event) => {
 };
 
 
-// Bir sonraki input'a odaklan ve içeriğini seç
-const focusNextInput = (currentIndex, type) => {
-    const nextIndex = (currentIndex + 1) % data.length;
-    const activeTab = document.querySelector('.tab-content.active');
+// Ortak input navigation fonksiyonu
+const navigateToInput = (index, direction = 'next') => {
+    const newIndex = direction === 'next' 
+        ? (index + 1) % data.length 
+        : (index - 1 + data.length) % data.length;
     
+    const activeTab = document.querySelector('.tab-content.active');
     if (activeTab) {
-        const nextInput = activeTab.querySelector(`[data-index="${nextIndex}"]`);
-        
-        if (nextInput) {
-            // Force focus and selection
-            nextInput.focus();
-            nextInput.select();
-            highlightCell(nextIndex);
-            // Trigger focus event to ensure proper state
-            nextInput.dispatchEvent(new Event('focus', { bubbles: true }));
+        const targetInput = activeTab.querySelector(`[data-index="${newIndex}"]`);
+        if (targetInput) {
+            targetInput.focus();
+            targetInput.select();
+            highlightCell(newIndex);
+            targetInput.dispatchEvent(new Event('focus', { bubbles: true }));
         }
     }
+};
+
+// Bir sonraki input'a odaklan
+const focusNextInput = (currentIndex, type) => {
+    navigateToInput(currentIndex, 'next');
 };
 
 
@@ -231,20 +235,10 @@ const focusNextInput = (currentIndex, type) => {
 
 
 
-// Paste event handler
-const handlePaste = (event) => {
-    event.preventDefault();
-    const pastedText = event.clipboardData.getData('text/plain');
+// Ortak paste parsing fonksiyonu
+const parsePastedText = (pastedText, type) => {
+    if (!pastedText || pastedText.trim() === '') return [];
     
-    // Eğer tüm hücreler seçili ise, tümüne paste yap
-    if (allSelected) {
-        pasteToAllSelected(pastedText);
-        return;
-    }
-    
-    const startIndex = parseInt(event.target.dataset.index, 10);
-    const type = event.target.dataset.type;
-
     let valuesToParse = [];
     if (type === 'ascii') {
         // ASCII için karakter karakter işle
@@ -257,41 +251,56 @@ const handlePaste = (event) => {
             if ((charCode >= 32 && charCode <= 126) || charCode === 13 || charCode === 10) {
                 valuesToParse.push(char);
             }
-            // Geçersiz karakterleri atla
         }
     } else if (type === 'hex') {
-        const cleanText = pastedText.replace(/\s/g, ''); // Remove all whitespace
+        const cleanText = pastedText.replace(/\s/g, '');
         for (let i = 0; i < cleanText.length; i += 2) {
             valuesToParse.push(cleanText.substring(i, i + 2));
         }
     } else if (type === 'decimal') {
-        // Decimal için hem virgül hem boşluk ile ayrılmış değerleri destekle
         valuesToParse = pastedText.trim().split(/[,\s]+/).filter(val => val.length > 0);
     } else {
         valuesToParse = pastedText.trim().split(/\s+/);
     }
+    
+    return valuesToParse;
+};
+
+// Ortak byte parsing fonksiyonu
+const parseValueToByte = (value, type) => {
+    if (!value || value.trim() === '') return null;
+    
+    if (isValidValue(value, type)) {
+        return parseValue(value, type);
+    } else if (value === '0' || value === '00' || value === '00000000') {
+        return 0;
+    } else {
+        return null;
+    }
+};
+
+// Paste event handler
+const handlePaste = (event) => {
+    event.preventDefault();
+    const pastedText = event.clipboardData.getData('text/plain');
+    
+    if (allSelected) {
+        pasteToAllSelected(pastedText);
+        return;
+    }
+    
+    const startIndex = parseInt(event.target.dataset.index, 10);
+    const type = event.target.dataset.type;
+    const valuesToParse = parsePastedText(pastedText, type);
 
     for (let i = 0; i < valuesToParse.length; i++) {
         const globalIndex = startIndex + i;
-        if (globalIndex >= data.length) {
-            break;
-        }
+        if (globalIndex >= data.length) break;
 
         const value = valuesToParse[i];
-        let byteValue;
+        const byteValue = parseValueToByte(value, type);
 
-        if (isValidValue(value, type)) {
-            // Valid value - parse it
-            byteValue = parseValue(value, type);
-        } else if (value === '0' || value === '00' || value === '00000000') {
-            // 0 değerlerini de kabul et
-            byteValue = 0;
-        } else {
-            // Invalid value - skip it
-            continue;
-        }
-
-        if (!isNaN(byteValue) && byteValue >= 0 && byteValue <= 255) {
+        if (byteValue !== null && !isNaN(byteValue) && byteValue >= 0 && byteValue <= 255) {
             data[globalIndex] = byteValue;
         }
     }
@@ -355,19 +364,7 @@ const handleKeydown = (event) => {
     // Backspace tuşu - Boş input'ta bir önceki input'a git
     if (event.key === 'Backspace' && event.target.value === '') {
         event.preventDefault();
-        newIndex = (index - 1 + data.length) % data.length;
-        const activeTab = document.querySelector('.tab-content.active');
-        if (activeTab) {
-            const prevInput = activeTab.querySelector(`[data-index="${newIndex}"]`);
-            if (prevInput) {
-                // Force focus and selection
-                prevInput.focus();
-                prevInput.select();
-                highlightCell(newIndex);
-                // Trigger focus event to ensure proper state
-                prevInput.dispatchEvent(new Event('focus', { bubbles: true }));
-            }
-        }
+        navigateToInput(index, 'prev');
         return;
     }
 
@@ -393,29 +390,26 @@ const updateAllViews = (excludeActiveInput = false) => {
         const type = input.dataset.type;
         const value = data[index];
         
-        // Eğer bu input aktif ise ve excludeActiveInput true ise, sadece değeri güncelle
+        // Aktif input'u hariç tut
         if (excludeActiveInput && input === activeInput) {
-            // Aktif input'un değerini data'dan güncelle ama görsel değerini koru
             return;
         }
         
-        // Boş inputlar boş kalsın, sadece kullanıcı değer girdiğinde göster
-        if (value === 0 && input.value === '') {
-            // Boş input ve 0 değeri - boş bırak
+        // Değer yoksa veya undefined/null ise boş string
+        if (value === undefined || value === null) {
             input.value = '';
-        } else if (value !== 0) {
-            // 0 olmayan değerler - göster
-            input.value = convertValue(value, type);
-        } else if (value === 0 && input.value !== '') {
-            // 0 değeri ama input'ta bir şey var - kullanıcı 0 yazmış, göster
-            input.value = convertValue(value, type);
+            return;
         }
         
-        // Varsayılan değerler için CSS sınıfı ekleme
+        // Değer 0-255 arası byte değeri ise convert et (0 dahil)
+        if (typeof value === 'number' && value >= 0 && value <= 255) {
+            input.value = convertValue(value, type);
+        } else {
+            input.value = '';
+        }
     });
     
-    
-    // If we just cleared all cells, ensure first input is focused
+    // İlk input'a focus
     if (activeIndex === -1 && allInputs.length > 0) {
         const activeTab = document.querySelector('.tab-content.active');
         if (activeTab) {
@@ -648,30 +642,7 @@ const pasteToAllSelected = (pastedText) => {
     const activeTab = document.querySelector('.tab-content.active');
     const type = activeTab.querySelector('.input-cell').dataset.type;
 
-    let valuesToParse = [];
-    if (type === 'ascii') {
-        // ASCII için karakter karakter işle
-        const characters = pastedText.split('');
-        for (let i = 0; i < characters.length; i++) {
-            const char = characters[i];
-            const charCode = char.charCodeAt(0);
-            
-            // Yazdırılabilir karakterler (32-126) veya CR/LF ise normal işle
-            if ((charCode >= 32 && charCode <= 126) || charCode === 13 || charCode === 10) {
-                valuesToParse.push(char);
-            }
-            // Geçersiz karakterleri atla
-        }
-    } else if (type === 'hex') {
-        const cleanText = pastedText.replace(/\s/g, '');
-        for (let i = 0; i < cleanText.length; i += 2) {
-            valuesToParse.push(cleanText.substring(i, i + 2));
-        }
-    } else if (type === 'decimal') {
-        valuesToParse = pastedText.trim().split(/[,\s]+/).filter(val => val.length > 0);
-    } else {
-        valuesToParse = pastedText.trim().split(/\s+/);
-    }
+    const valuesToParse = parsePastedText(pastedText, type);
 
     // Tüm hücreleri temizle
     data.fill(0);
@@ -679,19 +650,9 @@ const pasteToAllSelected = (pastedText) => {
     // Paste edilen değerleri ekle
     for (let i = 0; i < Math.min(valuesToParse.length, data.length); i++) {
         const value = valuesToParse[i];
-        let byteValue;
+        const byteValue = parseValueToByte(value, type);
 
-        if (isValidValue(value, type)) {
-            byteValue = parseValue(value, type);
-        } else if (value === '0' || value === '00' || value === '00000000') {
-            // 0 değerlerini de kabul et
-            byteValue = 0;
-        } else {
-            // Invalid value - skip it
-            continue;
-        }
-
-        if (!isNaN(byteValue) && byteValue >= 0 && byteValue <= 255) {
+        if (byteValue !== null && !isNaN(byteValue) && byteValue >= 0 && byteValue <= 255) {
             data[i] = byteValue;
         }
     }
@@ -1012,6 +973,95 @@ const handleUrlMode = () => {
     }
 };
 
+// Populate ASCII/HEX/DECIMAL reference table
+const populateAsciiTable = () => {
+    const tableBody = document.getElementById('ascii-table-body');
+    if (!tableBody) return;
+    
+    // ASCII karakter isimleri (kontrol karakterleri)
+    const controlCharNames = [
+        'NUL', 'SOH', 'STX', 'ETX', 'EOT', 'ENQ', 'ACK', 'BEL',
+        'BS', 'TAB', 'LF', 'VT', 'FF', 'CR', 'SO', 'SI',
+        'DLE', 'DC1', 'DC2', 'DC3', 'DC4', 'NAK', 'SYN', 'ETB',
+        'CAN', 'EM', 'SUB', 'ESC', 'FS', 'GS', 'RS', 'US'
+    ];
+    
+    // Helper function to get ASCII display
+    const getAsciiDisplay = (value) => {
+        if (value < 32) {
+            return `<span style="color: var(--theme-warning); font-weight: bold; font-size: 0.9em;">${controlCharNames[value]}</span>`;
+        } else if (value === 32) {
+            return '<span style="color: var(--theme-textSecondary); font-weight: bold;">SP</span>';
+        } else if (value === 127) {
+            return '<span style="color: var(--theme-warning); font-weight: bold; font-size: 0.9em;">DEL</span>';
+        } else if (value < 127) {
+            return `<span style="font-weight: bold; font-size: 1.1em;">${String.fromCharCode(value)}</span>`;
+        } else {
+            return `<span style="color: var(--theme-textSecondary); font-size: 1.1em;">&#${value};</span>`;
+        }
+    };
+    
+    // Helper function to create a cell group (DEC, HEX, ASCII)
+    const createCellGroup = (value) => {
+        const cells = [];
+        
+        // DECIMAL cell
+        const decCell = document.createElement('td');
+        decCell.className = 'px-4 py-3 border text-center decimal-cell';
+        decCell.style.borderColor = 'var(--theme-border)';
+        decCell.style.color = 'var(--theme-text)';
+        decCell.style.fontWeight = 'bold';
+        decCell.style.fontSize = '1em';
+        decCell.textContent = value;
+        cells.push(decCell);
+        
+        // HEX cell
+        const hexCell = document.createElement('td');
+        hexCell.className = 'px-4 py-3 border text-center';
+        hexCell.style.borderColor = 'var(--theme-border)';
+        hexCell.style.color = 'var(--theme-text)';
+        hexCell.style.fontWeight = 'bold';
+        hexCell.style.fontSize = '0.95em';
+        hexCell.textContent = value.toString(16).toUpperCase().padStart(2, '0');
+        cells.push(hexCell);
+        
+        // ASCII cell
+        const asciiCell = document.createElement('td');
+        asciiCell.className = 'px-4 py-3 border text-center';
+        asciiCell.style.borderColor = 'var(--theme-border)';
+        asciiCell.style.color = 'var(--theme-text)';
+        asciiCell.innerHTML = getAsciiDisplay(value);
+        cells.push(asciiCell);
+        
+        return cells;
+    };
+    
+    // Her satırda 4 grup değer göster (0-63 satır, her satır 4 değer)
+    const rowCount = 64;
+    for (let row = 0; row < rowCount; row++) {
+        const tr = document.createElement('tr');
+        tr.style.borderBottom = '1px solid var(--theme-border)';
+        
+        // Zebra striping
+        if (row % 2 === 0) {
+            tr.style.backgroundColor = 'var(--theme-surface)';
+        } else {
+            tr.style.backgroundColor = 'var(--theme-background)';
+        }
+        
+        // Her satırda 4 değer: row, row+64, row+128, row+192
+        for (let col = 0; col < 4; col++) {
+            const value = row + (col * 64);
+            if (value < 256) {
+                const cells = createCellGroup(value);
+                cells.forEach(cell => tr.appendChild(cell));
+            }
+        }
+        
+        tableBody.appendChild(tr);
+    }
+};
+
 // Initialize the app
 window.onload = () => {
     // Register service worker
@@ -1019,6 +1069,10 @@ window.onload = () => {
     
     // Handle URL mode parameters
     handleUrlMode();
+    
+    // Populate ASCII reference table
+    populateAsciiTable();
+    
     // DOM elementlerini bul
     tabButtons = document.querySelectorAll('.tab-button');
     tabContents = document.querySelectorAll('.tab-content');
