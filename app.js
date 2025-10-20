@@ -693,7 +693,11 @@ const createContextMenu = (x, y) => {
         // Özel karakterler grubu
         { text: 'Add CR (\\r)', action: 'addCR', shortcut: 'Cmd+Enter' },
         { text: 'Add LF (\\n)', action: 'addLF', shortcut: 'Cmd+Shift+Enter' },
-        { text: 'Reset (0)', action: 'reset', shortcut: 'Space' }
+        { text: 'Reset (0)', action: 'reset', shortcut: 'Space' },
+        { separator: true },
+        
+        // Sistem grubu
+        { text: 'Refresh', action: 'refresh', shortcut: 'F5' }
     ];
     
     // DevTools seçeneği kaldırıldı
@@ -841,6 +845,10 @@ const handleContextMenuAction = (action) => {
                     currentInput.select();
                 }
             }
+            break;
+        case 'refresh':
+            // Sayfayı yenile
+            window.location.reload();
             break;
         // DevTools case kaldırıldı
     }
@@ -1260,6 +1268,13 @@ window.onload = () => {
         if ((e.key === 'Delete' || e.key === 'Backspace') && allSelected) {
             e.preventDefault();
             clearAllCells();
+            return;
+        }
+
+        // F5 tuşu - Sayfayı yenile
+        if (e.key === 'F5') {
+            e.preventDefault();
+            window.location.reload();
             return;
         }
         // DevTools tuş kombinasyonları kaldırıldı
