@@ -17,7 +17,8 @@ const FILES_TO_UPDATE = [
   'package.json',
   'manifest.json',
   'sw.js',
-  'index.html'
+  'index.html',
+  'app.js'
 ];
 
 /**
@@ -164,6 +165,30 @@ function updateIndexHtml(newVersion) {
 }
 
 /**
+ * app.js dosyasındaki fallback versiyonu günceller
+ * @param {string} newVersion - Yeni versiyon
+ */
+function updateAppJs(newVersion) {
+  try {
+    let appContent = fs.readFileSync('app.js', 'utf8');
+    
+    // Fallback version satırını bul ve güncelle
+    const fallbackVersionRegex = /version: '[\d.]+', \/\/ fallback version/;
+    const newFallbackVersion = `version: '${newVersion}', // fallback version`;
+    
+    if (fallbackVersionRegex.test(appContent)) {
+      appContent = appContent.replace(fallbackVersionRegex, newFallbackVersion);
+      fs.writeFileSync('app.js', appContent);
+      console.log(`✅ app.js fallback version güncellendi: ${newVersion}`);
+    } else {
+      console.log('⚠️  app.js dosyasında fallback version bulunamadı');
+    }
+  } catch (error) {
+    throw new Error('app.js güncellenemedi: ' + error.message);
+  }
+}
+
+/**
  * Ana fonksiyon
  */
 function main() {
@@ -216,6 +241,7 @@ Güncellenen Dosyalar:
     updateManifestJson(newVersion);
     updateSwJs(newVersion);
     updateIndexHtml(newVersion);
+    updateAppJs(newVersion);
     
     console.log(`\n🎉 Versiyon güncelleme tamamlandı!`);
     console.log(`📦 ${currentVersion} → ${newVersion}`);
@@ -244,5 +270,6 @@ module.exports = {
   updatePackageJson,
   updateManifestJson,
   updateSwJs,
-  updateIndexHtml
+  updateIndexHtml,
+  updateAppJs
 };

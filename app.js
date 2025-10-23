@@ -1,7 +1,32 @@
 /**
- * ByteSync Editor - Ana JavaScript Dosyası
- * Tüm uygulama mantığı ve event handler'ları
+ * ByteSync Editor - Main JavaScript File
+ * All application logic and event handlers
  */
+
+// App Configuration - will be loaded dynamically from manifest.json
+let APP_CONFIG = {
+    version: '1.41.5', // fallback version
+    name: 'ByteSync Editor'
+};
+
+// Function to load app config from manifest.json
+async function loadAppConfig() {
+    try {
+        const response = await fetch('./manifest.json');
+        const manifest = await response.json();
+        
+        APP_CONFIG = {
+            version: manifest.version || '1.41.4',
+            name: manifest.name || 'ByteSync Editor'
+        };
+        
+        console.log('App config loaded:', APP_CONFIG);
+        return APP_CONFIG;
+    } catch (error) {
+        console.warn('Could not load manifest.json, using fallback config:', error);
+        return APP_CONFIG;
+    }
+}
 
 // Import utility functions
 import { 
@@ -1560,5 +1585,253 @@ class PWAUpdateManager {
 
 // PWA güncelleme yöneticisini başlat
 let pwaUpdateManager;
+
+// Feedback Form Functions
+class FeedbackForm {
+    constructor() {
+        this.form = document.getElementById('feedback-form');
+        this.previewModal = document.getElementById('preview-modal');
+        this.previewContent = document.getElementById('preview-content');
+        this.githubRepo = 'kaangrbz/byte-sync-editor'; // GitHub repository URL
+        this.appVersion = APP_CONFIG.version; // App version from config
+        
+        this.init();
+    }
+    
+    init() {
+        if (!this.form) return;
+        
+        // Form submit event
+        this.form.addEventListener('submit', (e) => this.handleSubmit(e));
+        
+        // Önizleme butonu
+        const previewBtn = document.getElementById('preview-feedback');
+        if (previewBtn) {
+            previewBtn.addEventListener('click', () => this.showPreview());
+        }
+        
+        // Modal kapatma butonları
+        const closeBtns = ['close-preview', 'close-preview-btn'];
+        closeBtns.forEach(id => {
+            const btn = document.getElementById(id);
+            if (btn) {
+                btn.addEventListener('click', () => this.hidePreview());
+            }
+        });
+        
+        // Modal dışına tıklama ile kapatma
+        if (this.previewModal) {
+            this.previewModal.addEventListener('click', (e) => {
+                if (e.target === this.previewModal) {
+                    this.hidePreview();
+                }
+            });
+        }
+        
+        // GitHub'da oluştur butonu
+        const createIssueBtn = document.getElementById('create-issue-btn');
+        if (createIssueBtn) {
+            createIssueBtn.addEventListener('click', () => this.createGitHubIssue());
+        }
+    }
+    
+    handleSubmit(e) {
+        e.preventDefault();
+        this.createGitHubIssue();
+    }
+    
+    showPreview() {
+        const formData = this.getFormData();
+        if (!formData) return;
+        
+        const preview = this.generatePreview(formData);
+        this.previewContent.innerHTML = preview;
+        this.previewModal.classList.remove('hidden');
+        this.previewModal.classList.add('flex');
+    }
+    
+    hidePreview() {
+        this.previewModal.classList.add('hidden');
+        this.previewModal.classList.remove('flex');
+    }
+    
+    getFormData() {
+        const formData = new FormData(this.form);
+        const data = {
+            type: formData.get('type'),
+            title: formData.get('title'),
+            description: formData.get('description'),
+            email: formData.get('email')
+        };
+        
+        // Validation
+        if (!data.type || !data.title || !data.description) {
+            alert('Please fill in all required fields.');
+            return null;
+        }
+        
+        return data;
+    }
+    
+    generatePreview(data) {
+        const typeEmojis = {
+            'bug': '🐛',
+            'feature': '💡',
+            'improvement': '⚡',
+            'question': '❓',
+            'other': '💬'
+        };
+        
+        const typeLabels = {
+            'bug': 'Bug Report',
+            'feature': 'Feature Request',
+            'improvement': 'Improvement Suggestion',
+            'question': 'Question',
+            'other': 'Other'
+        };
+        
+        const emoji = typeEmojis[data.type] || '💬';
+        const label = typeLabels[data.type] || 'Feedback';
+        
+        return `
+            <div class="border rounded-lg p-4" style="border-color: var(--theme-border);">
+                <div class="flex items-center mb-3">
+                    <span class="text-2xl mr-2">${emoji}</span>
+                    <h3 class="text-lg font-bold">${data.title}</h3>
+                    <span class="ml-auto px-2 py-1 text-xs rounded" style="background-color: var(--theme-primary); color: white;">${label}</span>
+                </div>
+                <div class="prose max-w-none">
+                    <p class="whitespace-pre-wrap">${data.description}</p>
+                </div>
+                ${data.email ? `<div class="mt-3 text-sm" style="color: var(--theme-textSecondary);">Contact: ${data.email}</div>` : ''}
+            </div>
+        `;
+    }
+    
+    createGitHubIssue() {
+        const formData = this.getFormData();
+        if (!formData) return;
+        
+        const typeEmojis = {
+            'bug': '🐛',
+            'feature': '💡',
+            'improvement': '⚡',
+            'question': '❓',
+            'other': '💬'
+        };
+        
+        const emoji = typeEmojis[formData.type] || '💬';
+        
+        // GitHub issue URL'si oluştur
+        const title = encodeURIComponent(`${emoji} ${formData.title}`);
+        const body = this.generateIssueBody(formData);
+        const labels = this.getLabelsForType(formData.type);
+        
+        const githubUrl = `https://github.com/${this.githubRepo}/issues/new?title=${title}&body=${encodeURIComponent(body)}&labels=${labels}`;
+        
+        // Open in new tab
+        window.open(githubUrl, '_blank');
+        
+        // Show success message
+        this.showSuccessMessage();
+    }
+    
+    generateIssueBody(data) {
+        const typeLabels = {
+            'bug': 'Bug Report',
+            'feature': 'Feature Request',
+            'improvement': 'Improvement Suggestion',
+            'question': 'Question',
+            'other': 'Feedback'
+        };
+        
+        const label = typeLabels[data.type] || 'Feedback';
+        
+        let body = `## ${label}\n\n`;
+        body += `**Description:**\n${data.description}\n\n`;
+        
+        if (data.email) {
+            body += `**Contact:** ${data.email}\n\n`;
+        }
+        
+        body += `---\n`;
+        body += `**ByteSync Editor v${this.appVersion}**\n`;
+        body += `**Submission Date:** ${new Date().toLocaleString('en-US')}\n`;
+        
+        if (data.type === 'bug') {
+            body += `\n**Additional information for bug report:**\n`;
+            body += `- App Version: ${this.appVersion}\n`;
+            body += `- Operating System: ${navigator.platform}\n`;
+            body += `- Browser: ${navigator.userAgent}\n`;
+            body += `- Steps to reproduce:\n`;
+            body += `  1. \n`;
+            body += `  2. \n`;
+            body += `  3. \n`;
+            body += `\n**Expected behavior:**\n\n`;
+            body += `**Actual behavior:**\n\n`;
+        }
+        
+        return body;
+    }
+    
+    getLabelsForType(type) {
+        const labelMap = {
+            'bug': 'bug',
+            'feature': 'enhancement',
+            'improvement': 'enhancement',
+            'question': 'question',
+            'other': 'feedback'
+        };
+        
+        return labelMap[type] || 'feedback';
+    }
+    
+    showSuccessMessage() {
+        // Show success notification
+        const notification = document.createElement('div');
+        notification.className = 'fixed top-4 right-4 p-4 rounded-lg text-white z-50 transition-all duration-300';
+        notification.style.backgroundColor = 'var(--theme-success)';
+        notification.innerHTML = `
+            <div class="flex items-center">
+                <span class="text-xl mr-2">✅</span>
+                <span>Opening GitHub page...</span>
+            </div>
+        `;
+        
+        document.body.appendChild(notification);
+        
+        // Remove after 3 seconds
+        setTimeout(() => {
+            notification.style.opacity = '0';
+            notification.style.transform = 'translateX(100%)';
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.parentNode.removeChild(notification);
+                }
+            }, 300);
+        }, 3000);
+    }
+}
+
+// Initialize app when DOM is loaded
+document.addEventListener('DOMContentLoaded', async () => {
+    // Load app config from manifest.json
+    await loadAppConfig();
+    
+    // Initialize feedback form with loaded config
+    new FeedbackForm();
+    
+    // Update version in HTML
+    updateVersionInHTML();
+});
+
+// Function to update version in HTML if needed
+function updateVersionInHTML() {
+    const versionElement = document.getElementById('app-title');
+    if (versionElement) {
+        // Use the centralized version from config
+        versionElement.textContent = `${APP_CONFIG.name} v${APP_CONFIG.version}`;
+    }
+}
 
 

@@ -33,7 +33,7 @@
 <body class="min-h-screen p-8" style="background-color: var(--theme-background); color: var(--theme-text);">
 
     <div class="max-w-4xl mx-auto p-8 rounded-xl shadow-lg" style="background-color: var(--theme-surface); min-width: 1000px;">
-        <h1 class="text-3xl font-bold text-center mb-6" style="color: var(--theme-primary);">ByteSync Editor v1.41.4</h1>
+        <h1 class="text-3xl font-bold text-center mb-6" style="color: var(--theme-primary);" id="app-title">ByteSync Editor v1.41.5</h1>
         <p class="text-center text-sm mb-8" style="color: var(--theme-textSecondary);">Edit a byte in any view, and watch all other views update automatically. The selected cell remains highlighted across tabs. Now with copy/paste functionality and a larger data grid.</p>
         
         <!-- Tab Buttons -->
@@ -237,6 +237,69 @@
                         <!-- Tablo içeriği JavaScript ile doldurulacak -->
                     </tbody>
                 </table>
+            </div>
+        </div>
+
+        <!-- Feedback Form -->
+        <div class="mb-6 mt-8 p-6 rounded-lg" style="background-color: var(--theme-surface); border: 1px solid var(--theme-border);">
+            <h3 class="text-xl font-bold mb-4 text-center" style="color: var(--theme-text);">Send Feedback</h3>
+            <p class="text-center text-sm mb-6" style="color: var(--theme-textSecondary);">
+                Share your thoughts, suggestions, or bug reports about ByteSync Editor through GitHub.
+            </p>
+            
+            <form id="feedback-form" class="max-w-2xl mx-auto">
+                <div class="mb-4">
+                    <label for="feedback-type" class="block text-sm font-medium mb-2" style="color: var(--theme-text);">Feedback Type</label>
+                    <select id="feedback-type" name="type" class="w-full p-3 rounded-lg border" style="background-color: var(--theme-background); color: var(--theme-text); border-color: var(--theme-border);" required>
+                        <option value="">Select...</option>
+                        <option value="bug">🐛 Bug Report</option>
+                        <option value="feature">💡 Feature Request</option>
+                        <option value="improvement">⚡ Improvement Suggestion</option>
+                        <option value="question">❓ Question</option>
+                        <option value="other">💬 Other</option>
+                    </select>
+                </div>
+                
+                <div class="mb-4">
+                    <label for="feedback-title" class="block text-sm font-medium mb-2" style="color: var(--theme-text);">Title</label>
+                    <input type="text" id="feedback-title" name="title" class="w-full p-3 rounded-lg border" style="background-color: var(--theme-background); color: var(--theme-text); border-color: var(--theme-border);" placeholder="Write a short and descriptive title..." required>
+                </div>
+                
+                <div class="mb-4">
+                    <label for="feedback-description" class="block text-sm font-medium mb-2" style="color: var(--theme-text);">Description</label>
+                    <textarea id="feedback-description" name="description" rows="6" class="w-full p-3 rounded-lg border" style="background-color: var(--theme-background); color: var(--theme-text); border-color: var(--theme-border);" placeholder="Describe your feedback in detail. For bug reports, include steps to reproduce. For feature requests, describe the use case..." required></textarea>
+                </div>
+                
+                <div class="mb-4">
+                    <label for="feedback-email" class="block text-sm font-medium mb-2" style="color: var(--theme-text);">Email (Optional)</label>
+                    <input type="email" id="feedback-email" name="email" class="w-full p-3 rounded-lg border" style="background-color: var(--theme-background); color: var(--theme-text); border-color: var(--theme-border);" placeholder="Leave your email for updates">
+                </div>
+                
+                <div class="flex justify-center space-x-4">
+                    <button type="submit" class="px-6 py-3 rounded-lg text-white font-medium transition-colors duration-200" style="background-color: var(--theme-primary);">
+                        Create GitHub Issue
+                    </button>
+                    <button type="button" id="preview-feedback" class="px-6 py-3 rounded-lg border font-medium transition-colors duration-200" style="background-color: var(--theme-secondary); color: var(--theme-text); border-color: var(--theme-border);">
+                        Preview
+                    </button>
+                </div>
+            </form>
+            
+            <!-- Preview Modal -->
+            <div id="preview-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+                <div class="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-96 overflow-y-auto" style="background-color: var(--theme-surface); color: var(--theme-text);">
+                    <div class="flex justify-between items-center mb-4">
+                        <h4 class="text-lg font-bold">GitHub Issue Preview</h4>
+                        <button id="close-preview" class="text-2xl font-bold">&times;</button>
+                    </div>
+                    <div id="preview-content" class="prose max-w-none">
+                        <!-- Preview content will appear here -->
+                    </div>
+                    <div class="mt-4 flex justify-end space-x-2">
+                        <button id="close-preview-btn" class="px-4 py-2 rounded border" style="background-color: var(--theme-secondary); color: var(--theme-text); border-color: var(--theme-border);">Close</button>
+                        <button id="create-issue-btn" class="px-4 py-2 rounded text-white" style="background-color: var(--theme-primary);">Create on GitHub</button>
+                    </div>
+                </div>
             </div>
         </div>
 
