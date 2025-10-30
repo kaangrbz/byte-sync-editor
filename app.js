@@ -44,6 +44,8 @@ let tabButtons, tabContents, hexGrid, asciiGrid, decimalGrid, binaryGrid, copyBu
 let data = new Uint8Array(256);
 let activeIndex = -1;
 let allSelected = false;
+// Kullanıcı tarafından değeri belirlenmiş hücreleri izlemek için
+const touchedIndices = new Set();
 
 // Dinamik genişletme fonksiyonu
 const expandDataArray = (newSize) => {
@@ -184,6 +186,7 @@ const handleInput = (event) => {
     console.log("🚀 ~ handleInput :",value, bytes, index, type)
     if (bytes.length > 0) {
         data[index] = bytes[0];
+        touchedIndices.add(index);
         
         // Otomatik genişletme kontrolü
         const wasExpanded = checkAndExpandIfNeeded();
@@ -283,6 +286,7 @@ const handlePaste = (event) => {
         }
 
         data[globalIndex] = valuesToParse[i];
+        touchedIndices.add(globalIndex);
     }
 
     updateAllViews();
@@ -378,8 +382,13 @@ const updateAllViews = (excludeActiveInput = false) => {
         // CR/LF highlight sınıflarını kaldır
         input.classList.remove('cr-character', 'lf-character', 'crlf-character');
         
-        // Değer yoksa veya undefined/null ise boş string
-        if (value === '0' || value === 0) {
+        // Değer yoksa (undefined/null/boş string) boş bırak
+        if (value === undefined || value === null || value === '') {
+            input.value = '';
+            return;
+        }
+        // Başlangıçtaki doldurulmamış 0 değerlerini gizle; kullanıcı 0 yazdıysa göster
+        if (value === 0 && !touchedIndices.has(index)) {
             input.value = '';
             return;
         }
