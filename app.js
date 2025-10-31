@@ -5,7 +5,7 @@
 
 // App Configuration - will be loaded dynamically from manifest.json
 let APP_CONFIG = {
-    version: '1.42.0', // fallback version
+    version: '1.42.1', // fallback version
     name: 'ByteSync Editor'
 };
 
