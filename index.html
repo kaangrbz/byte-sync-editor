@@ -33,7 +33,7 @@
 <body class="min-h-screen p-8" style="background-color: var(--theme-background); color: var(--theme-text);">
 
     <div class="max-w-4xl mx-auto p-8 rounded-xl shadow-lg" style="background-color: var(--theme-surface); min-width: 1000px;">
-        <h1 class="text-3xl font-bold text-center mb-6" style="color: var(--theme-primary);" id="app-title">ByteSync Editor v1.42.1</h1>
+        <h1 class="text-3xl font-bold text-center mb-6" style="color: var(--theme-primary);" id="app-title">ByteSync Editor v1.42.2</h1>
         <p class="text-center text-sm mb-8" style="color: var(--theme-textSecondary);">Edit a byte in any view, and watch all other views update automatically. The selected cell remains highlighted across tabs. Now with copy/paste functionality and a larger data grid.</p>
         
         <!-- Tab Buttons -->
@@ -130,16 +130,17 @@
                 
                 <!-- 4 Textareas in 2x2 Grid -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <!-- ASCII -->
-                    <div class="space-y-2">
-                        <div class="flex justify-between items-center">
-                            <h3 class="text-sm font-medium" style="color: var(--theme-text);">ASCII</h3>
-                            <button class="four-in-one-copy-btn px-2 py-1 text-xs rounded border transition-colors" data-format="ascii" style="background-color: var(--theme-primary); color: white; border-color: var(--theme-primary);">
-                                Copy
-                            </button>
-                        </div>
-                        <textarea id="four-in-one-ascii" class="w-full h-32 p-3 text-sm rounded border font-mono" style="background-color: var(--theme-background); color: var(--theme-text); border-color: var(--theme-border);" placeholder="ASCII text will appear here..."></textarea>
-                    </div>
+                    
+                  <!-- Decimal -->
+                  <div class="space-y-2">
+                      <div class="flex justify-between items-center">
+                          <h3 class="text-sm font-medium" style="color: var(--theme-text);">Decimal</h3>
+                          <button class="four-in-one-copy-btn px-2 py-1 text-xs rounded border transition-colors" data-format="decimal" style="background-color: var(--theme-primary); color: white; border-color: var(--theme-primary);">
+                              Copy
+                          </button>
+                      </div>
+                      <textarea id="four-in-one-decimal" class="w-full h-32 p-3 text-sm rounded border font-mono" style="background-color: var(--theme-background); color: var(--theme-text); border-color: var(--theme-border);" placeholder="Decimal values will appear here..."></textarea>
+                  </div>
                     
                     <!-- Hex -->
                     <div class="space-y-2">
@@ -152,15 +153,15 @@
                         <textarea id="four-in-one-hex" class="w-full h-32 p-3 text-sm rounded border font-mono" style="background-color: var(--theme-background); color: var(--theme-text); border-color: var(--theme-border);" placeholder="Hex values will appear here..."></textarea>
                     </div>
                     
-                    <!-- Decimal -->
+                    <!-- ASCII -->
                     <div class="space-y-2">
                         <div class="flex justify-between items-center">
-                            <h3 class="text-sm font-medium" style="color: var(--theme-text);">Decimal</h3>
-                            <button class="four-in-one-copy-btn px-2 py-1 text-xs rounded border transition-colors" data-format="decimal" style="background-color: var(--theme-primary); color: white; border-color: var(--theme-primary);">
+                            <h3 class="text-sm font-medium" style="color: var(--theme-text);">ASCII</h3>
+                            <button class="four-in-one-copy-btn px-2 py-1 text-xs rounded border transition-colors" data-format="ascii" style="background-color: var(--theme-primary); color: white; border-color: var(--theme-primary);">
                                 Copy
                             </button>
                         </div>
-                        <textarea id="four-in-one-decimal" class="w-full h-32 p-3 text-sm rounded border font-mono" style="background-color: var(--theme-background); color: var(--theme-text); border-color: var(--theme-border);" placeholder="Decimal values will appear here..."></textarea>
+                        <textarea id="four-in-one-ascii" class="w-full h-32 p-3 text-sm rounded border font-mono" style="background-color: var(--theme-background); color: var(--theme-text); border-color: var(--theme-border);" placeholder="ASCII text will appear here..."></textarea>
                     </div>
                     
                     <!-- Binary -->
