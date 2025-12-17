@@ -2,6 +2,10 @@
 
 A powerful cross-platform byte editor available as both a desktop application and web application. Edit bytes in ASCII, Hex, Decimal, and Binary formats with real-time synchronization across all views.
 
+## 🌐 Live Demo
+
+Try ByteSync Editor online: **[https://kaangrbz.github.io/byte-sync-editor/](https://kaangrbz.github.io/byte-sync-editor/)**
+
 ## 🚀 Quick Start
 
 ### Desktop Application (Electron)
