@@ -5,7 +5,7 @@
 
 // App Configuration - will be loaded dynamically from manifest.json
 let APP_CONFIG = {
-    version: '1.42.2', // fallback version
+    version: '1.42.3', // fallback version
     name: 'ByteSync Editor'
 };
 
@@ -1320,6 +1320,25 @@ window.onload = () => {
 
 // Initialize 4 in 1 mode
 const initializeFourInOneMode = () => {
+    // Load saved custom delimiter from localStorage
+    const customDelimiterInput = document.getElementById('custom-delimiter');
+    if (customDelimiterInput) {
+        try {
+            const savedCustomDelimiter = localStorage.getItem('bytesync-custom-delimiter');
+            if (savedCustomDelimiter !== null) {
+                customDelimiterInput.value = savedCustomDelimiter;
+                // If custom delimiter exists, select 'custom' option and enable input
+                const customOption = document.querySelector('input[name="delimiter-option"][value="custom"]');
+                if (customOption) {
+                    customOption.checked = true;
+                    customDelimiterInput.disabled = false;
+                }
+            }
+        } catch (err) {
+            console.warn('localStorage okunamıyor:', err);
+        }
+    }
+    
     // Add event listeners for delimiter options
     document.querySelectorAll('input[name="delimiter-option"]').forEach(radio => {
         radio.addEventListener('change', (e) => {
@@ -1332,9 +1351,14 @@ const initializeFourInOneMode = () => {
     });
     
     // Add event listener for custom delimiter input
-    const customDelimiterInput = document.getElementById('custom-delimiter');
     if (customDelimiterInput) {
         customDelimiterInput.addEventListener('input', () => {
+            // Save custom delimiter to localStorage
+            try {
+                localStorage.setItem('bytesync-custom-delimiter', customDelimiterInput.value);
+            } catch (err) {
+                console.warn('localStorage yazılamıyor:', err);
+            }
             updateFourInOneMode();
         });
     }
