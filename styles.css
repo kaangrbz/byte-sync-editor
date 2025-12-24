@@ -569,6 +569,19 @@ table thead th.dec-header {
     color: #2e7d32 !important;
 }
 
+/* Position Indicator Styles */
+.position-indicator {
+    font-family: 'Courier New', monospace;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--theme-textSecondary);
+    background-color: var(--theme-surface);
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    border: 1px solid var(--theme-border);
+    white-space: nowrap;
+}
+
 /* Docklight PTP Modal Styles */
 #ptp-modal {
     animation: fadeIn 0.2s ease-out;

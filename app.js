@@ -5,7 +5,7 @@
 
 // App Configuration - will be loaded dynamically from manifest.json
 let APP_CONFIG = {
-    version: '1.42.4', // fallback version
+    version: '1.42.5', // fallback version
     name: 'ByteSync Editor'
 };
 
@@ -47,6 +47,21 @@ let allSelected = false;
 // Kullanıcı tarafından değeri belirlenmiş hücreleri izlemek için
 const touchedIndices = new Set();
 
+// Kullanıcının girdiği veri boyutunu hesapla
+const getDataSize = () => {
+    if (touchedIndices.size === 0) {
+        return 1; // Hiç veri girilmemişse minimum 1
+    }
+    // En yüksek index'i bul ve +1 ekle (1-based)
+    const maxIndex = Math.max(...Array.from(touchedIndices));
+    return maxIndex + 1;
+};
+
+// Input sayısını hesapla (veri boyutu + 1, yeni veri girebilmek için)
+const getInputCount = () => {
+    return getDataSize() + 1;
+};
+
 // Dinamik genişletme fonksiyonu
 const expandDataArray = (newSize) => {
     const oldData = data;
@@ -66,6 +81,9 @@ const expandDataArray = (newSize) => {
     
     // Kullanıcıya bildirim göster
     showExpansionNotification(oldData.length, newSize);
+    
+    // Pozisyon göstergesini güncelle
+    updatePositionIndicator();
 };
 
 // Otomatik genişletme kontrolü
@@ -91,7 +109,8 @@ const recreateAllGrids = () => {
         createGrid(binaryGrid, 'binary-cell', 'binary');
         
         // Aktif index'i koru
-        if (activeIndex !== -1 && activeIndex < data.length) {
+        const inputCount = getInputCount();
+        if (activeIndex !== -1 && activeIndex < inputCount) {
             setTimeout(() => {
                 const activeInput = document.querySelector(`[data-index="${activeIndex}"]`);
                 if (activeInput) {
@@ -100,6 +119,9 @@ const recreateAllGrids = () => {
                 }
             }, 100);
         }
+        
+        // Pozisyon göstergesini güncelle
+        updatePositionIndicator();
     }
 };
 
@@ -137,7 +159,17 @@ const createGrid = (grid, className, type) => {
         return;
     }
     grid.innerHTML = '';
-    for (let i = 0; i < data.length; i++) {
+    
+    // Input sayısı: veri boyutu + 1 (yeni veri girebilmek için)
+    const inputCount = getInputCount();
+    
+    // Data array'i gerekirse genişlet
+    if (inputCount > data.length) {
+        const newSize = Math.max(data.length * 2, inputCount);
+        expandDataArray(newSize);
+    }
+    
+    for (let i = 0; i < inputCount; i++) {
         const input = document.createElement('input');
         input.type = 'text';
         input.className = `input-cell ${className}`;
@@ -188,12 +220,8 @@ const handleInput = (event) => {
         data[index] = bytes[0];
         touchedIndices.add(index);
         
-        // Otomatik genişletme kontrolü
-        const wasExpanded = checkAndExpandIfNeeded();
-        if (wasExpanded) {
-            // Grid'leri yeniden oluştur
-            recreateAllGrids();
-        }
+        // Veri boyutu değişti, grid'leri yeniden oluştur (yeni input eklemek için)
+        recreateAllGrids();
         
         updateAllViews(true);
         
@@ -282,12 +310,14 @@ const handlePaste = (event) => {
             // Array'i genişlet
             const newSize = Math.max(data.length * 2, globalIndex + 1);
             expandDataArray(newSize);
-            recreateAllGrids();
         }
 
         data[globalIndex] = valuesToParse[i];
         touchedIndices.add(globalIndex);
     }
+    
+    // Veri eklendi, grid'leri yeniden oluştur (yeni input eklemek için)
+    recreateAllGrids();
 
     updateAllViews();
 };
@@ -423,6 +453,9 @@ const updateAllViews = (excludeActiveInput = false) => {
             }
         }
     }
+    
+    // Pozisyon göstergesini güncelle
+    updatePositionIndicator();
 };
 
 
@@ -545,6 +578,25 @@ const initializeFourInOneCopyButtons = () => {
     });
 };
 
+// Pozisyon göstergesini güncelle
+const updatePositionIndicator = () => {
+    const totalBytes = getDataSize(); // Kullanıcının girdiği veri boyutu
+    const currentPosition = activeIndex >= 0 ? activeIndex + 1 : 0;
+    
+    const indicators = [
+        document.getElementById('hex-position-indicator'),
+        document.getElementById('ascii-position-indicator'),
+        document.getElementById('decimal-position-indicator'),
+        document.getElementById('binary-position-indicator')
+    ];
+    
+    indicators.forEach(indicator => {
+        if (indicator) {
+            indicator.textContent = `${currentPosition} / ${totalBytes}`;
+        }
+    });
+};
+
 // Hücreyi index'e göre tüm tab'larda vurgulama
 const highlightCell = (index) => {
     if (activeIndex !== -1) {
@@ -552,19 +604,26 @@ const highlightCell = (index) => {
     }
     activeIndex = index;
     document.querySelectorAll(`[data-index="${activeIndex}"]`).forEach(el => el.classList.add('highlight'));
+    
+    // Pozisyon göstergesini güncelle
+    updatePositionIndicator();
 };
 
 // Tüm hücreleri temizleme
 const clearAllCells = () => {
-    // Array'i 256 byte'a düşür
+    // Reset all data to zero (mecburen tüm inputları sıfırla)
+    data.fill(0);
+    
+    // Tüm touched indices'i temizle
+    touchedIndices.clear();
+    
+    // Array'i minimum boyuta düşür (2 input için: veri boyutu 1 + 1 input = 2)
     if (data.length > 256) {
         data = new Uint8Array(256);
-        // Grid'leri yeniden oluştur
-        recreateAllGrids();
-    } else {
-        // Reset all data to zero
-        data.fill(0);
     }
+    
+    // Grid'leri yeniden oluştur (minimum 2 input: 1 veri + 1 yeni veri için)
+    recreateAllGrids();
     
     // Remove highlight from active cell
     if (activeIndex !== -1) {
@@ -574,14 +633,22 @@ const clearAllCells = () => {
     // Clear all selection
     clearAllSelection();
     
-    // Tüm inputları boş yap
+    // Tüm inputları mecburen sıfırla ve boş yap
     const allInputs = document.querySelectorAll('.input-cell');
     allInputs.forEach(input => {
         input.value = '';
+        // Input'un index'ine göre data'yı da mecburen sıfırla
+        const inputIndex = parseInt(input.dataset.index, 10);
+        if (!isNaN(inputIndex) && inputIndex < data.length) {
+            data[inputIndex] = 0;
+        }
     });
     
     // Update all views
     updateAllViews();
+    
+    // Pozisyon göstergesini güncelle
+    updatePositionIndicator();
     
     // Focus on first input after clearing
     setTimeout(() => {
@@ -667,10 +734,13 @@ const pasteToAllSelected = (pastedText) => {
             // Array'i genişlet
             const newSize = Math.max(data.length * 2, i + 1);
             expandDataArray(newSize);
-            recreateAllGrids();
         }
         data[i] = valuesToParse[i];
+        touchedIndices.add(i);
     }
+    
+    // Veri eklendi, grid'leri yeniden oluştur (yeni input eklemek için)
+    recreateAllGrids();
 
     updateAllViews();
     clearAllSelection();
@@ -1147,6 +1217,9 @@ window.onload = () => {
     createGrid(asciiGrid, 'ascii-cell', 'ascii');
     createGrid(decimalGrid, 'decimal-cell', 'decimal');
     createGrid(binaryGrid, 'binary-cell', 'binary');
+    
+    // Initialize position indicator
+    updatePositionIndicator();
     
     // Initialize 4 in 1 mode
     initializeFourInOneMode();
