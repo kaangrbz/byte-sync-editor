@@ -568,3 +568,108 @@ table thead th.dec-header {
     border-color: #4caf50 !important;
     color: #2e7d32 !important;
 }
+
+/* Docklight PTP Modal Styles */
+#ptp-modal {
+    animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+#ptp-upload-area {
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+#ptp-upload-area:hover {
+    border-color: var(--theme-primary) !important;
+    background-color: var(--theme-surfaceHover) !important;
+}
+
+.ptp-block-card {
+    transition: all 0.2s ease;
+}
+
+.ptp-block-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+}
+
+.ptp-edit-btn,
+.ptp-add-btn {
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.ptp-edit-btn:hover {
+    background-color: var(--theme-primaryHover) !important;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.ptp-add-btn:hover {
+    background-color: var(--theme-successHover) !important;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* PTP Tab Styles */
+.ptp-block-card:hover {
+    background-color: var(--theme-surfaceHover) !important;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.ptp-block-card.selected {
+    border-color: var(--theme-primary) !important;
+    background-color: var(--theme-surfaceHover) !important;
+}
+
+#ptp-textareas-container textarea {
+    resize: both;
+    min-height: 16rem;
+    min-width: 100%;
+    max-width: 100%;
+    font-family: 'Courier New', monospace;
+}
+
+#ptp-blocks-list {
+    scrollbar-width: thin;
+    scrollbar-color: var(--theme-border) var(--theme-surface);
+}
+
+#ptp-blocks-list::-webkit-scrollbar {
+    width: 8px;
+}
+
+#ptp-blocks-list::-webkit-scrollbar-track {
+    background: var(--theme-surface);
+    border-radius: 4px;
+}
+
+#ptp-blocks-list::-webkit-scrollbar-thumb {
+    background: var(--theme-border);
+    border-radius: 4px;
+}
+
+#ptp-blocks-list::-webkit-scrollbar-thumb:hover {
+    background: var(--theme-primary);
+}
+
+/* Responsive adjustments for PTP tab */
+@media (max-width: 1024px) {
+    #ptp-main-content {
+        grid-template-columns: 1fr !important;
+    }
+    
+    #ptp-textareas-container {
+        grid-template-columns: 1fr !important;
+    }
+}

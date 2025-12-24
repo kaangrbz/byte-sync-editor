@@ -18,6 +18,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
     },
     isDeveloperMode: () => {
         return isDeveloperMode;
+    },
+    // File dialog API
+    showOpenDialog: (options) => {
+        return ipcRenderer.invoke('show-open-dialog', options);
     }
 });
 

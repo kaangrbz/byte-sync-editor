@@ -1,5 +1,5 @@
 // ByteSync Editor Service Worker
-const CACHE_NAME = 'bytesync-editor-v1.42.3';
+const CACHE_NAME = 'bytesync-editor-v1.42.4';
 const urlsToCache = [
   './',
   './index.html',
@@ -78,13 +78,14 @@ self.addEventListener('fetch', (event) => {
 
   event.respondWith(
     caches.match(event.request)
-      .then((response) => {
-        // Return cached version or fetch from network
-        if (response) {
+      .then((cachedResponse) => {
+        // Return cached version if available
+        if (cachedResponse) {
           console.log('Service Worker: Serving from cache', event.request.url);
-          return response;
+          return cachedResponse;
         }
 
+        // Fetch from network
         console.log('Service Worker: Fetching from network', event.request.url);
         return fetch(event.request)
           .then((response) => {
@@ -93,12 +94,16 @@ self.addEventListener('fetch', (event) => {
               return response;
             }
 
-            // Clone the response
+            // Clone the response for caching
             const responseToCache = response.clone();
 
+            // Cache the response (don't wait for it)
             caches.open(CACHE_NAME)
               .then((cache) => {
                 cache.put(event.request, responseToCache);
+              })
+              .catch((error) => {
+                console.error('Service Worker: Cache put failed', error);
               });
 
             return response;
@@ -107,8 +112,35 @@ self.addEventListener('fetch', (event) => {
             console.log('Service Worker: Network fetch failed', error);
             // Return offline page for navigation requests
             if (event.request.destination === 'document') {
-              return caches.match('./index.html');
+              return caches.match('./index.html')
+                .then((offlinePage) => {
+                  // If offline page exists, return it, otherwise return a basic response
+                  if (offlinePage) {
+                    return offlinePage;
+                  }
+                  // Fallback: return a basic HTML response
+                  return new Response('<!DOCTYPE html><html><head><title>Offline</title></head><body><h1>You are offline</h1></body></html>', {
+                    headers: { 'Content-Type': 'text/html' }
+                  });
+                });
             }
+            // For non-document requests, return a basic error response
+            return new Response('Network error', {
+              status: 408,
+              statusText: 'Request Timeout'
+            });
+          });
+      })
+      .catch((error) => {
+        console.error('Service Worker: Cache match failed', error);
+        // Fallback: try to fetch from network
+        return fetch(event.request)
+          .catch(() => {
+            // If fetch also fails, return error response
+            return new Response('Service unavailable', {
+              status: 503,
+              statusText: 'Service Unavailable'
+            });
           });
       })
   );

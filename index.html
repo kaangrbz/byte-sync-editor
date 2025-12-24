@@ -33,7 +33,7 @@
 <body class="min-h-screen p-8" style="background-color: var(--theme-background); color: var(--theme-text);">
 
     <div class="max-w-4xl mx-auto p-8 rounded-xl shadow-lg" style="background-color: var(--theme-surface); min-width: 1000px;">
-        <h1 class="text-3xl font-bold text-center mb-6" style="color: var(--theme-primary);" id="app-title">ByteSync Editor v1.42.3</h1>
+        <h1 class="text-3xl font-bold text-center mb-6" style="color: var(--theme-primary);" id="app-title">ByteSync Editor v1.42.4</h1>
         <p class="text-center text-sm mb-8" style="color: var(--theme-textSecondary);">Edit a byte in any view, and watch all other views update automatically. The selected cell remains highlighted across tabs. Now with copy/paste functionality and a larger data grid.</p>
         
         <!-- Tab Buttons -->
@@ -62,6 +62,11 @@
                 <div class="text-sm font-medium">4 in 1</div>
                 <div class="text-xs opacity-70">All in one</div>
                 <div class="text-xs opacity-70"><code>⌘</code>+<code>5</code></div>
+            </button>
+            <button class="tab-button px-6 py-2 rounded-lg transition-colors duration-200" data-tab="docklight-ptp" style="background-color: var(--theme-secondary); color: var(--theme-text);" title="Docklight PTP dosyası (⌘+6)">
+                <div class="text-sm font-medium">PTP</div>
+                <div class="text-xs opacity-70">Docklight</div>
+                <div class="text-xs opacity-70"><code>⌘</code>+<code>6</code></div>
             </button>
         </div>
 
@@ -97,6 +102,124 @@
             </div>
             <h2 class="text-xl font-semibold mb-4 text-center">Binary View</h2>
             <div id="binary-grid" class="grid-container binary-grid"></div>
+        </div>
+        
+        <!-- Docklight PTP Mode -->
+        <div id="docklight-ptp-tab" class="tab-content">
+            <div class="mb-6">
+                <h2 class="text-xl font-semibold mb-4 text-center">Docklight PTP File Manager</h2>
+                
+                <!-- File Upload Area -->
+                <div id="ptp-upload-area" class="mb-6 p-6 border-2 border-dashed rounded-lg text-center" style="border-color: var(--theme-border);">
+                    <input type="file" id="ptp-file-input" accept=".ptp" class="hidden">
+                    <div class="mb-4">
+                        <svg class="mx-auto h-12 w-12" style="color: var(--theme-textSecondary);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                        </svg>
+                    </div>
+                    <p class="mb-2" style="color: var(--theme-text);">Drag & drop a .ptp file here or</p>
+                    <button id="ptp-browse-btn" class="px-4 py-2 rounded text-white" style="background-color: var(--theme-primary);">Browse Files</button>
+                    <p id="ptp-file-name" class="mt-2 text-sm" style="color: var(--theme-textSecondary);"></p>
+                </div>
+
+                <!-- File Info -->
+                <div id="ptp-file-info" class="mb-6 p-4 rounded-lg hidden" style="background-color: var(--theme-background); border: 1px solid var(--theme-border);">
+                    <h5 class="font-semibold mb-2" style="color: var(--theme-text);">File Information</h5>
+                    <div id="ptp-file-info-content" class="text-sm" style="color: var(--theme-textSecondary);"></div>
+                </div>
+
+                <!-- Main Content: Two Panel Layout -->
+                <div id="ptp-main-content" class="hidden grid grid-cols-1 lg:grid-cols-3 gap-4">
+                    <!-- Left Panel: SEND Blocks List -->
+                    <div class="lg:col-span-1">
+                        <h3 class="text-lg font-semibold mb-3" style="color: var(--theme-text);">SEND Blocks</h3>
+                        <div id="ptp-blocks-list" class="space-y-2 max-h-[70vh] overflow-y-auto" style="border: 1px solid var(--theme-border); border-radius: 0.5rem; padding: 0.5rem;">
+                            <!-- Blocks will be inserted here -->
+                        </div>
+                    </div>
+
+                    <!-- Right Panel: 4 Textareas -->
+                    <div class="lg:col-span-2">
+                        <h3 class="text-lg font-semibold mb-3" style="color: var(--theme-text);">Selected Block Editor</h3>
+                        
+                        <!-- Separator Options -->
+                        <div class="mb-4 p-3 rounded-lg" style="background-color: var(--theme-surface); border: 1px solid var(--theme-border);">
+                            <h4 class="text-sm font-medium mb-2 text-center" style="color: var(--theme-text);">Number Delimiter</h4>
+                            <div class="flex flex-wrap justify-center gap-3 items-center">
+                                <label class="flex items-center">
+                                    <input type="radio" name="ptp-delimiter-option" value="none" class="mr-1">
+                                    <span class="text-xs" style="color: var(--theme-text);">None</span>
+                                </label>
+                                <label class="flex items-center">
+                                    <input type="radio" name="ptp-delimiter-option" value="comma" class="mr-1" checked>
+                                    <span class="text-xs" style="color: var(--theme-text);">Comma</span>
+                                </label>
+                                <label class="flex items-center">
+                                    <input type="radio" name="ptp-delimiter-option" value="space" class="mr-1">
+                                    <span class="text-xs" style="color: var(--theme-text);">Space</span>
+                                </label>
+                                <label class="flex items-center">
+                                    <input type="radio" name="ptp-delimiter-option" value="custom" class="mr-1">
+                                    <span class="text-xs" style="color: var(--theme-text);">Custom:</span>
+                                </label>
+                                <input type="text" id="ptp-custom-delimiter" placeholder="Enter delimiter" class="px-2 py-1 text-xs rounded border" style="background-color: var(--theme-background); color: var(--theme-text); border-color: var(--theme-border);" disabled>
+                            </div>
+                        </div>
+
+                        <!-- 4 Textareas in Columns -->
+                        <div id="ptp-textareas-container" class="hidden grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <!-- ASCII -->
+                            <div class="space-y-2">
+                                <div class="flex justify-between items-center">
+                                    <h4 class="text-sm font-medium" style="color: var(--theme-text);">ASCII</h4>
+                                    <button class="ptp-copy-btn px-2 py-1 text-xs rounded border transition-colors" data-format="ascii" style="background-color: var(--theme-primary); color: white; border-color: var(--theme-primary);">
+                                        Copy
+                                    </button>
+                                </div>
+                                <textarea id="ptp-textarea-ascii" class="w-full h-64 p-3 text-sm rounded border font-mono" style="background-color: var(--theme-background); color: var(--theme-text); border-color: var(--theme-border);" placeholder="ASCII text will appear here..."></textarea>
+                            </div>
+                            
+                            <!-- Decimal -->
+                            <div class="space-y-2">
+                                <div class="flex justify-between items-center">
+                                    <h4 class="text-sm font-medium" style="color: var(--theme-text);">Decimal</h4>
+                                    <button class="ptp-copy-btn px-2 py-1 text-xs rounded border transition-colors" data-format="decimal" style="background-color: var(--theme-primary); color: white; border-color: var(--theme-primary);">
+                                        Copy
+                                    </button>
+                                </div>
+                                <textarea id="ptp-textarea-decimal" class="w-full h-64 p-3 text-sm rounded border font-mono" style="background-color: var(--theme-background); color: var(--theme-text); border-color: var(--theme-border);" placeholder="Decimal values will appear here..."></textarea>
+                            </div>
+                            
+                            <!-- Hex -->
+                            <div class="space-y-2">
+                                <div class="flex justify-between items-center">
+                                    <h4 class="text-sm font-medium" style="color: var(--theme-text);">Hexadecimal</h4>
+                                    <button class="ptp-copy-btn px-2 py-1 text-xs rounded border transition-colors" data-format="hex" style="background-color: var(--theme-primary); color: white; border-color: var(--theme-primary);">
+                                        Copy
+                                    </button>
+                                </div>
+                                <textarea id="ptp-textarea-hex" class="w-full h-64 p-3 text-sm rounded border font-mono" style="background-color: var(--theme-background); color: var(--theme-text); border-color: var(--theme-border);" placeholder="Hex values will appear here..."></textarea>
+                            </div>
+                            
+                            <!-- Binary -->
+                            <div class="space-y-2">
+                                <div class="flex justify-between items-center">
+                                    <h4 class="text-sm font-medium" style="color: var(--theme-text);">Binary</h4>
+                                    <button class="ptp-copy-btn px-2 py-1 text-xs rounded border transition-colors" data-format="binary" style="background-color: var(--theme-primary); color: white; border-color: var(--theme-primary);">
+                                        Copy
+                                    </button>
+                                </div>
+                                <textarea id="ptp-textarea-binary" class="w-full h-64 p-3 text-sm rounded border font-mono" style="background-color: var(--theme-background); color: var(--theme-text); border-color: var(--theme-border);" placeholder="Binary values will appear here..."></textarea>
+                            </div>
+                        </div>
+
+                        <!-- No Selection Message -->
+                        <div id="ptp-no-selection" class="text-center p-8 rounded-lg" style="background-color: var(--theme-surface); border: 1px solid var(--theme-border);">
+                            <p style="color: var(--theme-textSecondary);">Select a SEND block from the list to edit</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
         
         <!-- 4 in 1 Mode -->
@@ -304,6 +427,7 @@
             </div>
         </div>
 
+
     </div>
 
     <script src="src/notification-helper.js"></script>
@@ -322,13 +446,14 @@
                 }
                 
                 // Tooltip'i güncelle
-                const tabNames = ['ascii', 'hex', 'decimal', 'binary', 'four-in-one'];
+                const tabNames = ['ascii', 'hex', 'decimal', 'binary', 'four-in-one', 'docklight-ptp'];
                 const tabTitles = [
                     'ASCII karakterleri',
                     'Hexadecimal format', 
                     'Decimal sayılar',
                     'Binary format',
-                    'Tüm formatlar birlikte'
+                    'Tüm formatlar birlikte',
+                    'Docklight PTP dosyası'
                 ];
                 button.title = `${tabTitles[index]} (${modifierKey}+${index + 1})`;
             });
