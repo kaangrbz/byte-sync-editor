@@ -1,5 +1,5 @@
 // ByteSync Editor Service Worker
-const CACHE_NAME = 'bytesync-editor-v1.42.5';
+const CACHE_NAME = 'bytesync-editor-v1.42.6';
 const urlsToCache = [
   './',
   './index.html',

@@ -5,7 +5,7 @@
 
 // App Configuration - will be loaded dynamically from manifest.json
 let APP_CONFIG = {
-    version: '1.42.5', // fallback version
+    version: '1.42.6', // fallback version
     name: 'ByteSync Editor'
 };
 
@@ -561,7 +561,7 @@ const initializeFourInOneCopyButtons = () => {
             const textarea = document.getElementById(`four-in-one-${format}`);
             if (textarea && textarea.value) {
                 navigator.clipboard.writeText(textarea.value).then(() => {
-                    NotificationHelper.showSuccess(`${format.toUpperCase()} formatı panoya kopyalandı!`);
+                    // NotificationHelper.showSuccess(`${format.toUpperCase()} formatı panoya kopyalandı!`);
                     // Visual feedback
                     const originalText = btn.textContent;
                     btn.textContent = '✅ Copied!';
@@ -2204,25 +2204,24 @@ const createPTPBlockCard = (block, index) => {
     card.style.cssText = 'background-color: var(--theme-background); border: 2px solid var(--theme-border); border-radius: 0.5rem; padding: 0.75rem; margin-bottom: 0.5rem; transition: all 0.2s ease;';
     card.dataset.blockIndex = index;
     
+    // Hex önizleme oluştur (maksimum 16 byte göster)
+    const previewBytes = block.bytes.slice(0, 16);
+    const hexPreview = formatBytesToText(previewBytes, 'hex', ' ');
+    const previewText = block.bytes.length > 16 ? `${hexPreview}...` : hexPreview;
+    
     card.innerHTML = `
         <div class="flex justify-between items-start">
             <div class="flex-1">
                 <h6 class="font-semibold mb-1" style="color: var(--theme-text);">
-                    SEND Block #${block.index !== null ? block.index : index}
+                    ${block.description || 'Açıklama yok'}
                 </h6>
                 <p class="text-xs mb-1" style="color: var(--theme-textSecondary);">
-                    ${block.description || 'Açıklama yok'}
-                </p>
-                <p class="text-xs" style="color: var(--theme-textSecondary);">
                     ${block.bytes.length} bytes
                 </p>
+                <p class="text-xs font-mono" style="color: var(--theme-textSecondary); opacity: 0.8;">
+                    ${previewText}
+                </p>
             </div>
-            <button class="ptp-add-btn px-2 py-1 text-xs rounded border" 
-                    style="background-color: var(--theme-success); color: white; border-color: var(--theme-success);"
-                    data-block-index="${index}"
-                    onclick="event.stopPropagation();">
-                Add to Editor
-            </button>
         </div>
     `;
     
@@ -2649,7 +2648,7 @@ const initializeDocklightPTPMode = () => {
             const textarea = document.getElementById(`ptp-textarea-${format}`);
             if (textarea && textarea.value) {
                 navigator.clipboard.writeText(textarea.value).then(() => {
-                    NotificationHelper.showSuccess(`${format.toUpperCase()} formatı panoya kopyalandı!`);
+                    // NotificationHelper.showSuccess(`${format.toUpperCase()} formatı panoya kopyalandı!`);
                     // Visual feedback
                     const originalText = e.target.textContent;
                     e.target.textContent = '✅ Copied!';
@@ -2661,14 +2660,6 @@ const initializeDocklightPTPMode = () => {
                 }).catch(err => {
                     console.error('Failed to copy: ', err);
                 });
-            }
-        }
-        
-        // Add to editor button
-        if (e.target.classList.contains('ptp-add-btn')) {
-            const blockIndex = parseInt(e.target.dataset.blockIndex, 10);
-            if (!isNaN(blockIndex)) {
-                addPTPToEditor(blockIndex);
             }
         }
     });
