@@ -126,6 +126,19 @@ body {
     border-color: var(--theme-primary);
 }
 
+.input-cell.invalid-input {
+    border-color: #ef4444;
+    outline: 2px solid #ef4444;
+    background-color: rgba(239, 68, 68, 0.1);
+    animation: shake 0.15s;
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-4px); }
+    75% { transform: translateX(4px); }
+}
+
 /* DevTools buton stilleri kaldırıldı */
 
 .context-menu {

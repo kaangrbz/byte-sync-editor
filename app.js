@@ -41,11 +41,14 @@ import {
 let tabButtons, tabContents, hexGrid, asciiGrid, decimalGrid, binaryGrid, copyButtons, clearButtons;
 
 // Veri ve durum değişkenleri
-let data = new Uint8Array(256);
+// Başlangıçta minimum boyut (gerektiğinde dinamik olarak genişletilecek)
+let data = new Uint8Array(1);
 let activeIndex = -1;
 let allSelected = false;
 // Kullanıcı tarafından değeri belirlenmiş hücreleri izlemek için
 const touchedIndices = new Set();
+// Her input'un önceki değerini takip etmek için (Shift+Tab sorununu çözmek için)
+const previousInputValues = new WeakMap();
 
 // Kullanıcının girdiği veri boyutunu hesapla
 const getDataSize = () => {
@@ -62,7 +65,7 @@ const getInputCount = () => {
     return getDataSize() + 1;
 };
 
-// Dinamik genişletme fonksiyonu
+// Dinamik genişletme fonksiyonu - sadece array'i genişletir
 const expandDataArray = (newSize) => {
     const oldData = data;
     data = new Uint8Array(newSize);
@@ -71,19 +74,7 @@ const expandDataArray = (newSize) => {
     for (let i = 0; i < Math.min(oldData.length, newSize); i++) {
         data[i] = oldData[i];
     }
-    
-    // Yeni alanları 0 ile doldur
-    for (let i = oldData.length; i < newSize; i++) {
-        data[i] = 0;
-    }
-    
-    console.log(`Data array genişletildi: ${oldData.length} → ${newSize} bytes`);
-    
-    // Kullanıcıya bildirim göster
-    showExpansionNotification(oldData.length, newSize);
-    
-    // Pozisyon göstergesini güncelle
-    updatePositionIndicator();
+    // Yeni alanlar zaten 0 ile başlar (Uint8Array varsayılanı)
 };
 
 // Otomatik genişletme kontrolü
@@ -93,8 +84,10 @@ const checkAndExpandIfNeeded = () => {
     const hasData = lastBytes.some(byte => byte !== 0);
     
     if (hasData && data.length < 1024) { // Maksimum 1024 byte
+        const oldSize = data.length;
         const newSize = data.length * 2;
         expandDataArray(newSize);
+        updatePositionIndicator();
         return true;
     }
     return false;
@@ -103,32 +96,64 @@ const checkAndExpandIfNeeded = () => {
 // Tüm grid'leri yeniden oluştur
 const recreateAllGrids = () => {
     if (hexGrid && asciiGrid && decimalGrid && binaryGrid) {
+        // Aktif input'un değerini ve cursor pozisyonunu kaydet
+        const activeInput = document.activeElement;
+        let savedValue = '';
+        let savedCursorPos = 0;
+        let savedType = '';
+        let savedIndex = -1;
+        
+        if (activeInput && activeInput.classList.contains('input-cell')) {
+            savedValue = activeInput.value;
+            savedCursorPos = activeInput.selectionStart;
+            savedType = activeInput.dataset.type;
+            savedIndex = parseInt(activeInput.dataset.index, 10);
+        }
+        
         createGrid(hexGrid, 'hex-cell', 'hex');
         createGrid(asciiGrid, 'ascii-cell', 'ascii');
         createGrid(decimalGrid, 'decimal-cell', 'decimal');
         createGrid(binaryGrid, 'binary-cell', 'binary');
         
-        // Aktif index'i koru
-        const inputCount = getInputCount();
-        if (activeIndex !== -1 && activeIndex < inputCount) {
+        // Aktif input'un değerini ve focus'u geri yükle
+        if (savedIndex !== -1 && savedType) {
             setTimeout(() => {
-                const activeInput = document.querySelector(`[data-index="${activeIndex}"]`);
-                if (activeInput) {
-                    activeInput.focus();
-                    activeInput.select();
+                const restoredInput = document.querySelector(`[data-index="${savedIndex}"][data-type="${savedType}"]`);
+                if (restoredInput) {
+                    // Kullanıcının yazdığı değeri geri yükle
+                    restoredInput.value = savedValue;
+                    restoredInput.focus();
+                    // Cursor pozisyonunu geri yükle
+                    const maxPos = Math.min(savedCursorPos, savedValue.length);
+                    restoredInput.setSelectionRange(maxPos, maxPos);
                 }
-            }, 100);
+            }, 50);
+        } else if (activeIndex !== -1) {
+            // Eğer aktif input yoksa ama activeIndex varsa, sadece focus'u geri al
+            const inputCount = getInputCount();
+            if (activeIndex < inputCount) {
+                setTimeout(() => {
+                    const activeInput = document.querySelector(`[data-index="${activeIndex}"]`);
+                    if (activeInput) {
+                        activeInput.focus();
+                        activeInput.select();
+                    }
+                }, 100);
+            }
         }
         
         // Pozisyon göstergesini güncelle
         updatePositionIndicator();
+        
+        // Tüm view'ları güncelle (aktif input hariç)
+        updateAllViews(true);
     }
 };
 
 // Genişletme bildirimi göster (eski fonksiyon - yeni helper kullanıyor)
-const showExpansionNotification = (oldSize, newSize) => {
-    NotificationHelper.showExpansion(oldSize, newSize);
-};
+// const 
+//     NotificationHelper.showExpansion(oldSize, newSize);
+// };
 
 // Geliştirici modunu tespit et
 const isDeveloperMode = () => {
@@ -165,8 +190,10 @@ const createGrid = (grid, className, type) => {
     
     // Data array'i gerekirse genişlet
     if (inputCount > data.length) {
+        const oldSize = data.length;
         const newSize = Math.max(data.length * 2, inputCount);
         expandDataArray(newSize);
+        updatePositionIndicator();
     }
     
     for (let i = 0; i < inputCount; i++) {
@@ -181,12 +208,17 @@ const createGrid = (grid, className, type) => {
         // Inputları boş başlat
         input.value = '';
         
+        // Önceki değeri başlat (Shift+Tab sorununu önlemek için)
+        previousInputValues.set(input, '');
+        
         // Varsayılan değerler için CSS sınıfı ekleme
         
         // Add event listeners for selection, input, and paste
         input.addEventListener('focus', handleFocus);
         input.addEventListener('input', handleInput);
         input.addEventListener('keydown', handleKeydown);
+        input.addEventListener('keyup', handleKeyup);
+        input.addEventListener('blur', handleBlur);
         input.addEventListener('paste', handlePaste);
 
         grid.appendChild(input);
@@ -201,51 +233,208 @@ const handleFocus = (event) => {
     }
     
     const index = parseInt(event.target.dataset.index, 10);
+    const inputElement = event.target;
+    
+    // Önceki değeri mevcut değer olarak ayarla (Shift+Tab sorununu önlemek için)
+    previousInputValues.set(inputElement, inputElement.value);
+    
     highlightCell(index);
 };
 
-// Input işleme ve tüm view'ları güncelleme
+// Input işleme - parse, data güncelleme ve otomatik geçiş
 const handleInput = (event) => {
     const index = parseInt(event.target.dataset.index, 10);
     const type = event.target.dataset.type;
-    const value = event.target.value;
+    let value = event.target.value;
+    const inputElement = event.target;
 
-    // Boş input - değeri değiştirme
-    if (value.length === 0) return;
+    // Önceki değeri al
+    const previousValue = previousInputValues.get(inputElement) || '';
+
+    // Geçersiz karakterleri filtrele (otomatik temizleme)
+    const filteredValue = filterInvalidChars(value, type);
+    
+    // Eğer filtreleme sonucu değiştiyse (geçersiz karakter vardı)
+    if (filteredValue !== value) {
+        const cursorPosition = inputElement.selectionStart;
+        value = filteredValue;
+        inputElement.value = value;
+        
+        // Cursor pozisyonunu ayarla (silinen karakter sayısı kadar geri git)
+        const newCursorPos = Math.max(0, cursorPosition - 1);
+        inputElement.setSelectionRange(newCursorPos, newCursorPos);
+    }
+
+    // Boş input - değeri sıfırla
+    if (value.length === 0) {
+        data[index] = 0;
+        touchedIndices.delete(index);
+        previousInputValues.set(inputElement, '');
+        inputElement.classList.remove('invalid-input');
+        updateAllViews(true);
+        return;
+    }
+
+    // Maksimum uzunluk kontrolü
+    const maxLength = getMaxLengthForType(type);
+    if (value.length > maxLength) {
+        value = value.substring(0, maxLength);
+        inputElement.value = value;
+    }
 
     // Parse ve kaydet
     const bytes = parseTextToBytes(value, type);
-    console.log("🚀 ~ handleInput :",value, bytes, index, type)
+    
+    // Geçersiz veri kontrolü (parse başarısız veya değer geçersiz)
+    const hasInvalidChars = filteredValue !== event.target.value || bytes.length === 0;
+    
     if (bytes.length > 0) {
+        // Geçerli veri - invalid class'ı kaldır
+        inputElement.classList.remove('invalid-input');
+        
+        const oldDataSize = getDataSize();
         data[index] = bytes[0];
         touchedIndices.add(index);
+        const newDataSize = getDataSize();
         
-        // Veri boyutu değişti, grid'leri yeniden oluştur (yeni input eklemek için)
-        recreateAllGrids();
-        
-        updateAllViews(true);
-        
-        // Auto-navigation (basitleştirilmiş)
-        if (isCompleteValue(value, type)) {
+        // Veri boyutu değiştiyse grid'leri yeniden oluştur
+        if (newDataSize > oldDataSize) {
+            recreateAllGrids();
             setTimeout(() => {
-              focusNextInput(index, type);
-            }, 10);
+                const activeInput = document.querySelector(`[data-index="${index}"][data-type="${type}"]`);
+                if (activeInput) {
+                    activeInput.focus();
+                }
+            }, 50);
+        } else {
+            updateAllViews(true);
         }
-    } else if (bytes.length === 0 && value.length > 0) {
-      console.log('bytes.length === 0', value, type);
-      event.target.value = '';
+
+        // Tamamlanmış değer kontrolü ve otomatik geçiş
+        // Sadece değer gerçekten değiştiyse ve tamamlanmışsa geçiş yap
+        if (isCompleteValue(value, type) && value !== previousValue) {
+            // Formatla
+            const formattedValue = formatBytesToText([bytes[0]], type, '');
+            const finalValue = type === 'hex' ? formattedValue.toUpperCase() : formattedValue;
+            inputElement.value = finalValue;
+            
+            // Önceki değeri güncelle
+            previousInputValues.set(inputElement, finalValue);
+            
+            // Sonraki input'a geç
+            setTimeout(() => {
+                focusNextInput(index, type);
+            }, 10);
+        } else {
+            // Önceki değeri güncelle
+            previousInputValues.set(inputElement, value);
+        }
+    } else {
+        // Geçersiz veri - görsel geri bildirim
+        if (value.length > 0) {
+            inputElement.classList.add('invalid-input');
+        } else {
+            inputElement.classList.remove('invalid-input');
+        }
+        previousInputValues.set(inputElement, value);
+    }
+};
+
+// Yardımcı fonksiyon: Geçersiz karakterleri filtrele
+const filterInvalidChars = (value, type) => {
+    if (!value) return '';
+    
+    switch (type) {
+        case 'hex':
+            // Sadece 0-9, a-f, A-F karakterlerini tut
+            return value.replace(/[^0-9a-fA-F]/g, '');
+        case 'decimal':
+            // Sadece 0-9 karakterlerini tut
+            return value.replace(/[^0-9]/g, '');
+        case 'binary':
+            // Sadece 0-1 karakterlerini tut
+            return value.replace(/[^01]/g, '');
+        case 'ascii':
+            // ASCII için tüm karakterler geçerli, sadece uzunluk kontrolü yapılacak
+            return value;
+        default:
+            return value;
     }
 };
 
 // Yardımcı fonksiyon: Tamamlanmış değer kontrolü
 const isCompleteValue = (value, type) => {
-    const patterns = {
-        hex: /^[0-9a-fA-F]{2}$/,
-        decimal: /^\d{3}$/,
-        binary: /^[01]{8}$/,
-        ascii: /^.{1}$/  // Boşluk karakteri de dahil olmak üzere herhangi bir karakter
-    };
-    return patterns[type]?.test(value) || false;
+    if (!value || value.length === 0) return false;
+    
+    const maxLength = getMaxLengthForType(type);
+    
+    // Uzunluk kontrolü
+    if (value.length !== maxLength) return false;
+    
+    // Format doğrulaması
+    switch (type) {
+        case 'hex':
+            return /^[0-9a-fA-F]+$/.test(value);
+        case 'decimal':
+            const num = parseInt(value, 10);
+            return !isNaN(num) && num >= 0 && num <= 255;
+        case 'binary':
+            return /^[01]+$/.test(value);
+        case 'ascii':
+            return value.length === 1; // Herhangi bir karakter
+        default:
+            return false;
+    }
+};
+
+// Keyup event - sadece formatlama (otomatik geçiş handleInput'da yapılıyor)
+const handleKeyup = (event) => {
+    const type = event.target.dataset.type;
+    const value = event.target.value;
+    const inputElement = event.target;
+
+    // Geçersiz karakter kontrolü ve görsel geri bildirim
+    const bytes = parseTextToBytes(value, type);
+    if (bytes.length === 0 && value.length > 0) {
+        inputElement.classList.add('invalid-input');
+    } else {
+        inputElement.classList.remove('invalid-input');
+    }
+
+    // Tamamlanmış değerleri formatla (otomatik geçiş yapma)
+    if (isCompleteValue(value, type) && bytes.length > 0) {
+        const formattedValue = formatBytesToText([bytes[0]], type, '');
+        const finalValue = type === 'hex' ? formattedValue.toUpperCase() : formattedValue;
+        
+        // Sadece formatlanmış değer farklıysa güncelle
+        if (value !== finalValue) {
+            inputElement.value = finalValue;
+            previousInputValues.set(inputElement, finalValue);
+        }
+    }
+};
+
+// Blur event - input'tan çıkıldığında formatla
+const handleBlur = (event) => {
+    const type = event.target.dataset.type;
+    const value = event.target.value;
+    const inputElement = event.target;
+
+    // Invalid class'ı kaldır
+    inputElement.classList.remove('invalid-input');
+
+    // Boş değilse formatla
+    if (value.length > 0) {
+        const bytes = parseTextToBytes(value, type);
+        if (bytes.length > 0) {
+            const formattedValue = formatBytesToText([bytes[0]], type, '');
+            const finalValue = type === 'hex' ? formattedValue.toUpperCase() : formattedValue;
+            if (value !== finalValue) {
+                inputElement.value = finalValue;
+                previousInputValues.set(inputElement, finalValue);
+            }
+        }
+    }
 };
 
 
@@ -308,8 +497,11 @@ const handlePaste = (event) => {
         const globalIndex = startIndex + i;
         if (globalIndex >= data.length) {
             // Array'i genişlet
+            const oldSize = data.length;
             const newSize = Math.max(data.length * 2, globalIndex + 1);
             expandDataArray(newSize);
+            
+            updatePositionIndicator();
         }
 
         data[globalIndex] = valuesToParse[i];
@@ -497,8 +689,11 @@ const handleFourInOneInput = (sourceFormat, text) => {
     
     // Ana data array'ini de güncelle ve genişletme kontrolü yap
     if (parsedBytes.length > data.length) {
+        const oldSize = data.length;
         const newSize = Math.max(data.length * 2, parsedBytes.length);
         expandDataArray(newSize);
+        showExpansionNotification(oldSize, newSize);
+        updatePositionIndicator();
         recreateAllGrids();
     }
     
@@ -617,9 +812,9 @@ const clearAllCells = () => {
     // Tüm touched indices'i temizle
     touchedIndices.clear();
     
-    // Array'i minimum boyuta düşür (2 input için: veri boyutu 1 + 1 input = 2)
-    if (data.length > 256) {
-        data = new Uint8Array(256);
+    // Array'i minimum boyuta düşür (1 byte: sadece yeni veri girebilmek için)
+    if (data.length > 1) {
+        data = new Uint8Array(1);
     }
     
     // Grid'leri yeniden oluştur (minimum 2 input: 1 veri + 1 yeni veri için)
@@ -848,10 +1043,11 @@ const handleContextMenuAction = (action) => {
     switch (action) {
         case 'copy':
             if (allSelected) {
-                // Tüm grid'i kopyala
-        const type = getActiveType();
-                // utils.js'deki standart formatBytesToText fonksiyonunu kullan
-                const textToCopy = formatBytesToText(data, type, ' ');
+                // Tüm grid'i kopyala (sadece gerçek veri)
+                const type = getActiveType();
+                const dataSize = getDataSize();
+                const actualData = data.slice(0, dataSize);
+                const textToCopy = formatBytesToText(actualData, type, ' ');
                 navigator.clipboard.writeText(textToCopy);
             } else if (activeIndex !== -1) {
                 // Aktif hücreyi kopyala
@@ -911,10 +1107,11 @@ const handleContextMenuAction = (action) => {
             break;
         case 'cut':
             if (allSelected) {
-                // Tüm grid'i kes
-        const type = getActiveType();
-                // utils.js'deki standart formatBytesToText fonksiyonunu kullan
-                const textToCopy = formatBytesToText(data, type, ' ');
+                // Tüm grid'i kes (sadece gerçek veri)
+                const type = getActiveType();
+                const dataSize = getDataSize();
+                const actualData = data.slice(0, dataSize);
+                const textToCopy = formatBytesToText(actualData, type, ' ');
                 navigator.clipboard.writeText(textToCopy);
                 clearAllCells();
             } else if (activeIndex !== -1) {
@@ -1281,8 +1478,10 @@ window.onload = () => {
     copyButtons.forEach(button => {
         button.addEventListener('click', () => {
             const type = button.dataset.type;
-            // utils.js'deki standart formatBytesToText fonksiyonunu kullan
-            const textToCopy = formatBytesToText(data, type, ' ');
+            // Sadece gerçekten girilmiş veriyi kopyala (tüm array değil)
+            const dataSize = getDataSize();
+            const actualData = data.slice(0, dataSize);
+            const textToCopy = formatBytesToText(actualData, type, ' ');
             
             // Use the clipboard API for modern browsers
             navigator.clipboard.writeText(textToCopy).then(() => {
@@ -2104,6 +2303,28 @@ let ptpParsedData = null;
 let ptpSelectedBlockIndex = -1;
 let isUpdatingPTPTextareas = false;
 
+// Save PTP file to localStorage
+const savePTPFileToLocalStorage = (fileData) => {
+    try {
+        localStorage.setItem('bytesync-last-ptp-file', JSON.stringify({
+            name: fileData.name,
+            content: fileData.content
+        }));
+    } catch (error) {
+        console.warn('PTP dosyası kaydedilemedi:', error);
+    }
+};
+
+// Load PTP file from localStorage
+const loadPTPFileFromLocalStorage = () => {
+    try {
+        const saved = localStorage.getItem('bytesync-last-ptp-file');
+        return saved ? JSON.parse(saved) : null;
+    } catch (error) {
+        return null;
+    }
+};
+
 // Load PTP file
 const loadPTPFile = (file) => {
     if (!file || !file.name.endsWith('.ptp')) {
@@ -2121,6 +2342,9 @@ const loadPTPFile = (file) => {
                 size: file.size,
                 content: content
             };
+            
+            // Save to localStorage
+            savePTPFileToLocalStorage(ptpFileData);
             
             // Parse the file
             ptpParsedData = parsePTPFile(content);
@@ -2473,8 +2697,11 @@ const addPTPToEditor = (blockIndex) => {
     // Check if we need to expand the data array
     const requiredSize = bytes.length;
     if (requiredSize > data.length) {
+        const oldSize = data.length;
         const newSize = Math.max(data.length * 2, requiredSize);
         expandDataArray(newSize);
+        
+        updatePositionIndicator();
         recreateAllGrids();
     }
     
@@ -2501,6 +2728,26 @@ const addPTPToEditor = (blockIndex) => {
 const initializeDocklightPTPMode = () => {
     // Load saved preferences
     loadPTPPreferences();
+    
+    // Load last opened PTP file from localStorage
+    const savedFileData = loadPTPFileFromLocalStorage();
+    if (savedFileData && savedFileData.name && savedFileData.content) {
+        ptpFileData = {
+            name: savedFileData.name,
+            size: savedFileData.content.length,
+            content: savedFileData.content
+        };
+        ptpParsedData = parsePTPFile(savedFileData.content);
+        displayPTPData(ptpParsedData);
+        showPTPFileInfo(ptpFileData, ptpParsedData);
+        loadPTPPreferences();
+        
+        const fileNameDiv = document.getElementById('ptp-file-name');
+        if (fileNameDiv) {
+            fileNameDiv.textContent = `Loaded: ${savedFileData.name}`;
+            fileNameDiv.style.color = 'var(--theme-success)';
+        }
+    }
     
     // File input
     const fileInput = document.getElementById('ptp-file-input');
