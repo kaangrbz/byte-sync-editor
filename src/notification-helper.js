@@ -88,11 +88,6 @@ const NotificationHelper = {
         }, duration);
     },
     
-    // Özel bildirimler
-    showExpansion: (oldSize, newSize) => {
-        NotificationHelper.show(`Array genişletildi: ${oldSize} → ${newSize} bytes`, 'info');
-    },
-    
     showSuccess: (message) => {
         NotificationHelper.show(message, 'success');
     },
