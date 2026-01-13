@@ -28,9 +28,87 @@
     <link rel="icon" type="image/png" sizes="16x16" href="./AppIcon.iconset/icon_16x16.png">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="styles.css">
-    <script src="theme.js"></script>
+    
+    <!-- Critical: Apply theme immediately to prevent flash -->
+    <script>
+        (function() {
+            // Tema renkleri tanımları
+            const themes = {
+                light: {
+                    primary: '#3b82f6',
+                    primaryHover: '#2563eb',
+                    secondary: '#6b7280',
+                    secondaryHover: '#4b5563',
+                    background: '#ffffff',
+                    surface: '#f9fafb',
+                    surfaceHover: '#f3f4f6',
+                    text: '#111827',
+                    textSecondary: '#6b7280',
+                    border: '#e5e7eb',
+                    borderFocus: '#3b82f6',
+                    success: '#10b981',
+                    successHover: '#059669',
+                    danger: '#ef4444',
+                    dangerHover: '#dc2626',
+                    warning: '#f59e0b',
+                    warningHover: '#d97706',
+                    input: '#ffffff',
+                    inputFocus: '#f0f9ff',
+                    zeroValue: '#9ca3af'
+                },
+                dark: {
+                    primary: '#6366f1',
+                    primaryHover: '#4f46e5',
+                    secondary: '#6b7280',
+                    secondaryHover: '#4b5563',
+                    background: '#1a1a1a',
+                    surface: '#1f2937',
+                    surfaceHover: '#374151',
+                    text: '#f9fafb',
+                    textSecondary: '#d1d5db',
+                    border: '#374151',
+                    borderFocus: '#6366f1',
+                    success: '#10b981',
+                    successHover: '#059669',
+                    danger: '#ef4444',
+                    dangerHover: '#dc2626',
+                    warning: '#f59e0b',
+                    warningHover: '#d97706',
+                    input: '#2b2b2b',
+                    inputFocus: '#4b4b4b',
+                    zeroValue: '#7d7d7d'
+                }
+            };
+            
+            // localStorage'dan temayı al, yoksa dark (varsayılan)
+            let theme = 'dark';
+            try {
+                const stored = localStorage.getItem('bytesync-theme');
+                if (stored === 'light' || stored === 'dark') {
+                    theme = stored;
+                }
+            } catch (e) {
+                // localStorage erişilemezse dark kullan
+            }
+            
+            // Tema renklerini hemen uygula
+            const themeColors = themes[theme];
+            const root = document.documentElement;
+            
+            Object.entries(themeColors).forEach(([key, value]) => {
+                root.style.setProperty(`--theme-${key}`, value);
+            });
+            
+            // Body class'ını ekle
+            document.documentElement.classList.add(`theme-${theme}`);
+        })();
+    </script>
+    
+    <!-- Theme and Notification Helper -->
+    <script type="module" src="./src/theme.ts"></script>
+    <script type="module" src="./src/notification-helper.ts"></script>
 </head>
-<body class="min-h-screen p-8" style="background-color: var(--theme-background); color: var(--theme-text);">
+<body class="min-h-screen p-8 theme-dark" style="background-color: var(--theme-background); color: var(--theme-text);">
 
     <div class="max-w-4xl mx-auto p-8 rounded-xl shadow-lg" style="background-color: var(--theme-surface); min-width: 1000px;">
         <h1 class="text-3xl font-bold text-center mb-6" style="color: var(--theme-primary);" id="app-title">ByteSync Editor v1.42.6</h1>
@@ -350,7 +428,7 @@
 
         <!-- ASCII/HEX/DECIMAL Reference Table -->
         <div class="mb-6 mt-6 p-4 rounded-lg" style="background-color: var(--theme-surface); border: 1px solid var(--theme-border);">
-            <h3 class="text-lg font-bold mb-4 text-center" style="color: var(--theme-text);">ASCII/HEX/DECIMAL Referans Tablosu (0-255)</h3>
+            <h3 class="text-lg font-bold mb-4 text-center" style="color: var(--theme-text);">ASCII/HEX/DECIMAL Referans Tablosu (0-255) - Unicode Desteği Aktif</h3>
             <div class="overflow-auto" style="max-height: 85vh; border-radius: 0.5rem;">
                 <table class="w-full text-sm" style="border-collapse: collapse; min-width: 100%;">
                     <thead style="position: sticky; top: 0; background-color: var(--theme-primary); color: white; z-index: 10;">
@@ -442,7 +520,7 @@
 
     </div>
 
-    <script src="src/notification-helper.js"></script>
+    <script type="module" src="./src/notification-helper.ts"></script>
     <script>
         // Platform tespiti ve klavye kısayolu güncellemesi
         const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
@@ -479,7 +557,8 @@
             });
         });
     </script>
-    <script type="module" src="app.js"></script>
+    <!-- Vite entry point -->
+    <script type="module" src="./src/app.ts"></script>
 
 </body>
 </html>

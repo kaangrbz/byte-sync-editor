@@ -3,9 +3,16 @@
  * Light ve Dark tema desteği ile localStorage entegrasyonu
  */
 
+import type { ThemeConfig, ThemeColors } from './types/index.js';
+
+type ThemeName = 'light' | 'dark';
+
 class ThemeManager {
+    private currentTheme: ThemeName;
+    private themes: Record<ThemeName, ThemeConfig>;
+
     constructor() {
-        this.currentTheme = this.getStoredTheme() || 'light';
+        this.currentTheme = (this.getStoredTheme() as ThemeName) || 'dark';
         this.themes = {
             light: {
                 name: 'Light',
@@ -64,22 +71,24 @@ class ThemeManager {
         this.init();
     }
 
-    init() {
+    init(): void {
         this.applyTheme(this.currentTheme);
         this.createThemeButton();
         this.bindEvents();
     }
 
-    getStoredTheme() {
+    getStoredTheme(): string | null {
         try {
-            return localStorage.getItem('bytesync-theme');
+            const stored = localStorage.getItem('bytesync-theme');
+            // Eğer tema kaydedilmemişse dark döndür
+            return stored || 'dark';
         } catch (e) {
             console.warn('localStorage erişilemiyor:', e);
             return 'dark';
         }
     }
 
-    setStoredTheme(theme) {
+    setStoredTheme(theme: string): void {
         try {
             localStorage.setItem('bytesync-theme', theme);
         } catch (e) {
@@ -87,7 +96,7 @@ class ThemeManager {
         }
     }
 
-    applyTheme(themeName) {
+    applyTheme(themeName: ThemeName): void {
         if (!this.themes[themeName]) {
             console.warn(`Bilinmeyen tema: ${themeName}`);
             return;
@@ -99,12 +108,14 @@ class ThemeManager {
         const theme = this.themes[themeName];
         const root = document.documentElement;
         
-        // CSS custom properties ile tema renklerini uygula
+        // CSS custom properties ile tema renklerini hemen uygula (hızlı)
         Object.entries(theme.colors).forEach(([key, value]) => {
             root.style.setProperty(`--theme-${key}`, value);
         });
 
-        // Body class'ını güncelle
+        // Body ve html class'ını güncelle
+        document.documentElement.className = document.documentElement.className.replace(/theme-\w+/g, '');
+        document.documentElement.classList.add(`theme-${themeName}`);
         document.body.className = document.body.className.replace(/theme-\w+/g, '');
         document.body.classList.add(`theme-${themeName}`);
 
@@ -115,8 +126,8 @@ class ThemeManager {
         this.updateInputCells();
     }
 
-    updateInputCells() {
-        const inputs = document.querySelectorAll('.input-cell');
+    updateInputCells(): void {
+        const inputs = document.querySelectorAll<HTMLInputElement>('.input-cell');
         inputs.forEach(input => {
             const value = parseInt(input.value, 10);
             if (value === 0) {
@@ -127,7 +138,7 @@ class ThemeManager {
         });
     }
 
-    createThemeButton() {
+    createThemeButton(): void {
         // Mevcut tema butonunu kaldır
         const existingButton = document.getElementById('theme-toggle');
         if (existingButton) {
@@ -135,7 +146,7 @@ class ThemeManager {
         }
 
         // Tersine çevir: mevcut tema değil, geçiş yapılacak tema gösterilsin
-        const nextTheme = this.currentTheme === 'dark' ? 'light' : 'dark';
+        const nextTheme: ThemeName = this.currentTheme === 'dark' ? 'light' : 'dark';
         const nextThemeData = this.themes[nextTheme];
         const button = document.createElement('button');
         button.id = 'theme-toggle';
@@ -146,15 +157,17 @@ class ThemeManager {
         `;
         
         // Başlık kısmına ekle
-        const header = document.querySelector('h1').parentElement;
-        header.appendChild(button);
+        const header = document.querySelector('h1')?.parentElement;
+        if (header) {
+            header.appendChild(button);
+        }
     }
 
-    updateThemeButton() {
+    updateThemeButton(): void {
         const button = document.getElementById('theme-toggle');
         if (button) {
             // Tersine çevir: mevcut tema değil, geçiş yapılacak tema gösterilsin
-            const nextTheme = this.currentTheme === 'dark' ? 'light' : 'dark';
+            const nextTheme: ThemeName = this.currentTheme === 'dark' ? 'light' : 'dark';
             const nextThemeData = this.themes[nextTheme];
             button.innerHTML = `
                 <span class="theme-icon">${nextThemeData.icon}</span>
@@ -163,16 +176,17 @@ class ThemeManager {
         }
     }
 
-    bindEvents() {
-        document.addEventListener('click', (e) => {
-            if (e.target.closest('#theme-toggle')) {
+    bindEvents(): void {
+        document.addEventListener('click', (e: MouseEvent) => {
+            const target = e.target as HTMLElement;
+            if (target.closest('#theme-toggle')) {
                 this.toggleTheme();
             }
         });
     }
 
-    toggleTheme() {
-        const newTheme = this.currentTheme === 'dark' ? 'light' : 'dark';
+    toggleTheme(): void {
+        const newTheme: ThemeName = this.currentTheme === 'dark' ? 'light' : 'dark';
         console.log(`Tema değiştiriliyor: ${this.currentTheme} -> ${newTheme}`);
         this.applyTheme(newTheme);
         
@@ -183,14 +197,23 @@ class ThemeManager {
         }, 300);
     }
 
-    getCurrentTheme() {
+    getCurrentTheme(): ThemeName {
         return this.currentTheme;
     }
 
-    getThemeColors() {
+    getThemeColors(): ThemeColors {
         return this.themes[this.currentTheme].colors;
     }
 }
 
 // Global olarak erişilebilir yap
+declare global {
+    interface Window {
+        ThemeManager: typeof ThemeManager;
+    }
+}
+
 window.ThemeManager = ThemeManager;
+
+export default ThemeManager;
+

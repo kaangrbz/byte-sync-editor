@@ -1,7 +1,19 @@
-// Bildirim sistemi helper'ı
-const NotificationHelper = {
+/**
+ * ByteSync Editor - Notification Helper
+ * Bildirim sistemi helper'ı
+ */
+
+export type NotificationType = 'success' | 'info' | 'warning' | 'error';
+
+interface NotificationTypeConfig {
+    icon: string;
+    bg: string;
+    color: string;
+}
+
+class NotificationHelper {
     // Bildirim tipleri
-    types: {
+    private types: Record<NotificationType, NotificationTypeConfig> = {
         success: {
             icon: '✅',
             bg: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
@@ -22,18 +34,18 @@ const NotificationHelper = {
             bg: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
             color: 'white'
         }
-    },
-    
+    };
+
     // Bildirim göster
-    show: (message, type = 'info', duration = 3000) => {
+    show(message: string, type: NotificationType = 'info', duration: number = 3000): void {
         // Mevcut bildirimi kaldır
         const existingNotification = document.getElementById('app-notification');
         if (existingNotification) {
             existingNotification.remove();
         }
-        
-        const notificationType = NotificationHelper.types[type] || NotificationHelper.types.info;
-        
+
+        const notificationType = this.types[type] || this.types.info;
+
         // Yeni bildirim oluştur
         const notification = document.createElement('div');
         notification.id = 'app-notification';
@@ -57,7 +69,7 @@ const NotificationHelper = {
                 ${notificationType.icon} ${message}
             </div>
         `;
-        
+
         // CSS animasyonu ekle (sadece bir kez)
         if (!document.getElementById('notification-styles')) {
             const style = document.createElement('style');
@@ -74,9 +86,9 @@ const NotificationHelper = {
             `;
             document.head.appendChild(style);
         }
-        
+
         document.body.appendChild(notification);
-        
+
         // Belirtilen süre sonra kaldır
         setTimeout(() => {
             if (notification) {
@@ -86,31 +98,41 @@ const NotificationHelper = {
                 }, 300);
             }
         }, duration);
-    },
-    
-    // Özel bildirimler
-    showExpansion: (oldSize, newSize) => {
-        NotificationHelper.show(`Array genişletildi: ${oldSize} → ${newSize} bytes`, 'info');
-    },
-    
-    showSuccess: (message) => {
-        NotificationHelper.show(message, 'success');
-    },
-    
-    showWarning: (message) => {
-        NotificationHelper.show(message, 'warning');
-    },
-    
-    showError: (message) => {
-        NotificationHelper.show(message, 'error');
-    },
-    
-    showInfo: (message) => {
-        NotificationHelper.show(message, 'info');
     }
-};
 
-// Export for use in other files
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = NotificationHelper;
+    // Özel bildirimler
+    showExpansion(oldSize: number, newSize: number): void {
+        this.show(`Array genişletildi: ${oldSize} → ${newSize} bytes`, 'info');
+    }
+
+    showSuccess(message: string): void {
+        this.show(message, 'success');
+    }
+
+    showWarning(message: string): void {
+        this.show(message, 'warning');
+    }
+
+    showError(message: string): void {
+        this.show(message, 'error');
+    }
+
+    showInfo(message: string): void {
+        this.show(message, 'info');
+    }
 }
+
+// Singleton instance
+const notificationHelperInstance = new NotificationHelper();
+
+// Global olarak erişilebilir yap
+declare global {
+    interface Window {
+        NotificationHelper: NotificationHelper;
+    }
+}
+
+window.NotificationHelper = notificationHelperInstance;
+
+export default notificationHelperInstance;
+
