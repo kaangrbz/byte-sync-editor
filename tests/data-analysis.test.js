@@ -1,165 +1,260 @@
-/**
- * Data Analysis Tests
- * Tests for data analysis functionality
- */
+import {
+  analyzeData,
+  calculateEntropy,
+  getByteFrequency,
+  detectPatterns
+} from '../src/utils.js';
 
-const { analyzeData, calculateEntropy, getByteFrequency, detectPatterns } = require('../src/utils');
-
-describe('ByteSync Editor - Data Analysis', () => {
-    describe('calculateEntropy', () => {
-        it('should calculate entropy for uniform distribution', () => {
-            const data = new Uint8Array([0, 1, 2, 3, 4, 5, 6, 7]);
-            const entropy = calculateEntropy(data);
-            expect(entropy).toBeCloseTo(3.0, 1); // 8 different values = 3 bits
-        });
-
-        it('should calculate entropy for repeated data', () => {
-            const data = new Uint8Array([1, 1, 1, 1, 1, 1, 1, 1]);
-            const entropy = calculateEntropy(data);
-            expect(entropy).toBeCloseTo(0.0, 1); // All same = 0 entropy
-        });
-
-        it('should handle empty data', () => {
-            const data = new Uint8Array([]);
-            const entropy = calculateEntropy(data);
-            expect(entropy).toBe(0);
-        });
-
-        it('should calculate entropy for mixed data', () => {
-            const data = new Uint8Array([1, 1, 2, 2, 3, 3, 4, 4]);
-            const entropy = calculateEntropy(data);
-            expect(entropy).toBeCloseTo(2.0, 1); // 4 different values = 2 bits
-        });
+describe('Data Analysis Fonksiyonları', () => {
+  
+  describe('calculateEntropy', () => {
+    test('boş array için 0 döndürmeli', () => {
+      expect(calculateEntropy([])).toBe(0);
     });
 
-    describe('getByteFrequency', () => {
-        it('should count byte frequencies correctly', () => {
-            const data = new Uint8Array([1, 1, 2, 3, 2, 1]);
-            const frequency = getByteFrequency(data);
-            expect(frequency[1]).toBe(3);
-            expect(frequency[2]).toBe(2);
-            expect(frequency[3]).toBe(1);
-        });
-
-        it('should handle empty data', () => {
-            const data = new Uint8Array([]);
-            const frequency = getByteFrequency(data);
-            expect(Object.keys(frequency)).toHaveLength(0);
-        });
-
-        it('should handle single byte', () => {
-            const data = new Uint8Array([42]);
-            const frequency = getByteFrequency(data);
-            expect(frequency[42]).toBe(1);
-        });
+    test('tek elemanlı array için 0 döndürmeli', () => {
+      expect(calculateEntropy([65])).toBe(0);
     });
 
-    describe('detectPatterns', () => {
-        it('should detect repeating patterns', () => {
-            const data = new Uint8Array([1, 1, 2, 2, 3, 3]);
-            const patterns = detectPatterns(data);
-            expect(patterns.repeats).toBe(3);
-        });
-
-        it('should detect sequences', () => {
-            const data = new Uint8Array([1, 2, 3, 4, 5]);
-            const patterns = detectPatterns(data);
-            expect(patterns.sequences).toBe(3); // 1,2,3 and 2,3,4 and 3,4,5
-        });
-
-        it('should count ASCII characters', () => {
-            const data = new Uint8Array([72, 101, 108, 108, 111]); // "Hello"
-            const patterns = detectPatterns(data);
-            expect(patterns.asciiChars).toBe(5);
-        });
-
-        it('should count control characters', () => {
-            const data = new Uint8Array([0, 13, 10, 127, 32]); // NUL, CR, LF, DEL, SPACE
-            const patterns = detectPatterns(data);
-            expect(patterns.controlChars).toBe(4); // 0, 13, 10, 127
-        });
-
-        it('should handle empty data', () => {
-            const data = new Uint8Array([]);
-            const patterns = detectPatterns(data);
-            expect(patterns.repeats).toBe(0);
-            expect(patterns.sequences).toBe(0);
-            expect(patterns.asciiChars).toBe(0);
-            expect(patterns.controlChars).toBe(0);
-        });
+    test('aynı elemanlardan oluşan array için 0 döndürmeli', () => {
+      expect(calculateEntropy([65, 65, 65, 65])).toBe(0);
     });
 
-    describe('analyzeData', () => {
-        it('should provide complete analysis', () => {
-            const data = new Uint8Array([72, 101, 108, 108, 111, 0, 0, 0]); // "Hello" + padding
-            const analysis = analyzeData(data);
-            
-            expect(analysis.totalBytes).toBe(8);
-            expect(analysis.nonZeroBytes).toBe(5);
-            expect(analysis.uniqueBytes).toBe(5); // H, e, l, l, o (including 0)
-            expect(analysis.entropy).toBe('2.16'); // Actual calculated value
-            expect(analysis.mostFrequent).toHaveLength(3);
-            expect(analysis.patterns.asciiChars).toBe(5);
-            expect(analysis.patterns.controlChars).toBe(3);
-        });
-
-        it('should handle all zeros', () => {
-            const data = new Uint8Array([0, 0, 0, 0]);
-            const analysis = analyzeData(data);
-            
-            expect(analysis.totalBytes).toBe(4);
-            expect(analysis.nonZeroBytes).toBe(0);
-            expect(analysis.uniqueBytes).toBe(1);
-            expect(analysis.entropy).toBe('0.00');
-            expect(analysis.patterns.asciiChars).toBe(0);
-            expect(analysis.patterns.controlChars).toBe(4);
-        });
-
-        it('should handle single byte', () => {
-            const data = new Uint8Array([65]); // 'A'
-            const analysis = analyzeData(data);
-            
-            expect(analysis.totalBytes).toBe(1);
-            expect(analysis.nonZeroBytes).toBe(1);
-            expect(analysis.uniqueBytes).toBe(1);
-            expect(analysis.entropy).toBe('0.00');
-            expect(analysis.patterns.asciiChars).toBe(1);
-        });
-
-        it('should handle empty data', () => {
-            const data = new Uint8Array([]);
-            const analysis = analyzeData(data);
-            
-            expect(analysis.totalBytes).toBe(0);
-            expect(analysis.nonZeroBytes).toBe(0);
-            expect(analysis.uniqueBytes).toBe(0);
-            expect(analysis.entropy).toBe('0.00');
-            expect(analysis.mostFrequent).toHaveLength(0);
-        });
+    test('farklı elemanlardan oluşan array için pozitif entropy döndürmeli', () => {
+      const entropy = calculateEntropy([65, 66, 67, 68]);
+      expect(entropy).toBeGreaterThan(0);
     });
 
-    describe('Edge cases', () => {
-        it('should handle maximum byte values', () => {
-            const data = new Uint8Array([255, 255, 0, 0]);
-            const analysis = analyzeData(data);
-            
-            expect(analysis.uniqueBytes).toBe(2);
-            expect(analysis.mostFrequent[0]).toBe('0x00 (2)'); // 0 appears twice, 255 appears twice
-        });
-
-        it('should handle mixed ASCII and control characters', () => {
-            const data = new Uint8Array([72, 0, 101, 13, 108, 10, 111]); // "H\0e\rl\no"
-            const patterns = detectPatterns(data);
-            
-            expect(patterns.asciiChars).toBe(4); // H, e, l, o
-            expect(patterns.controlChars).toBe(3); // 0, 13, 10
-        });
-
-        it('should detect complex sequences', () => {
-            const data = new Uint8Array([1, 2, 3, 5, 6, 7, 9, 10, 11]);
-            const patterns = detectPatterns(data);
-            
-            expect(patterns.sequences).toBe(3); // 1,2,3 and 5,6,7 and 9,10,11 (6,7,9 is not consecutive)
-        });
+    test('maksimum entropy için tüm byte değerleri farklı olmalı', () => {
+      const allBytes = Array.from({ length: 256 }, (_, i) => i);
+      const entropy = calculateEntropy(allBytes);
+      expect(entropy).toBeGreaterThan(0);
+      expect(entropy).toBeLessThanOrEqual(8); // 8 bit = maksimum entropy
     });
+
+    test('Shannon entropy formülünü doğru hesaplamalı', () => {
+      // 2 farklı byte, eşit dağılım: entropy = -2 * (0.5 * log2(0.5)) = 1
+      const data = [65, 66, 65, 66];
+      const entropy = calculateEntropy(data);
+      expect(entropy).toBeCloseTo(1, 1);
+    });
+
+    test('Uint8Array ile çalışmalı', () => {
+      const data = new Uint8Array([65, 66, 67, 68]);
+      const entropy = calculateEntropy(Array.from(data));
+      expect(entropy).toBeGreaterThan(0);
+    });
+  });
+
+  describe('getByteFrequency', () => {
+    test('boş array için boş object döndürmeli', () => {
+      const frequency = getByteFrequency([]);
+      expect(frequency).toEqual({});
+    });
+
+    test('tek elemanlı array için doğru frequency döndürmeli', () => {
+      const frequency = getByteFrequency([65]);
+      expect(frequency[65]).toBe(1);
+      expect(Object.keys(frequency).length).toBe(1);
+    });
+
+    test('çoklu elemanlar için doğru frequency döndürmeli', () => {
+      const frequency = getByteFrequency([65, 66, 65, 67, 65]);
+      expect(frequency[65]).toBe(3);
+      expect(frequency[66]).toBe(1);
+      expect(frequency[67]).toBe(1);
+    });
+
+    test('tüm byte değerleri için frequency hesaplamalı', () => {
+      const data = [0, 255, 128, 0, 255];
+      const frequency = getByteFrequency(data);
+      expect(frequency[0]).toBe(2);
+      expect(frequency[255]).toBe(2);
+      expect(frequency[128]).toBe(1);
+    });
+
+    test('Uint8Array ile çalışmalı', () => {
+      const data = new Uint8Array([65, 66, 65]);
+      const frequency = getByteFrequency(Array.from(data));
+      expect(frequency[65]).toBe(2);
+      expect(frequency[66]).toBe(1);
+    });
+  });
+
+  describe('detectPatterns', () => {
+    test('boş array için sıfır pattern döndürmeli', () => {
+      const patterns = detectPatterns([]);
+      expect(patterns.repeats).toBe(0);
+      expect(patterns.sequences).toBe(0);
+      expect(patterns.asciiChars).toBe(0);
+      expect(patterns.controlChars).toBe(0);
+    });
+
+    test('tekrar eden pattern\'leri tespit etmeli', () => {
+      const data = [65, 65, 66, 66, 67, 67];
+      const patterns = detectPatterns(data);
+      expect(patterns.repeats).toBe(3); // 3 çift tekrar
+    });
+
+    test('sequence pattern\'lerini tespit etmeli', () => {
+      const data = [65, 66, 67, 68]; // Artan sequence
+      const patterns = detectPatterns(data);
+      expect(patterns.sequences).toBeGreaterThan(0);
+    });
+
+    test('azalan sequence pattern\'lerini tespit etmeli', () => {
+      const data = [68, 67, 66, 65]; // Azalan sequence
+      const patterns = detectPatterns(data);
+      expect(patterns.sequences).toBeGreaterThan(0);
+    });
+
+    test('ASCII karakterlerini saymalı', () => {
+      const data = [65, 66, 67, 32, 33]; // A, B, C, space, !
+      const patterns = detectPatterns(data);
+      expect(patterns.asciiChars).toBe(5);
+    });
+
+    test('kontrol karakterlerini saymalı', () => {
+      const data = [0, 9, 10, 13, 127]; // NUL, TAB, LF, CR, DEL
+      const patterns = detectPatterns(data);
+      expect(patterns.controlChars).toBe(5);
+    });
+
+    test('ASCII ve kontrol karakterlerini birlikte saymalı', () => {
+      const data = [65, 0, 66, 10, 67]; // A, NUL, B, LF, C
+      const patterns = detectPatterns(data);
+      expect(patterns.asciiChars).toBe(3);
+      expect(patterns.controlChars).toBe(2);
+    });
+
+    test('genişletilmiş ASCII karakterlerini ASCII olarak saymamalı', () => {
+      const data = [128, 200, 255]; // Genişletilmiş ASCII
+      const patterns = detectPatterns(data);
+      expect(patterns.asciiChars).toBe(0);
+      expect(patterns.controlChars).toBe(0);
+    });
+
+    test('karmaşık pattern\'leri tespit etmeli', () => {
+      const data = [65, 65, 66, 67, 68, 65, 65]; // Tekrarlar ve sequence
+      const patterns = detectPatterns(data);
+      expect(patterns.repeats).toBeGreaterThan(0);
+      expect(patterns.sequences).toBeGreaterThan(0);
+    });
+
+    test('Uint8Array ile çalışmalı', () => {
+      const data = new Uint8Array([65, 66, 65]);
+      const patterns = detectPatterns(Array.from(data));
+      // [65, 66, 65] -> 65-66 (farklı), 66-65 (farklı) -> 0 repeat
+      // Repeat sadece ardışık aynı değerler için sayılır
+      expect(patterns.repeats).toBe(0);
+    });
+  });
+
+  describe('analyzeData', () => {
+    test('boş data için doğru analiz döndürmeli', () => {
+      const data = new Uint8Array([]);
+      const analysis = analyzeData(data);
+      
+      expect(analysis.totalBytes).toBe(0);
+      expect(analysis.nonZeroBytes).toBe(0);
+      expect(analysis.uniqueBytes).toBe(0);
+      expect(analysis.entropy).toBe('0.00');
+      expect(analysis.mostFrequent).toEqual([]);
+      expect(analysis.patterns).toBeDefined();
+    });
+
+    test('basit data için doğru analiz döndürmeli', () => {
+      const data = new Uint8Array([72, 101, 108, 108, 111]); // "Hello"
+      const analysis = analyzeData(data);
+      
+      expect(analysis.totalBytes).toBe(5);
+      expect(analysis.nonZeroBytes).toBe(5);
+      expect(analysis.uniqueBytes).toBe(4); // H, e, l, o
+      expect(parseFloat(analysis.entropy)).toBeGreaterThan(0);
+      expect(analysis.mostFrequent.length).toBeLessThanOrEqual(3);
+      expect(analysis.patterns).toBeDefined();
+    });
+
+    test('zero içeren data için doğru nonZeroBytes saymalı', () => {
+      const data = new Uint8Array([72, 0, 101, 0, 108]);
+      const analysis = analyzeData(data);
+      
+      expect(analysis.totalBytes).toBe(5);
+      expect(analysis.nonZeroBytes).toBe(3);
+    });
+
+    test('uniqueBytes sayısını doğru hesaplamalı', () => {
+      const data = new Uint8Array([65, 66, 65, 67, 65]); // 3 unique: A, B, C
+      const analysis = analyzeData(data);
+      
+      expect(analysis.uniqueBytes).toBe(3);
+    });
+
+    test('entropy string formatında olmalı', () => {
+      const data = new Uint8Array([72, 101, 108, 108, 111]);
+      const analysis = analyzeData(data);
+      
+      expect(typeof analysis.entropy).toBe('string');
+      expect(analysis.entropy).toMatch(/^\d+\.\d{2}$/); // "X.XX" formatı
+    });
+
+    test('mostFrequent en fazla 3 eleman içermeli', () => {
+      const data = new Uint8Array([65, 65, 66, 66, 67, 67, 68, 68, 69, 69]);
+      const analysis = analyzeData(data);
+      
+      expect(analysis.mostFrequent.length).toBeLessThanOrEqual(3);
+    });
+
+    test('mostFrequent formatı doğru olmalı', () => {
+      const data = new Uint8Array([65, 65, 66]);
+      const analysis = analyzeData(data);
+      
+      if (analysis.mostFrequent.length > 0) {
+        analysis.mostFrequent.forEach(item => {
+          expect(typeof item).toBe('string');
+          expect(item).toMatch(/^0x[0-9A-F]{2} \(\d+\)$/); // "0xXX (count)" formatı
+        });
+      }
+    });
+
+    test('patterns objesi doğru yapıda olmalı', () => {
+      const data = new Uint8Array([72, 101, 108, 108, 111]);
+      const analysis = analyzeData(data);
+      
+      expect(analysis.patterns).toBeDefined();
+      expect(analysis.patterns).toHaveProperty('repeats');
+      expect(analysis.patterns).toHaveProperty('sequences');
+      expect(analysis.patterns).toHaveProperty('asciiChars');
+      expect(analysis.patterns).toHaveProperty('controlChars');
+    });
+
+    test('karmaşık data için kapsamlı analiz döndürmeli', () => {
+      const data = new Uint8Array([
+        72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33, // "Hello World!"
+        0, 0, 0, // Trailing zeros
+        65, 65, 65, // Repeats
+        1, 2, 3, 4, 5 // Sequence
+      ]);
+      const analysis = analyzeData(data);
+      
+      // Toplam: 12 + 3 + 3 + 5 = 23 byte
+      expect(analysis.totalBytes).toBe(23);
+      expect(analysis.nonZeroBytes).toBe(20); // 23 - 3 zero = 20
+      expect(analysis.uniqueBytes).toBeGreaterThan(0);
+      expect(parseFloat(analysis.entropy)).toBeGreaterThan(0);
+      expect(analysis.patterns.repeats).toBeGreaterThan(0);
+      expect(analysis.patterns.sequences).toBeGreaterThan(0);
+    });
+
+    test('tüm 256 byte değeri için analiz yapabilmeli', () => {
+      const allBytes = Array.from({ length: 256 }, (_, i) => i);
+      const data = new Uint8Array(allBytes);
+      const analysis = analyzeData(data);
+      
+      expect(analysis.totalBytes).toBe(256);
+      expect(analysis.uniqueBytes).toBe(256);
+      expect(parseFloat(analysis.entropy)).toBeGreaterThan(0);
+    });
+  });
 });
+

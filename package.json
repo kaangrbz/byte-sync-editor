@@ -1,6 +1,6 @@
 {
   "name": "bytesync-editor",
-  "version": "1.42.6",
+  "version": "1.42.4",
   "description": "",
   "main": "main.js",
   "scripts": {
@@ -52,6 +52,7 @@
   "keywords": [],
   "devDependencies": {
     "@babel/preset-env": "^7.28.3",
+    "baseline-browser-mapping": "^2.9.14",
     "electron": "^38.0.0",
     "electron-builder": "^26.0.12",
     "identity-obj-proxy": "^3.0.0",

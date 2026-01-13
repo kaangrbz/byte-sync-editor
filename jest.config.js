@@ -13,7 +13,7 @@ module.exports = {
   transform: {
     '^.+\\.js$': 'babel-jest'
   },
-  moduleNameMapping: {
+  moduleNameMapper: {
     '\\.(css|less|scss)$': 'identity-obj-proxy'
   }
 };
