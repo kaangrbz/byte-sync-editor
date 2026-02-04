@@ -14,6 +14,7 @@ import {
     pasteToAllSelected,
     focusNextInput
 } from '../grid-manager.js';
+import type { GridFormat } from '../types/index.js';
 import { handleFourInOneInput } from '../modes/four-in-one-mode.js';
 
 // Context menu oluşturma
@@ -67,7 +68,7 @@ const createContextMenu = (x: number, y: number): void => {
             `;
             
             menuItem.addEventListener('click', () => {
-                handleContextMenuAction(item.action);
+                if (item.action) handleContextMenuAction(item.action);
                 menu.remove();
             });
             
@@ -100,7 +101,7 @@ const handleContextMenuAction = (action: string): void => {
         case 'copy':
             if (allSelected) {
                 // Tüm grid'i kopyala
-                const type = getActiveType() || 'hex';
+                const type = (getActiveType() || 'hex') as GridFormat;
                 const textToCopy = formatBytesToText(data, type, ' ');
                 navigator.clipboard.writeText(textToCopy);
             } else if (activeIndex !== -1) {
@@ -162,7 +163,7 @@ const handleContextMenuAction = (action: string): void => {
         case 'cut':
             if (allSelected) {
                 // Tüm grid'i kes
-                const type = getActiveType() || 'hex';
+                const type = (getActiveType() || 'hex') as GridFormat;
                 const textToCopy = formatBytesToText(data, type, ' ');
                 navigator.clipboard.writeText(textToCopy);
                 clearAllCells();

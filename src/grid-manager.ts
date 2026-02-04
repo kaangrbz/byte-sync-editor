@@ -134,6 +134,7 @@ const recreateAllGrids = (): void => {
         
         // Pozisyon göstergesini güncelle
         updatePositionIndicator();
+        onRecreateGridsCallback?.();
     }
 };
 
@@ -273,7 +274,7 @@ const navigateToInput = (index: number, direction: 'next' | 'prev' = 'next'): vo
 };
 
 // Bir sonraki input'a odaklan
-const focusNextInput = (currentIndex: number, type: string): void => {
+const focusNextInput = (currentIndex: number, _type: string): void => {
     navigateToInput(currentIndex, 'next');
 };
 
@@ -491,6 +492,7 @@ const updateAllViews = (excludeActiveInput: boolean = false): void => {
     
     // Pozisyon göstergesini güncelle
     updatePositionIndicator();
+    onUpdateViewsCallback?.();
 };
 
 // Pozisyon göstergesini güncelle

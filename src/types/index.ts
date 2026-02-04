@@ -65,6 +65,7 @@ declare global {
         adsbygoogle?: unknown[];
       };
     };
+    electronAPI?: ElectronAPI;
     showOpenFilePicker?: (options?: {
       types?: Array<{
         description?: string;

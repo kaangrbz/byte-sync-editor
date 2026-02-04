@@ -21,12 +21,6 @@ export const getMaxLengthForType = (type: GridFormat): number => {
     }
 };
 
-// Kontrol karakterleri için görsel gösterim mapping'i - artık sadece direkt karakter
-const getControlCharDisplay = (byte: number): string => {
-    // Tüm karakterleri direkt göster
-    return String.fromCharCode(byte);
-};
-
 // Akıllı kopyalama - sondan başlayıp ilk geçerli karaktere kadar git
 export const getSmartCopyData = (data: Uint8Array | number[], type: GridFormat): string[] => {
     const values = formatBytesToText(data, type, ' ').split(' ');
@@ -156,21 +150,6 @@ export const analyzeData = (data: Uint8Array | number[]): DataAnalysisResult => 
         mostFrequent,
         patterns
     };
-};
-
-// Utilities
-const isPrintableAscii = (n: number): boolean => n >= 0x20 && n <= 0x7E;
-
-// BigInt -> minimal big-endian byte array
-const bigintToBytesBE = (nBigInt: bigint): number[] => {
-  if (nBigInt === 0n) return [0];
-  const out: number[] = [];
-  let v = nBigInt < 0n ? -nBigInt : nBigInt;
-  while (v > 0n) {
-    out.unshift(Number(v & 0xFFn));
-    v >>= 8n;
-  }
-  return out;
 };
 
 // Basit ve anlaşılır input parser

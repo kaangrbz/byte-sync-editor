@@ -3,6 +3,7 @@
  * PTP dosya parsing ve yönetimi
  */
 
+import type { GridFormat, DelimiterOption } from './types/index.js';
 import stateManager from './state-manager.js';
 import { parseTextToBytes, formatBytesToText, getDelimiter } from './utils.js';
 import { recreateAllGrids } from './grid-manager.js';
@@ -335,7 +336,7 @@ const updatePTPTextareas = (block: PTPSendBlock): void => {
     formats.forEach(format => {
         const textarea = document.getElementById(`ptp-textarea-${format}`) as HTMLTextAreaElement;
         if (textarea) {
-            textarea.value = formatBytesToText(Array.from(block.bytes), format, delimiter);
+            textarea.value = formatBytesToText(Array.from(block.bytes), format as GridFormat, delimiter);
         }
     });
     
@@ -354,7 +355,7 @@ const handlePTPTextareaInput = (sourceFormat: string, text: string): void => {
     const block = ptpParsedData.sendBlocks[ptpSelectedBlockIndex];
     
     // Parse the input text to bytes
-    const parsedBytes = parseTextToBytes(text, sourceFormat);
+    const parsedBytes = parseTextToBytes(text, sourceFormat as GridFormat);
     block.bytes = new Uint8Array(parsedBytes);
     
     // Update hex string
@@ -366,7 +367,7 @@ const handlePTPTextareaInput = (sourceFormat: string, text: string): void => {
         if (format !== sourceFormat) {
             const textarea = document.getElementById(`ptp-textarea-${format}`) as HTMLTextAreaElement;
             if (textarea) {
-                textarea.value = formatBytesToText(parsedBytes, format, delimiter);
+                textarea.value = formatBytesToText(parsedBytes, format as GridFormat, delimiter);
             }
         }
     });
@@ -381,7 +382,7 @@ const handlePTPTextareaInput = (sourceFormat: string, text: string): void => {
 const getPTPDelimiter = (): string => {
     const option = (document.querySelector('input[name="ptp-delimiter-option"]:checked') as HTMLInputElement)?.value || 'comma';
     const custom = (document.getElementById('ptp-custom-delimiter') as HTMLInputElement)?.value || '';
-    return getDelimiter(option, custom);
+    return getDelimiter(option as DelimiterOption, custom);
 };
 
 // Save PTP preferences

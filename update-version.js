@@ -7,10 +7,14 @@
  * node update-version.js patch   (1.41.1 → 1.41.2)
  * node update-version.js minor   (1.41.1 → 1.42.0)
  * node update-version.js major   (1.41.1 → 2.0.0)
+ * node update-version.js manual 1.43.0   (versiyonu elle belirle)
  */
 
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
 
 // Güncellenecek dosyalar
 const FILES_TO_UPDATE = [
@@ -73,6 +77,11 @@ function calculateNewVersion(currentVersion, type) {
   return formatVersion(version);
 }
 
+/** Semver formatında mı kontrol eder (X.Y.Z) */
+function isValidVersion(version) {
+  return /^\d+\.\d+\.\d+$/.test(version);
+}
+
 /**
  * package.json dosyasından mevcut versiyonu okur
  * @returns {string} - Mevcut versiyon
@@ -122,12 +131,10 @@ function updateManifestJson(newVersion) {
  */
 function updateSwJs(newVersion) {
   try {
+    if (!fs.existsSync('sw.js')) return;
     let swContent = fs.readFileSync('sw.js', 'utf8');
-    
-    // CACHE_NAME satırını bul ve güncelle
     const cacheNameRegex = /const CACHE_NAME = 'bytesync-editor-v[\d.]+';/;
     const newCacheName = `const CACHE_NAME = 'bytesync-editor-v${newVersion}';`;
-    
     if (cacheNameRegex.test(swContent)) {
       swContent = swContent.replace(cacheNameRegex, newCacheName);
       fs.writeFileSync('sw.js', swContent);
@@ -165,26 +172,33 @@ function updateIndexHtml(newVersion) {
 }
 
 /**
- * app.js dosyasındaki fallback versiyonu günceller
+ * src/app.ts dosyasındaki fallback versiyonları günceller
  * @param {string} newVersion - Yeni versiyon
  */
-function updateAppJs(newVersion) {
+function updateAppTs(newVersion) {
+  const appPath = 'src/app.ts';
   try {
-    let appContent = fs.readFileSync('app.js', 'utf8');
-    
-    // Fallback version satırını bul ve güncelle
-    const fallbackVersionRegex = /version: '[\d.]+', \/\/ fallback version/;
-    const newFallbackVersion = `version: '${newVersion}', // fallback version`;
-    
-    if (fallbackVersionRegex.test(appContent)) {
-      appContent = appContent.replace(fallbackVersionRegex, newFallbackVersion);
-      fs.writeFileSync('app.js', appContent);
-      console.log(`✅ app.js fallback version güncellendi: ${newVersion}`);
-    } else {
-      console.log('⚠️  app.js dosyasında fallback version bulunamadı');
+    if (!fs.existsSync(appPath)) return;
+    let content = fs.readFileSync(appPath, 'utf8');
+    const fallbackRegex = /version: '[\d.]+', \/\/ fallback version/;
+    const manifestFallbackRegex = /manifest\.version \|\| '[\d.]+'/;
+    const newFallback = `version: '${newVersion}', // fallback version`;
+    const newManifestFallback = `manifest.version || '${newVersion}'`;
+    let updated = false;
+    if (fallbackRegex.test(content)) {
+      content = content.replace(fallbackRegex, newFallback);
+      updated = true;
+    }
+    if (manifestFallbackRegex.test(content)) {
+      content = content.replace(manifestFallbackRegex, newManifestFallback);
+      updated = true;
+    }
+    if (updated) {
+      fs.writeFileSync(appPath, content);
+      console.log(`✅ src/app.ts güncellendi: ${newVersion}`);
     }
   } catch (error) {
-    throw new Error('app.js güncellenemedi: ' + error.message);
+    throw new Error('src/app.ts güncellenemedi: ' + error.message);
   }
 }
 
@@ -199,41 +213,51 @@ function main() {
 🚀 ByteSync Editor - Versiyon Güncelleme Scripti
 
 Kullanım:
-  node update-version.js patch   (1.41.1 → 1.41.2)
-  node update-version.js minor   (1.41.1 → 1.42.0)
-  node update-version.js major   (1.41.1 → 2.0.0)
+  node update-version.js patch        (1.41.1 → 1.41.2)
+  node update-version.js minor       (1.41.1 → 1.42.0)
+  node update-version.js major       (1.41.1 → 2.0.0)
+  node update-version.js manual 1.43.0   (versiyonu elle belirle)
 
 Versiyon Türleri:
   patch  - Hata düzeltmeleri, küçük iyileştirmeler
   minor  - Yeni özellikler, iyileştirmeler
   major  - Büyük değişiklikler, uyumsuzluklar
+  manual - Belirtilen versiyonu kullan (örn: yarn version:manual 1.43.0)
 
 Güncellenen Dosyalar:
   📦 package.json    - version alanı
   📱 manifest.json   - version alanı
-  🔧 sw.js          - CACHE_NAME değeri
+  🔧 sw.js          - CACHE_NAME (varsa)
   🌐 index.html     - ByteSync Editor vX.X.X
+  📄 src/app.ts     - fallback version
 `);
     process.exit(1);
   }
   
   const versionType = args[0].toLowerCase();
-  
-  if (!['patch', 'minor', 'major'].includes(versionType)) {
+  const validTypes = ['patch', 'minor', 'major', 'manual'];
+
+  if (!validTypes.includes(versionType)) {
     console.error(`❌ Geçersiz versiyon türü: ${versionType}`);
-    console.error('Geçerli türler: patch, minor, major');
+    console.error('Geçerli türler: patch, minor, major, manual');
+    process.exit(1);
+  }
+
+  if (versionType === 'manual' && (!args[1] || !isValidVersion(args[1]))) {
+    console.error('❌ manual için geçerli bir versiyon gerekli (örn: 1.43.0)');
+    console.error('   yarn version:manual 1.43.0');
     process.exit(1);
   }
   
   try {
     console.log('🔄 Versiyon güncelleme başlatılıyor...\n');
     
-    // Mevcut versiyonu al
     const currentVersion = getCurrentVersion();
     console.log(`📋 Mevcut versiyon: ${currentVersion}`);
     
-    // Yeni versiyonu hesapla
-    const newVersion = calculateNewVersion(currentVersion, versionType);
+    const newVersion = versionType === 'manual'
+      ? args[1]
+      : calculateNewVersion(currentVersion, versionType);
     console.log(`🎯 Yeni versiyon: ${newVersion}\n`);
     
     // Dosyaları güncelle
@@ -241,7 +265,7 @@ Güncellenen Dosyalar:
     updateManifestJson(newVersion);
     updateSwJs(newVersion);
     updateIndexHtml(newVersion);
-    updateAppJs(newVersion);
+    updateAppTs(newVersion);
     
     console.log(`\n🎉 Versiyon güncelleme tamamlandı!`);
     console.log(`📦 ${currentVersion} → ${newVersion}`);
@@ -257,19 +281,20 @@ Güncellenen Dosyalar:
   }
 }
 
-// Script çalıştırılıyorsa main fonksiyonunu çağır
-if (require.main === module) {
+// Script doğrudan çalıştırılıyorsa main'i çağır
+if (process.argv[1] && path.resolve(process.argv[1]) === __filename) {
   main();
 }
 
-module.exports = {
+export {
   parseVersion,
   formatVersion,
   calculateNewVersion,
+  isValidVersion,
   getCurrentVersion,
   updatePackageJson,
   updateManifestJson,
   updateSwJs,
   updateIndexHtml,
-  updateAppJs
+  updateAppTs
 };

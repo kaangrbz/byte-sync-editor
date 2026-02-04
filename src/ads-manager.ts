@@ -53,10 +53,11 @@ export class AdsManager {
             return;
         }
 
+        const publisherId = this.config.publisherId;
         // Script'i dinamik olarak yükle
         return new Promise((resolve, reject) => {
             const script = document.createElement('script');
-            script.src = `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${this.config.publisherId}`;
+            script.src = `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${publisherId}`;
             script.async = true;
             script.crossOrigin = 'anonymous';
             script.onload = () => {
@@ -127,7 +128,7 @@ export class AdsManager {
     /**
      * Script yüklenene kadar bekle ve push yap
      */
-    private waitForScriptAndPush(adUnit: HTMLElement, placement: string): void {
+    private waitForScriptAndPush(_adUnit: HTMLElement, placement: string): void {
         const checkInterval = setInterval(() => {
             if (this.scriptLoaded && window.google?.ads?.adsbygoogle) {
                 clearInterval(checkInterval);

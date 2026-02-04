@@ -10,7 +10,7 @@ interface AppConfig {
 }
 
 let APP_CONFIG: AppConfig = {
-    version: '1.42.6', // fallback version
+    version: '1.0.1', // fallback version
     name: 'ByteSync Editor'
 };
 
@@ -21,7 +21,7 @@ async function loadAppConfig(): Promise<AppConfig> {
         const manifest = await response.json();
         
         APP_CONFIG = {
-            version: manifest.version || '1.42.6',
+            version: manifest.version || '1.0.1',
             name: manifest.name || 'ByteSync Editor'
         };
         

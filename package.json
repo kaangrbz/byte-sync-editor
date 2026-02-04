@@ -1,6 +1,6 @@
 {
   "name": "bytesync-editor",
-  "version": "1.42.7",
+  "version": "1.0.1",
   "description": "A powerful byte editor for ASCII, Hex, Decimal, and Binary formats",
   "type": "module",
   "scripts": {
@@ -13,7 +13,8 @@
     "preview": "vite preview",
     "version:patch": "node update-version.js patch",
     "version:minor": "node update-version.js minor",
-    "version:major": "node update-version.js major"
+    "version:major": "node update-version.js major",
+    "version:manual": "node update-version.js manual"
   },
   "author": "ByteSync",
   "license": "ISC",

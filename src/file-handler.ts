@@ -8,22 +8,6 @@ import type { FileDialogOptions, FileDialogResult } from './types/index.js';
 const LAST_FOLDER_KEY = 'bytesync-last-folder';
 
 /**
- * Son açılan klasörü localStorage'dan al
- */
-function getLastFolder(): string | null {
-    try {
-        const stored = localStorage.getItem(LAST_FOLDER_KEY);
-        if (stored) {
-            const data = JSON.parse(stored) as { folder?: string };
-            return data.folder || null;
-        }
-    } catch (e) {
-        console.warn('Son klasör bilgisi okunamadı:', e);
-    }
-    return null;
-}
-
-/**
  * Son açılan klasörü localStorage'a kaydet
  */
 function saveLastFolder(folderPath: string): void {

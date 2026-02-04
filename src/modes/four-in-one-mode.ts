@@ -3,6 +3,7 @@
  * Tüm formatları aynı anda gösteren textarea modu
  */
 
+import type { GridFormat, DelimiterOption } from '../types/index.js';
 import stateManager from '../state-manager.js';
 import { parseTextToBytes, formatBytesToText, getDelimiter } from '../utils.js';
 import { recreateAllGrids } from '../grid-manager.js';
@@ -14,7 +15,7 @@ let isUpdatingFourInOne = false;
 const getDelimiterSettings = (): string => {
     const option = document.querySelector('input[name="delimiter-option"]:checked')?.getAttribute('value') || 'comma';
     const custom = (document.getElementById('custom-delimiter') as HTMLInputElement)?.value || '';
-    return getDelimiter(option, custom);
+    return getDelimiter(option as DelimiterOption, custom);
 };
 
 // 4-in-1 mode'u güncelle
@@ -31,7 +32,7 @@ const updateFourInOneMode = (): void => {
     formats.forEach(format => {
         const textarea = document.getElementById(`four-in-one-${format}`) as HTMLTextAreaElement;
         if (textarea) {
-            textarea.value = formatBytesToText(fourInOneData, format, delimiter);
+            textarea.value = formatBytesToText(fourInOneData, format as GridFormat, delimiter);
         }
     });
     
@@ -48,7 +49,7 @@ const handleFourInOneInput = (sourceFormat: string, text: string): void => {
     const delimiter = getDelimiterSettings();
     
     // Parse the input text to bytes
-    const parsedBytes = parseTextToBytes(text, sourceFormat);
+    const parsedBytes = parseTextToBytes(text, sourceFormat as GridFormat);
     fourInOneData = new Uint8Array(parsedBytes);
     
     // Ana data array'ini de güncelle ve genişletme kontrolü yap
@@ -71,7 +72,7 @@ const handleFourInOneInput = (sourceFormat: string, text: string): void => {
         if (format !== sourceFormat) {
             const textarea = document.getElementById(`four-in-one-${format}`) as HTMLTextAreaElement;
             if (textarea) {
-                textarea.value = formatBytesToText(fourInOneData, format, delimiter);
+                textarea.value = formatBytesToText(fourInOneData, format as GridFormat, delimiter);
             }
         }
     });
@@ -93,12 +94,10 @@ const clearFourInOneMode = (): void => {
 
 // Tüm formatları kopyala
 const copyAllFourInOneFormats = (): void => {
-    const delimiter = getDelimiterSettings();
-    
     const formats = ['ascii', 'hex', 'decimal', 'binary'];
     let allFormats = '';
     
-    formats.forEach((format, index) => {
+    formats.forEach((format) => {
         const textarea = document.getElementById(`four-in-one-${format}`) as HTMLTextAreaElement;
         if (textarea) {
             allFormats += `${format.toUpperCase()}:\n${textarea.value}\n\n`;
