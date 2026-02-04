@@ -228,17 +228,17 @@ const handleInput = (event: Event): void => {
         
         updateAllViews(true);
         
-        // Auto-navigation - değer tamamlandıysa bir sonraki input'a geç
-        // ASCII için: çoklu byte karakterlerde tüm byte'lar yazıldıktan sonra geç
+        // Auto-navigation - değer tamamlandıysa bir sonraki input'a geç (aktif sekme içinde ara)
         if (isCompleteValue(value, type)) {
+            const nextIndex = type === 'ascii' && bytes.length > 1
+                ? index + bytes.length
+                : index + 1;
             setTimeout(() => {
-                const nextIndex = type === 'ascii' && bytes.length > 1 
-                    ? index + bytes.length 
-                    : index + 1;
-                const nextInput = document.querySelector(`[data-index="${nextIndex}"]`) as HTMLElement;
+                const activeTab = getActiveTab();
+                const nextInput = activeTab?.querySelector(`[data-index="${nextIndex}"]`) as HTMLInputElement | null;
                 if (nextInput) {
                     nextInput.focus();
-                    (nextInput as HTMLInputElement).select();
+                    nextInput.select();
                     highlightCell(nextIndex);
                 } else {
                     focusNextInput(index, type);
