@@ -4,7 +4,8 @@
  */
 
 import stateManager from './state-manager.js';
-import { clearAllSelection } from './grid-manager.js';
+import { clearAllSelection, recreateAllGrids } from './grid-manager.js';
+import { getDefaultTabId } from './tabs-config.js';
 
 type TabChangeCallback = (tabName: string) => void;
 
@@ -48,6 +49,9 @@ const switchTab = (tabName: string): void => {
     // Clear all selection when switching tabs
     clearAllSelection();
 
+    // Sadece aktif tab için hücreler üretilsin; sekme değişince o sekmeye ait grid oluştur
+    recreateAllGrids();
+
     // Re-apply highlight to the current active cell
     const activeIndex = stateManager.getActiveIndex();
     if (activeIndex !== -1) {
@@ -56,14 +60,12 @@ const switchTab = (tabName: string): void => {
             activeInput.focus();
         }
     } else {
-        // Eğer aktif hücre yoksa ve grid boşsa, 1. input'a focus ol
         const data = stateManager.getData();
         const isGridEmpty = Array.from(data).every(value => value === 0);
         if (isGridEmpty) {
             const firstInput = document.querySelector(`#${tabName}-tab [data-index="0"]`) as HTMLElement;
             if (firstInput) {
                 firstInput.focus();
-                (firstInput as HTMLInputElement).select();
             }
         }
     }
@@ -103,9 +105,10 @@ const initializeTabs = (
         });
     });
     
-    // Load and set active tab from localStorage
+    // Load and set active tab from localStorage (varsayılan: tabs-config'den)
     try {
-        const savedTab = localStorage.getItem('bytesync-active-tab') || 'hex';
+        const defaultTab = getDefaultTabId();
+        const savedTab = localStorage.getItem('bytesync-active-tab') || defaultTab;
         const tabButton = document.querySelector(`[data-tab="${savedTab}"]`) as HTMLElement;
         if (tabButton) {
             tabButton.classList.add('active');
@@ -113,24 +116,23 @@ const initializeTabs = (
             tabButton.style.color = 'white';
             switchTab(savedTab);
         } else {
-            // Fallback to hex if saved tab not found
-            const hexButton = document.querySelector('[data-tab="hex"]') as HTMLElement;
-            if (hexButton) {
-                hexButton.classList.add('active');
-                hexButton.style.backgroundColor = 'var(--theme-primary)';
-                hexButton.style.color = 'white';
-                switchTab('hex');
+            const fallbackButton = document.querySelector(`[data-tab="${defaultTab}"]`) as HTMLElement;
+            if (fallbackButton) {
+                fallbackButton.classList.add('active');
+                fallbackButton.style.backgroundColor = 'var(--theme-primary)';
+                fallbackButton.style.color = 'white';
+                switchTab(defaultTab);
             }
         }
     } catch (err) {
         console.warn('localStorage okunamıyor:', err);
-        // Fallback to hex
-        const hexButton = document.querySelector('[data-tab="hex"]') as HTMLElement;
-        if (hexButton) {
-            hexButton.classList.add('active');
-            hexButton.style.backgroundColor = 'var(--theme-primary)';
-            hexButton.style.color = 'white';
-            switchTab('hex');
+        const defaultTab = getDefaultTabId();
+        const fallbackButton = document.querySelector(`[data-tab="${defaultTab}"]`) as HTMLElement;
+        if (fallbackButton) {
+            fallbackButton.classList.add('active');
+            fallbackButton.style.backgroundColor = 'var(--theme-primary)';
+            fallbackButton.style.color = 'white';
+            switchTab(defaultTab);
         }
     }
 };

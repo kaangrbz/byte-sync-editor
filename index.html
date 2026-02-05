@@ -111,45 +111,74 @@
 <body class="min-h-screen p-8 theme-dark" style="background-color: var(--theme-background); color: var(--theme-text);">
 
     <div class="max-w-4xl mx-auto p-8 rounded-xl shadow-lg" style="background-color: var(--theme-surface); min-width: 1000px;">
-        <h1 class="text-3xl font-bold text-center mb-6" style="color: var(--theme-primary);" id="app-title">ByteSync Editor v1.0.2</h1>
-        <p class="text-center text-sm mb-8" style="color: var(--theme-textSecondary);">Edit a byte in any view, and watch all other views update automatically. The selected cell remains highlighted across tabs. Now with copy/paste functionality and a larger data grid.</p>
-        
-        <!-- Tab Buttons -->
-        <div class="flex justify-center space-x-2 mb-6">
-            <button class="tab-button px-6 py-2 rounded-lg transition-colors duration-200" data-tab="ascii" style="background-color: var(--theme-secondary); color: var(--theme-text);" title="ASCII karakterleri (⌘+1)">
-                <div class="text-sm font-medium">ASCII</div>
-                <div class="text-xs opacity-70">Karakterler</div>
-                <div class="text-xs opacity-70"><code>⌘</code>+<code>1</code></div>
-            </button>
-            <button class="tab-button px-6 py-2 rounded-lg transition-colors duration-200" data-tab="hex" style="background-color: var(--theme-secondary); color: var(--theme-text);" title="Hexadecimal format (⌘+2)">
-                <div class="text-sm font-medium">Hex</div>
-                <div class="text-xs opacity-70">0x00-0xFF</div>
-                <div class="text-xs opacity-70"><code>⌘</code>+<code>2</code></div>
-            </button>
-            <button class="tab-button px-6 py-2 rounded-lg transition-colors duration-200" data-tab="decimal" style="background-color: var(--theme-secondary); color: var(--theme-text);" title="Decimal sayılar (⌘+3)">
-                <div class="text-sm font-medium">Decimal</div>
-                <div class="text-xs opacity-70">0-255</div>
-                <div class="text-xs opacity-70"><code>⌘</code>+<code>3</code></div>
-            </button>
-            <button class="tab-button px-6 py-2 rounded-lg transition-colors duration-200" data-tab="binary" style="background-color: var(--theme-secondary); color: var(--theme-text);" title="Binary format (⌘+4)">
-                <div class="text-sm font-medium">Binary</div>
-                <div class="text-xs opacity-70">8-bit</div>
-                <div class="text-xs opacity-70"><code>⌘</code>+<code>4</code></div>
-            </button>
-            <button class="tab-button px-6 py-2 rounded-lg transition-colors duration-200" data-tab="four-in-one" style="background-color: var(--theme-secondary); color: var(--theme-text);" title="Tüm formatlar birlikte (⌘+5)">
-                <div class="text-sm font-medium">4 in 1</div>
-                <div class="text-xs opacity-70">All in one</div>
-                <div class="text-xs opacity-70"><code>⌘</code>+<code>5</code></div>
-            </button>
-            <button class="tab-button px-6 py-2 rounded-lg transition-colors duration-200" data-tab="docklight-ptp" style="background-color: var(--theme-secondary); color: var(--theme-text);" title="Docklight PTP dosyası (⌘+6)">
-                <div class="text-sm font-medium">PTP</div>
-                <div class="text-xs opacity-70">Docklight</div>
-                <div class="text-xs opacity-70"><code>⌘</code>+<code>6</code></div>
-            </button>
-        </div>
+        <!-- App Toolbar: başlık + aksiyonlar (tema, dosya, index'e git vb.) -->
+        <header id="app-toolbar" class="app-toolbar flex flex-wrap justify-between items-start gap-4 mb-6 relative">
+            <div class="toolbar-left flex-1 min-w-0">
+                <h1 class="text-3xl font-bold mb-2" style="color: var(--theme-primary);" id="app-title">ByteSync Editor v1.0.3</h1>
+                <p class="text-sm" style="color: var(--theme-textSecondary);">Edit a byte in any view, and watch all other views update automatically. The selected cell remains highlighted across tabs. Hücreye tıklayınca metin otomatik seçilmez; imleci istediğiniz yere koyabilirsiniz.</p>
+            </div>
+            <div id="app-toolbar-actions" class="toolbar-actions flex items-center gap-2 flex-shrink-0 flex-wrap">
+                <!-- Index'e git -->
+                <div class="jump-to-index flex items-center gap-1">
+                    <label for="jump-to-index-input" class="sr-only">Byte index</label>
+                    <input type="number" id="jump-to-index-input" min="0" placeholder="Index" class="jump-to-index-input w-20 px-2 py-1.5 text-sm rounded border" style="background-color: var(--theme-input); color: var(--theme-text); border-color: var(--theme-border);" aria-label="Byte indexe git" title="0 ile toplam byte-1 arası değer girin">
+                    <button type="button" id="jump-to-index-btn" class="jump-to-index-btn px-3 py-1.5 text-sm rounded font-medium transition-colors" style="background-color: var(--theme-primary); color: white;" aria-label="Indexe git">Git</button>
+                </div>
+                <label class="show-zeros-toggle flex items-center gap-2 cursor-pointer select-none" title="Açıkken 0 değeri boş yerine 0 olarak gösterilir">
+                    <input type="checkbox" id="show-explicit-zeros" class="rounded border" style="accent-color: var(--theme-primary);">
+                    <span class="text-sm whitespace-nowrap" style="color: var(--theme-textSecondary);">0 göster</span>
+                </label>
+                <div class="file-actions flex items-center gap-1">
+                    <button type="button" id="file-open-btn" class="file-open-btn px-3 py-1.5 text-sm rounded font-medium transition-colors" style="background-color: var(--theme-secondary); color: var(--theme-text); border: 1px solid var(--theme-border);" title="Binary dosya aç" aria-label="Binary dosya aç">Dosya Aç</button>
+                    <button type="button" id="file-save-btn" class="file-save-btn px-3 py-1.5 text-sm rounded font-medium transition-colors" style="background-color: var(--theme-success); color: white;" title="Mevcut veriyi binary dosya olarak indir" aria-label="Mevcut veriyi dosya olarak indir">Kaydet</button>
+                </div>
+                <button type="button" id="settings-open-btn" class="settings-btn px-3 py-1.5 text-sm rounded font-medium transition-colors border" style="background-color: var(--theme-surface); color: var(--theme-text); border-color: var(--theme-border);" title="Ayarlar" aria-label="Ayarlar">Ayarlar</button>
+                <!-- Tema butonu theme.ts tarafından buraya eklenir -->
+            </div>
+        </header>
 
-        <!-- Tab Content -->
-        <div id="hex-tab" class="tab-content active">
+        <!-- Tab Buttons (tabs-config.ts'den üretilir) -->
+        <div id="tab-buttons-container" class="flex justify-center space-x-2 mb-6"></div>
+
+        <!-- Tab Content (four-in-one varsayılan aktif) -->
+        <div id="four-in-one-tab" class="tab-content active">
+            <div class="mb-6">
+                <h2 class="text-xl font-semibold mb-4 text-center">4 in 1 Mode - Multi-Format View</h2>
+                <div class="mb-4 p-3 rounded-lg" style="background-color: var(--theme-surface); border: 1px solid var(--theme-border);">
+                    <h3 class="text-sm font-medium mb-2 text-center" style="color: var(--theme-text);">Number Delimiter</h3>
+                    <div class="flex flex-wrap justify-center gap-3 items-center">
+                        <label class="flex items-center"><input type="radio" name="delimiter-option" value="none" class="mr-1"><span class="text-xs" style="color: var(--theme-text);">None</span></label>
+                        <label class="flex items-center"><input type="radio" name="delimiter-option" value="comma" class="mr-1" checked><span class="text-xs" style="color: var(--theme-text);">Comma</span></label>
+                        <label class="flex items-center"><input type="radio" name="delimiter-option" value="space" class="mr-1"><span class="text-xs" style="color: var(--theme-text);">Space</span></label>
+                        <label class="flex items-center"><input type="radio" name="delimiter-option" value="custom" class="mr-1"><span class="text-xs" style="color: var(--theme-text);">Custom:</span></label>
+                        <input type="text" id="custom-delimiter" placeholder="Enter delimiter" class="px-2 py-1 text-xs rounded border" style="background-color: var(--theme-background); color: var(--theme-text); border-color: var(--theme-border);" disabled>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="space-y-2">
+                        <div class="flex justify-between items-center"><h3 class="text-sm font-medium" style="color: var(--theme-text);">Decimal</h3><button class="four-in-one-copy-btn px-2 py-1 text-xs rounded border transition-colors" data-format="decimal" style="background-color: var(--theme-primary); color: white; border-color: var(--theme-primary);">Copy</button></div>
+                        <textarea id="four-in-one-decimal" class="w-full h-32 p-3 text-sm rounded border font-mono" style="background-color: var(--theme-background); color: var(--theme-text); border-color: var(--theme-border);" placeholder="Decimal values will appear here..."></textarea>
+                    </div>
+                    <div class="space-y-2">
+                        <div class="flex justify-between items-center"><h3 class="text-sm font-medium" style="color: var(--theme-text);">Hexadecimal</h3><button class="four-in-one-copy-btn px-2 py-1 text-xs rounded border transition-colors" data-format="hex" style="background-color: var(--theme-primary); color: white; border-color: var(--theme-primary);">Copy</button></div>
+                        <textarea id="four-in-one-hex" class="w-full h-32 p-3 text-sm rounded border font-mono" style="background-color: var(--theme-background); color: var(--theme-text); border-color: var(--theme-border);" placeholder="Hex values will appear here..."></textarea>
+                    </div>
+                    <div class="space-y-2">
+                        <div class="flex justify-between items-center"><h3 class="text-sm font-medium" style="color: var(--theme-text);">ASCII</h3><button class="four-in-one-copy-btn px-2 py-1 text-xs rounded border transition-colors" data-format="ascii" style="background-color: var(--theme-primary); color: white; border-color: var(--theme-primary);">Copy</button></div>
+                        <textarea id="four-in-one-ascii" class="w-full h-32 p-3 text-sm rounded border font-mono" style="background-color: var(--theme-background); color: var(--theme-text); border-color: var(--theme-border);" placeholder="ASCII text will appear here..."></textarea>
+                    </div>
+                    <div class="space-y-2">
+                        <div class="flex justify-between items-center"><h3 class="text-sm font-medium" style="color: var(--theme-text);">Binary</h3><button class="four-in-one-copy-btn px-2 py-1 text-xs rounded border transition-colors" data-format="binary" style="background-color: var(--theme-primary); color: white; border-color: var(--theme-primary);">Copy</button></div>
+                        <textarea id="four-in-one-binary" class="w-full h-32 p-3 text-sm rounded border font-mono" style="background-color: var(--theme-background); color: var(--theme-text); border-color: var(--theme-border);" placeholder="Binary values will appear here..."></textarea>
+                    </div>
+                </div>
+                <div class="flex justify-center mt-4 space-x-2">
+                    <button id="four-in-one-copy-all" class="px-4 py-2 text-sm rounded-lg text-white transition-colors duration-200" style="background-color: var(--theme-primary);">Copy All Formats</button>
+                    <button id="four-in-one-clear-all" class="px-4 py-2 text-sm rounded-lg text-white transition-colors duration-200" style="background-color: var(--theme-danger);">Clear All</button>
+                </div>
+            </div>
+        </div>
+        <div id="hex-tab" class="tab-content">
             <div class="flex justify-center mb-4 space-x-2">
                 <button class="copy-button text-white px-4 py-1 rounded-lg transition-colors duration-200" data-type="hex" style="background-color: var(--theme-primary);">Copy All Hex</button>
                 <button class="clear-button text-white px-4 py-1 rounded-lg transition-colors duration-200" style="background-color: var(--theme-danger);">Clear All</button>
@@ -311,104 +340,19 @@
                 </div>
             </div>
         </div>
-        
-        <!-- 4 in 1 Mode -->
-        <div id="four-in-one-tab" class="tab-content">
-            <div class="mb-6">
-                <h2 class="text-xl font-semibold mb-4 text-center">4 in 1 Mode - Multi-Format View</h2>
-                
-                <!-- Number Delimiter Options -->
-                <div class="mb-4 p-3 rounded-lg" style="background-color: var(--theme-surface); border: 1px solid var(--theme-border);">
-                    <h3 class="text-sm font-medium mb-2 text-center" style="color: var(--theme-text);">Number Delimiter</h3>
-                    <div class="flex flex-wrap justify-center gap-3 items-center">
-                        <label class="flex items-center">
-                            <input type="radio" name="delimiter-option" value="none" class="mr-1">
-                            <span class="text-xs" style="color: var(--theme-text);">None</span>
-                        </label>
-                        <label class="flex items-center">
-                            <input type="radio" name="delimiter-option" value="comma" class="mr-1" checked>
-                            <span class="text-xs" style="color: var(--theme-text);">Comma</span>
-                        </label>
-                        <label class="flex items-center">
-                            <input type="radio" name="delimiter-option" value="space" class="mr-1">
-                            <span class="text-xs" style="color: var(--theme-text);">Space</span>
-                        </label>
-                        <label class="flex items-center">
-                            <input type="radio" name="delimiter-option" value="custom" class="mr-1">
-                            <span class="text-xs" style="color: var(--theme-text);">Custom:</span>
-                        </label>
-                        <input type="text" id="custom-delimiter" placeholder="Enter delimiter" class="px-2 py-1 text-xs rounded border" style="background-color: var(--theme-background); color: var(--theme-text); border-color: var(--theme-border);" disabled>
-                    </div>
-                </div>
-                
-                <!-- 4 Textareas in 2x2 Grid -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    
-                  <!-- Decimal -->
-                  <div class="space-y-2">
-                      <div class="flex justify-between items-center">
-                          <h3 class="text-sm font-medium" style="color: var(--theme-text);">Decimal</h3>
-                          <button class="four-in-one-copy-btn px-2 py-1 text-xs rounded border transition-colors" data-format="decimal" style="background-color: var(--theme-primary); color: white; border-color: var(--theme-primary);">
-                              Copy
-                          </button>
-                      </div>
-                      <textarea id="four-in-one-decimal" class="w-full h-32 p-3 text-sm rounded border font-mono" style="background-color: var(--theme-background); color: var(--theme-text); border-color: var(--theme-border);" placeholder="Decimal values will appear here..."></textarea>
-                  </div>
-                    
-                    <!-- Hex -->
-                    <div class="space-y-2">
-                        <div class="flex justify-between items-center">
-                            <h3 class="text-sm font-medium" style="color: var(--theme-text);">Hexadecimal</h3>
-                            <button class="four-in-one-copy-btn px-2 py-1 text-xs rounded border transition-colors" data-format="hex" style="background-color: var(--theme-primary); color: white; border-color: var(--theme-primary);">
-                                Copy
-                            </button>
-                        </div>
-                        <textarea id="four-in-one-hex" class="w-full h-32 p-3 text-sm rounded border font-mono" style="background-color: var(--theme-background); color: var(--theme-text); border-color: var(--theme-border);" placeholder="Hex values will appear here..."></textarea>
-                    </div>
-                    
-                    <!-- ASCII -->
-                    <div class="space-y-2">
-                        <div class="flex justify-between items-center">
-                            <h3 class="text-sm font-medium" style="color: var(--theme-text);">ASCII</h3>
-                            <button class="four-in-one-copy-btn px-2 py-1 text-xs rounded border transition-colors" data-format="ascii" style="background-color: var(--theme-primary); color: white; border-color: var(--theme-primary);">
-                                Copy
-                            </button>
-                        </div>
-                        <textarea id="four-in-one-ascii" class="w-full h-32 p-3 text-sm rounded border font-mono" style="background-color: var(--theme-background); color: var(--theme-text); border-color: var(--theme-border);" placeholder="ASCII text will appear here..."></textarea>
-                    </div>
-                    
-                    <!-- Binary -->
-                    <div class="space-y-2">
-                        <div class="flex justify-between items-center">
-                            <h3 class="text-sm font-medium" style="color: var(--theme-text);">Binary</h3>
-                            <button class="four-in-one-copy-btn px-2 py-1 text-xs rounded border transition-colors" data-format="binary" style="background-color: var(--theme-primary); color: white; border-color: var(--theme-primary);">
-                                Copy
-                            </button>
-                        </div>
-                        <textarea id="four-in-one-binary" class="w-full h-32 p-3 text-sm rounded border font-mono" style="background-color: var(--theme-background); color: var(--theme-text); border-color: var(--theme-border);" placeholder="Binary values will appear here..."></textarea>
-                    </div>
-                </div>
-                
-                <!-- Action Buttons -->
-                <div class="flex justify-center mt-4 space-x-2">
-                    <button id="four-in-one-copy-all" class="px-4 py-2 text-sm rounded-lg text-white transition-colors duration-200" style="background-color: var(--theme-primary);">Copy All Formats</button>
-                    <button id="four-in-one-clear-all" class="px-4 py-2 text-sm rounded-lg text-white transition-colors duration-200" style="background-color: var(--theme-danger);">Clear All</button>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Keyboard Shortcuts Info -->
-        <div class="mb-6 mt-6 p-4 rounded-lg" style="background-color: var(--theme-surface); border: 1px solid var(--theme-border);">
-            <h3 class="text-sm font-medium mb-3 text-center" style="color: var(--theme-text);">Keyboard Shortcuts</h3>
+
+        <!-- Keyboard Shortcuts Info (collapse/expand) -->
+        <details class="keyboard-shortcuts-details mb-6 mt-6 rounded-lg" style="background-color: var(--theme-surface); border: 1px solid var(--theme-border);">
+            <summary class="text-sm font-medium p-4 cursor-pointer list-none flex items-center justify-center gap-2" style="color: var(--theme-text);">
+                <span>Klavye kısayolları</span>
+                <span class="details-marker" aria-hidden="true">▼</span>
+            </summary>
+            <div class="px-4 pb-4 pt-0">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs" style="color: var(--theme-textSecondary);">
                 <div>
                     <div class="font-medium mb-2" style="color: var(--theme-text);">Navigation & Editing</div>
-                    <div class="space-y-3">
-                        <div><kbd class="px-1 py-0.5 rounded text-xs border">⌘ + 1</kbd> ASCII Mode</div>
-                        <div><kbd class="px-1 py-0.5 rounded text-xs border">⌘ + 2</kbd> Hex Mode</div>
-                        <div><kbd class="px-1 py-0.5 rounded text-xs border">⌘ + 3</kbd> Decimal Mode</div>
-                        <div><kbd class="px-1 py-0.5 rounded text-xs border">⌘ + 4</kbd> Binary Mode</div>
-                        <div><kbd class="px-1 py-0.5 rounded text-xs border">⌘ + 5</kbd> 4 in 1 Mode</div>
+                    <div id="keyboard-shortcuts-tabs" class="space-y-3"></div>
+                    <div class="space-y-3 mt-3">
                         <div><kbd class="px-1 py-0.5 rounded text-xs border">Cmd+A</kbd> Select All</div>
                         <div><kbd class="px-1 py-0.5 rounded text-xs border">Delete</kbd> Clear All (when selected)</div>
                     </div>
@@ -424,7 +368,8 @@
                     </div>
                 </div>
             </div>
-        </div>
+            </div>
+        </details>
 
         <!-- ASCII/HEX/DECIMAL Reference Table -->
         <div class="mb-6 mt-6 p-4 rounded-lg" style="background-color: var(--theme-surface); border: 1px solid var(--theme-border);">
@@ -520,39 +465,50 @@
 
     </div>
 
+    <!-- Ayarlar modalı -->
+    <div id="settings-modal" class="settings-modal" aria-hidden="true" role="dialog" aria-labelledby="settings-modal-title">
+        <div class="settings-modal-overlay" id="settings-modal-overlay"></div>
+        <div class="settings-modal-box" style="background-color: var(--theme-surface); border: 1px solid var(--theme-border); color: var(--theme-text);">
+            <div class="settings-modal-header">
+                <h2 id="settings-modal-title" class="settings-modal-title" style="color: var(--theme-text);">Ayarlar</h2>
+                <button type="button" id="settings-modal-close" class="settings-modal-close" aria-label="Kapat" style="color: var(--theme-textSecondary);">&times;</button>
+            </div>
+            <div class="settings-modal-body">
+                <div class="settings-row">
+                    <span class="settings-label" style="color: var(--theme-text);">Otomatik sonraki hücreye geç</span>
+                    <label class="settings-switch">
+                        <input type="checkbox" id="setting-auto-advance" class="settings-switch-input">
+                        <span class="settings-switch-slider"></span>
+                    </label>
+                </div>
+                <div class="settings-row">
+                    <span class="settings-label" style="color: var(--theme-text);">INSERT modu (sonrakileri kaydır)</span>
+                    <label class="settings-switch">
+                        <input type="checkbox" id="setting-insert-mode" class="settings-switch-input">
+                        <span class="settings-switch-slider"></span>
+                    </label>
+                </div>
+                <div class="settings-row">
+                    <span class="settings-label" style="color: var(--theme-text);">Hücreye odaklanınca metni seç</span>
+                    <label class="settings-switch">
+                        <input type="checkbox" id="setting-select-on-focus" class="settings-switch-input">
+                        <span class="settings-switch-slider"></span>
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script type="module" src="./src/notification-helper.ts"></script>
     <script>
-        // Platform tespiti ve klavye kısayolu güncellemesi
-        const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
-        const modifierKey = isMac ? '⌘' : 'Ctrl';
-        
-        // Tab butonlarındaki kısayolları güncelle
+        // Tab butonları ve kısayol listesi app.ts (tabs-config) ile doldurulur.
+        // Diğer kısayollardaki Cmd/⌘ platforma göre güncellemek için:
         document.addEventListener('DOMContentLoaded', () => {
-            const tabButtons = document.querySelectorAll('.tab-button');
-            tabButtons.forEach((button, index) => {
-                const shortcutElement = button.querySelector('code');
-                if (shortcutElement) {
-                    shortcutElement.textContent = modifierKey;
-                }
-                
-                // Tooltip'i güncelle
-                const tabNames = ['ascii', 'hex', 'decimal', 'binary', 'four-in-one', 'docklight-ptp'];
-                const tabTitles = [
-                    'ASCII karakterleri',
-                    'Hexadecimal format', 
-                    'Decimal sayılar',
-                    'Binary format',
-                    'Tüm formatlar birlikte',
-                    'Docklight PTP dosyası'
-                ];
-                button.title = `${tabTitles[index]} (${modifierKey}+${index + 1})`;
-            });
-            
-            // Keyboard shortcuts bölümünü güncelle
-            const shortcutElements = document.querySelectorAll('kbd');
-            shortcutElements.forEach(kbd => {
-                if (kbd.textContent.includes('⌘')) {
-                    kbd.textContent = kbd.textContent.replace('⌘', modifierKey);
+            const mod = navigator.platform.toUpperCase().indexOf('MAC') >= 0 ? '⌘' : 'Ctrl';
+            document.querySelectorAll('.keyboard-shortcuts-details kbd').forEach(kbd => {
+                const t = kbd.textContent || '';
+                if (t.startsWith('Cmd') || t.includes('⌘')) {
+                    kbd.textContent = t.replace(/Cmd|⌘/g, mod);
                 }
             });
         });

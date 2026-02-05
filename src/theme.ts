@@ -156,10 +156,10 @@ class ThemeManager {
             <span class="theme-text">${nextThemeData.name}</span>
         `;
         
-        // Başlık kısmına ekle
-        const header = document.querySelector('h1')?.parentElement;
-        if (header) {
-            header.appendChild(button);
+        // Toolbar aksiyon alanına ekle (#app-toolbar-actions)
+        const toolbarActions = document.getElementById('app-toolbar-actions');
+        if (toolbarActions) {
+            toolbarActions.appendChild(button);
         }
     }
 

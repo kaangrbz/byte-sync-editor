@@ -169,3 +169,77 @@ export async function showOpenDialog(
     return showOpenFileDialog(options);
 }
 
+export interface OpenBinaryResult {
+    canceled: boolean;
+    data?: Uint8Array;
+    fileName?: string;
+}
+
+/**
+ * Binary dosya aç (ham byte dizisi). File System Access API veya fallback kullanır.
+ */
+export async function openBinaryFileDialog(): Promise<OpenBinaryResult> {
+    if (window.showOpenFilePicker) {
+        try {
+            const [fileHandle] = await window.showOpenFilePicker({
+                multiple: false
+            });
+            const file = await fileHandle.getFile();
+            const buffer = await file.arrayBuffer();
+            return {
+                canceled: false,
+                data: new Uint8Array(buffer),
+                fileName: file.name
+            };
+        } catch (err) {
+            if ((err as Error).name === 'AbortError') {
+                return { canceled: true };
+            }
+            throw err;
+        }
+    }
+    return new Promise((resolve) => {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.style.display = 'none';
+        input.addEventListener('change', async () => {
+            const file = input.files?.[0];
+            if (!file) {
+                resolve({ canceled: true });
+                return;
+            }
+            try {
+                const buffer = await file.arrayBuffer();
+                resolve({
+                    canceled: false,
+                    data: new Uint8Array(buffer),
+                    fileName: file.name
+                });
+            } catch (e) {
+                resolve({ canceled: false, error: (e as Error).message } as OpenBinaryResult & { error?: string });
+            }
+            input.remove();
+        });
+        const cancel = () => {
+            resolve({ canceled: true });
+            input.remove();
+        };
+        input.addEventListener('cancel', cancel);
+        document.body.appendChild(input);
+        input.click();
+    });
+}
+
+/**
+ * Byte dizisini dosya olarak indirir.
+ */
+export function downloadBytes(data: Uint8Array, fileName: string): void {
+    const blob = new Blob([data], { type: 'application/octet-stream' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName || 'bytesync.bin';
+    a.click();
+    URL.revokeObjectURL(url);
+}
+

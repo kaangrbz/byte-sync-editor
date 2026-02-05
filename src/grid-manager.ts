@@ -6,6 +6,7 @@
 import stateManager from './state-manager.js';
 import { parseTextToBytes, formatBytesToText } from './utils.js';
 import type { GridFormat } from './types/index.js';
+import { getSettings } from './settings.js';
 
 // DOM element referansları
 let hexGrid: HTMLElement | null = null;
@@ -31,10 +32,10 @@ const getActiveType = (): string | undefined => {
 };
 
 const getActiveInput = (index: number): HTMLElement | null => {
-    return document.querySelector(`[data-index="${index}"]`);
+    return getActiveTab()?.querySelector(`[data-index="${index}"]`) ?? null;
 };
 
-// Tamamlanmış değer kontrolü
+// Tamamlanmış değer kontrolü (referans: decimal 3 rakam ve 0-255)
 const isCompleteValue = (value: string, type: string): boolean => {
     const patterns: Record<string, RegExp> = {
         hex: /^[0-9a-fA-F]{2}$/,
@@ -42,7 +43,12 @@ const isCompleteValue = (value: string, type: string): boolean => {
         binary: /^[01]{8}$/,
         ascii: /^.{1}$/  // Boşluk karakteri de dahil olmak üzere herhangi bir karakter
     };
-    return patterns[type]?.test(value) || false;
+    if (!patterns[type]?.test(value)) return false;
+    if (type === 'decimal') {
+        const num = parseInt(value, 10);
+        return !isNaN(num) && num >= 0 && num <= 255;
+    }
+    return true;
 };
 
 // Tek karakter validasyonu
@@ -96,12 +102,14 @@ const createGrid = (grid: HTMLElement, className: string, type: string): void =>
         input.className = `input-cell ${className}`;
         input.dataset.index = i.toString();
         input.dataset.type = type;
-        
+        input.setAttribute('aria-label', `Byte ${i}, ${type}`);
+
         // Inputları boş başlat
         input.value = '';
-        
+
         // Add event listeners
         input.addEventListener('focus', handleFocus);
+        input.addEventListener('blur', handleBlur);
         input.addEventListener('beforeinput', handleBeforeInput);
         input.addEventListener('input', handleInput);
         input.addEventListener('keydown', handleKeydown);
@@ -111,38 +119,60 @@ const createGrid = (grid: HTMLElement, className: string, type: string): void =>
     }
 };
 
-// Tüm grid'leri yeniden oluştur
+// Byte grid sekmeleri: sadece bu sekmelerde hücre üretilir
+const BYTE_GRID_TABS = ['hex', 'ascii', 'decimal', 'binary'] as const;
+const GRID_CONFIG: Record<string, { className: string; type: string }> = {
+    hex: { className: 'hex-cell', type: 'hex' },
+    ascii: { className: 'ascii-cell', type: 'ascii' },
+    decimal: { className: 'decimal-cell', type: 'decimal' },
+    binary: { className: 'binary-cell', type: 'binary' }
+};
+
+// Aktif sekme byte grid sekmesiyse adını döndür (hex, ascii, decimal, binary), değilse null
+const getActiveByteGridTabName = (): string | null => {
+    const activeTab = getActiveTab();
+    const id = activeTab?.id ?? '';
+    const name = id.replace(/-tab$/, '');
+    return BYTE_GRID_TABS.includes(name as any) ? name : null;
+};
+
+// Tüm grid konteynerlerini boşalt (sadece birinde hücre kalacak)
+const clearAllGridContainers = (): void => {
+    if (hexGrid) hexGrid.innerHTML = '';
+    if (asciiGrid) asciiGrid.innerHTML = '';
+    if (decimalGrid) decimalGrid.innerHTML = '';
+    if (binaryGrid) binaryGrid.innerHTML = '';
+};
+
+// Sadece aktif tab için hücreleri oluştur
 const recreateAllGrids = (): void => {
-    if (hexGrid && asciiGrid && decimalGrid && binaryGrid) {
-        createGrid(hexGrid, 'hex-cell', 'hex');
-        createGrid(asciiGrid, 'ascii-cell', 'ascii');
-        createGrid(decimalGrid, 'decimal-cell', 'decimal');
-        createGrid(binaryGrid, 'binary-cell', 'binary');
-        
-        // Aktif index'i koru
-        const inputCount = stateManager.getInputCount();
-        const activeIndex = stateManager.getActiveIndex();
-        if (activeIndex !== -1 && activeIndex < inputCount) {
-            setTimeout(() => {
-                const activeInput = document.querySelector(`[data-index="${activeIndex}"]`);
-                if (activeInput) {
-                    (activeInput as HTMLElement).focus();
-                    (activeInput as HTMLInputElement).select();
-                }
-            }, 100);
-        }
-        
-        // Pozisyon göstergesini güncelle
-        updatePositionIndicator();
-        onRecreateGridsCallback?.();
+    if (!hexGrid || !asciiGrid || !decimalGrid || !binaryGrid) return;
+
+    const activeName = getActiveByteGridTabName();
+    clearAllGridContainers();
+
+    if (activeName) {
+        const config = GRID_CONFIG[activeName];
+        const gridEl = activeName === 'hex' ? hexGrid : activeName === 'ascii' ? asciiGrid : activeName === 'decimal' ? decimalGrid : binaryGrid;
+        if (gridEl) createGrid(gridEl, config.className, config.type);
     }
+
+    const inputCount = stateManager.getInputCount();
+    const activeIndex = stateManager.getActiveIndex();
+    if (activeIndex !== -1 && activeIndex < inputCount) {
+        setTimeout(() => {
+            const activeInput = getActiveInput(activeIndex);
+            if (activeInput) activeInput.focus();
+        }, 100);
+    }
+    updatePositionIndicator();
+    onRecreateGridsCallback?.();
 };
 
 // Hücre odaklanma ve vurgulama
 const handleFocus = (event: Event): void => {
     const target = event.target as HTMLElement;
     
-    // Eğer tüm seçili ise, tek hücreye odaklanıldığında seçimi temizle
     if (stateManager.getAllSelected()) {
         if (onClearSelectionCallback) {
             onClearSelectionCallback();
@@ -151,6 +181,36 @@ const handleFocus = (event: Event): void => {
     
     const index = parseInt(target.dataset.index || '0', 10);
     highlightCell(index);
+
+    if (getSettings().selectOnFocus && target instanceof HTMLInputElement) {
+        target.select();
+    }
+};
+
+// Focus kaybında parse et; hata varsa eski değere dön (referans: _on_editing_finished)
+const handleBlur = (event: Event): void => {
+    const target = event.target as HTMLInputElement;
+    const index = parseInt(target.dataset.index || '0', 10);
+    const type = (target.dataset.type || 'hex') as GridFormat;
+    const value = target.value.trim();
+
+    if (value.length === 0) {
+        stateManager.setByte(index, 0);
+        updateAllViews(true);
+        return;
+    }
+
+    const bytes = parseTextToBytes(value, type);
+    if (bytes.length === 1) {
+        stateManager.setByte(index, bytes[0]);
+        updateAllViews(true);
+        return;
+    }
+
+    // Parse boş veya hatalı: state'teki mevcut byte'a göre metni geri yükle
+    const currentByte = stateManager.getByte(index);
+    const restored = formatBytesToText([currentByte], type, '');
+    target.value = type === 'hex' ? restored.toUpperCase() : restored;
 };
 
 // BeforeInput event handler - Geçersiz karakterleri engelle
@@ -194,60 +254,83 @@ const handleInput = (event: Event): void => {
     const type = target.dataset.type as GridFormat;
     const value = target.value;
 
-    // Boş input - byte değerini 0 yap (görünmez olacak çünkü touchedIndices kontrolü var)
+    // Boş input - byte değerini 0 yap, grid boyutu küçülebilir
     if (value.length === 0) {
         stateManager.setByte(index, 0);
+        recreateAllGrids();
         updateAllViews(true);
         return;
     }
 
-    // Parse ve kaydet - beforeinput ile zaten validasyon yapıldı, burada sadece parse edip kaydet
+    const inputCountBefore = stateManager.getInputCount();
+
+    // Parse - beforeinput ile zaten validasyon yapıldı
     const bytes = parseTextToBytes(value, type);
-    
+
     if (bytes.length > 0) {
-        // ASCII için: UTF-8 karakterler çoklu byte olabilir, tüm byte'ları kaydet
+        const settings = getSettings();
+        const hasDataAfter = stateManager.getDataSize() > index + 1;
+
+        // INSERT modu açıksa ve sonrasında veri varsa: ekle ve sonrakileri kaydır
+        if (settings.insertMode && hasDataAfter) {
+            if (type === 'ascii' && bytes.length > 1) {
+                for (let i = 0; i < bytes.length; i++) {
+                    stateManager.insertByteAt(index + i, bytes[i]);
+                }
+            } else {
+                stateManager.insertByteAt(index, bytes[0]);
+            }
+            recreateAllGrids();
+            updateAllViews(true);
+            const stayIndex = type === 'ascii' && bytes.length > 1 ? index + bytes.length : index;
+            stateManager.setActiveIndex(stayIndex);
+            const stayInput = getActiveInput(stayIndex);
+            if (stayInput) {
+                stayInput.focus();
+                highlightCell(stayIndex);
+            }
+            return;
+        }
+
+        // Üzerine yaz (INSERT kapalı veya sonrasında veri yok)
         if (type === 'ascii' && bytes.length > 1) {
-            // Çoklu byte karakter (örn: ğ, ü, ş) - tüm byte'ları kaydet
             const data = stateManager.getData();
             for (let i = 0; i < bytes.length; i++) {
                 const globalIndex = index + i;
                 if (globalIndex >= data.length) {
-                    // Array'i genişlet
                     const newSize = Math.max(data.length * 2, globalIndex + 1);
                     stateManager.expandDataArray(newSize);
                 }
                 stateManager.setByte(globalIndex, bytes[i]);
             }
         } else {
-            // Tek byte karakter veya diğer formatlar - sadece ilk byte'ı kaydet
             stateManager.setByte(index, bytes[0]);
         }
-        
-        // Veri boyutu değişti, grid'leri yeniden oluştur (yeni input eklemek için)
-        recreateAllGrids();
-        
+
+        const inputCountAfter = stateManager.getInputCount();
+        if (inputCountAfter !== inputCountBefore) {
+            const nextIndex = type === 'ascii' && bytes.length > 1 ? index + bytes.length : index + 1;
+            if (isCompleteValue(value, type)) {
+                stateManager.setActiveIndex(nextIndex);
+            }
+            recreateAllGrids();
+        }
         updateAllViews(true);
-        
-        // Auto-navigation - değer tamamlandıysa bir sonraki input'a geç (aktif sekme içinde ara)
-        if (isCompleteValue(value, type)) {
-            const nextIndex = type === 'ascii' && bytes.length > 1
-                ? index + bytes.length
-                : index + 1;
+
+        // Otomatik sonraki hücreye geç sadece ayar açıksa (50 ms gecikme: referans QTimer.singleShot(50))
+        if (getSettings().autoAdvance && isCompleteValue(value, type)) {
+            const nextIndex = type === 'ascii' && bytes.length > 1 ? index + bytes.length : index + 1;
             setTimeout(() => {
-                const activeTab = getActiveTab();
-                const nextInput = activeTab?.querySelector(`[data-index="${nextIndex}"]`) as HTMLInputElement | null;
+                const nextInput = getActiveInput(nextIndex);
                 if (nextInput) {
                     nextInput.focus();
-                    nextInput.select();
                     highlightCell(nextIndex);
                 } else {
                     focusNextInput(index, type);
                 }
-            }, 10);
+            }, 50);
         }
     } else {
-        // Parse edilemedi (bu durumda beforeinput'da engellenmiş olmalı, ama yine de kontrol)
-        // Değeri temizle
         target.value = '';
         stateManager.setByte(index, 0);
         updateAllViews(true);
@@ -266,7 +349,6 @@ const navigateToInput = (index: number, direction: 'next' | 'prev' = 'next'): vo
         const targetInput = activeTab.querySelector(`[data-index="${newIndex}"]`) as HTMLElement;
         if (targetInput) {
             targetInput.focus();
-            (targetInput as HTMLInputElement).select();
             highlightCell(newIndex);
             targetInput.dispatchEvent(new Event('focus', { bubbles: true }));
         }
@@ -294,8 +376,16 @@ const handlePaste = (event: ClipboardEvent): void => {
     const target = event.target as HTMLElement;
     const startIndex = parseInt(target.dataset.index || '0', 10);
     const type = target.dataset.type || '';
-    const valuesToParse = parseTextToBytes(pastedText, type as any);
+    let valuesToParse = parseTextToBytes(pastedText, type as any);
     const data = stateManager.getData();
+
+    // 256 byte sınırı (referans: parse + uyarı + kesim)
+    if (valuesToParse.length > 256) {
+        if (typeof window !== 'undefined' && window.NotificationHelper) {
+            window.NotificationHelper.showWarning('En fazla 256 byte yapıştırılabilir; fazlası yok sayıldı.');
+        }
+        valuesToParse = valuesToParse.slice(0, 256);
+    }
 
     for (let i = 0; i < valuesToParse.length; i++) {
         const globalIndex = startIndex + i;
@@ -366,19 +456,144 @@ const handleKeydown = (event: KeyboardEvent): void => {
 
     const target = event.target as HTMLElement;
     const index = parseInt(target.dataset.index || '0', 10);
+    const isEmpty = (target as HTMLInputElement).value === '';
+    const isLastCell = index === stateManager.getInputCount() - 1;
+    const isOnlyCell = stateManager.getDataSize() <= 1;
 
-    // Backspace tuşu - Boş input'ta bir önceki input'a git
-    if (event.key === 'Backspace' && (target as HTMLInputElement).value === '') {
+    // Delete tuşu - Boş hücrede: hücreyi kaldır, sola kaydır, focus önceki (referans: delete_empty_requested)
+    if (event.key === 'Delete' && isEmpty) {
+        event.preventDefault();
+        if (!isOnlyCell && !isLastCell) {
+            stateManager.removeByteAt(index);
+            recreateAllGrids();
+            updateAllViews(true);
+            const prevIndex = index - 1;
+            setTimeout(() => {
+                const prevInput = getActiveInput(prevIndex);
+                if (prevInput) {
+                    prevInput.focus();
+                    highlightCell(prevIndex);
+                }
+            }, 10);
+        } else {
+            navigateToInput(index, 'prev');
+        }
+        return;
+    }
+
+    // Backspace tuşu - Boş hücrede: aynı (hücre sil, sola kaydır, focus önceki); doluysa varsayılan karakter silme
+    if (event.key === 'Backspace' && isEmpty) {
+        event.preventDefault();
+        if (!isOnlyCell && !isLastCell) {
+            stateManager.removeByteAt(index);
+            recreateAllGrids();
+            updateAllViews(true);
+            const prevIndex = index - 1;
+            setTimeout(() => {
+                const prevInput = getActiveInput(prevIndex);
+                if (prevInput) {
+                    prevInput.focus();
+                    highlightCell(prevIndex);
+                }
+            }, 10);
+        } else {
+            navigateToInput(index, 'prev');
+        }
+        return;
+    }
+
+    // Space - ASCII modunda boşluk karakteri (0x20) yazılır; diğer modlarda boş byte ekleme
+    if (event.key === ' ') {
+        const type = (target as HTMLElement).dataset.type;
+        if (type === 'ascii') {
+            // ASCII: Space'i normal karakter olarak bırak (input event 0x20 yazar)
+            return;
+        }
+        const inputEl = target as HTMLInputElement;
+        const hasSelection = inputEl.selectionStart !== inputEl.selectionEnd;
+        if (!hasSelection) {
+            event.preventDefault();
+            stateManager.insertByteAt(index, 0);
+            recreateAllGrids();
+            updateAllViews(true);
+            setTimeout(() => {
+                const activeTab = getActiveTab();
+                const sameInput = activeTab?.querySelector(`[data-index="${index}"]`) as HTMLInputElement | null;
+                if (sameInput) {
+                    sameInput.focus();
+                    highlightCell(index);
+                }
+            }, 10);
+            return;
+        }
+    }
+
+    // Ok tuşları: sol/sağ önceki/sonraki, yukarı/aşağı ilk/son hücre
+    if (event.key === 'ArrowLeft') {
         event.preventDefault();
         navigateToInput(index, 'prev');
+        return;
+    }
+    if (event.key === 'ArrowRight') {
+        event.preventDefault();
+        const inputCountForRight = stateManager.getInputCount();
+        if (index === inputCountForRight - 1) {
+            stateManager.insertByteAt(stateManager.getDataSize(), 0);
+            recreateAllGrids();
+            updateAllViews(true);
+            const newIdx = stateManager.getInputCount() - 1;
+            setTimeout(() => {
+                const nextInput = getActiveInput(newIdx);
+                if (nextInput) {
+                    nextInput.focus();
+                    highlightCell(newIdx);
+                }
+            }, 10);
+        } else {
+            navigateToInput(index, 'next');
+        }
+        return;
+    }
+    if (event.key === 'ArrowUp') {
+        event.preventDefault();
+        const firstInput = getActiveTab()?.querySelector('[data-index="0"]') as HTMLElement;
+        if (firstInput) {
+            firstInput.focus();
+            highlightCell(0);
+        }
+        return;
+    }
+    if (event.key === 'ArrowDown') {
+        event.preventDefault();
+        const lastIndex = stateManager.getInputCount() - 1;
+        const lastInput = getActiveInput(lastIndex);
+        if (lastInput) {
+            lastInput.focus();
+            highlightCell(lastIndex);
+        }
         return;
     }
 
     switch (event.key) {
         case 'Enter':
-            // Enter tuşu - sonraki input'a geç
+            // Enter tuşu - sonraki input'a geç; son hücredeyse yeni boş hücre ekle (referans: move_to_next_box)
             event.preventDefault();
-            focusNextInput(index, target.dataset.type || '');
+            const inputCount = stateManager.getInputCount();
+            if (index === inputCount - 1) {
+                stateManager.insertByteAt(stateManager.getDataSize(), 0);
+                recreateAllGrids();
+                updateAllViews(true);
+                const newIndex = stateManager.getInputCount() - 1;
+                setTimeout(() => {
+                    const nextInput = getActiveInput(newIndex);
+                    if (nextInput) {
+                        nextInput.focus();
+                        highlightCell(newIndex);
+                    }
+                }, 10);
+            } else {
+                focusNextInput(index, target.dataset.type || '');
+            }
             return;
         default:
             return;
@@ -537,6 +752,18 @@ const highlightCell = (index: number): void => {
     updatePositionIndicator();
 };
 
+/** Belirtilen byte index'ine odaklanır, scroll eder ve vurgular (Index'e git). */
+const jumpToIndex = (index: number): void => {
+    const count = stateManager.getInputCount();
+    const clamped = Math.max(0, Math.min(index, count - 1));
+    highlightCell(clamped);
+    const el = getActiveInput(clamped);
+    if (el) {
+        el.focus();
+        el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    }
+};
+
 // Tüm hücreleri temizleme
 const clearAllCells = (): void => {
     stateManager.clearAllData();
@@ -575,11 +802,8 @@ const clearAllCells = (): void => {
         if (activeTab) {
             const firstInput = activeTab.querySelector('.input-cell') as HTMLElement;
             if (firstInput) {
-                // Force focus and selection
                 firstInput.focus();
-                (firstInput as HTMLInputElement).select();
                 highlightCell(0);
-                // Trigger focus event to ensure proper state
                 firstInput.dispatchEvent(new Event('focus', { bubbles: true }));
             }
         }
@@ -641,8 +865,16 @@ const clearAllSelection = (): void => {
 // Tüm seçili hücrelere paste yapma
 const pasteToAllSelected = (pastedText: string): void => {
     const type = getActiveType() || '';
-    const valuesToParse = parseTextToBytes(pastedText, type as any);
+    let valuesToParse = parseTextToBytes(pastedText, type as any);
     const data = stateManager.getData();
+
+    // 256 byte sınırı (referans: uyarı + kesim)
+    if (valuesToParse.length > 256) {
+        if (typeof window !== 'undefined' && window.NotificationHelper) {
+            window.NotificationHelper.showWarning('En fazla 256 byte yapıştırılabilir; fazlası yok sayıldı.');
+        }
+        valuesToParse = valuesToParse.slice(0, 256);
+    }
 
     // Tüm hücreleri temizle
     stateManager.clearAllData();
@@ -679,11 +911,13 @@ const initializeGrids = (
     binaryGrid = binaryGridEl;
     
     if (hexGrid && asciiGrid && decimalGrid && binaryGrid) {
-        createGrid(hexGrid, 'hex-cell', 'hex');
-        createGrid(asciiGrid, 'ascii-cell', 'ascii');
-        createGrid(decimalGrid, 'decimal-cell', 'decimal');
-        createGrid(binaryGrid, 'binary-cell', 'binary');
-        
+        clearAllGridContainers();
+        const activeName = getActiveByteGridTabName();
+        if (activeName) {
+            const config = GRID_CONFIG[activeName];
+            const gridEl = activeName === 'hex' ? hexGrid : activeName === 'ascii' ? asciiGrid : activeName === 'decimal' ? decimalGrid : binaryGrid;
+            if (gridEl) createGrid(gridEl, config.className, config.type);
+        }
         updatePositionIndicator();
     }
 };
@@ -715,6 +949,7 @@ export {
     createGrid,
     recreateAllGrids,
     highlightCell,
+    jumpToIndex,
     updateAllViews,
     updatePositionIndicator,
     clearAllCells,

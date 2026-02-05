@@ -93,16 +93,16 @@ const createContextMenu = (x: number, y: number): void => {
 
 // Context menu aksiyonları
 const handleContextMenuAction = (action: string): void => {
-    const data = stateManager.getData();
+    const effective = stateManager.getEffectiveData();
     const activeIndex = stateManager.getActiveIndex();
     const allSelected = stateManager.getAllSelected();
     
     switch (action) {
         case 'copy':
             if (allSelected) {
-                // Tüm grid'i kopyala
+                // Tüm grid'i kopyala (sadece anlamlı veri; sondaki boş yok)
                 const type = (getActiveType() || 'hex') as GridFormat;
-                const textToCopy = formatBytesToText(data, type, ' ');
+                const textToCopy = formatBytesToText(effective, type, ' ');
                 navigator.clipboard.writeText(textToCopy);
             } else if (activeIndex !== -1) {
                 // Aktif hücreyi kopyala
@@ -162,9 +162,9 @@ const handleContextMenuAction = (action: string): void => {
             break;
         case 'cut':
             if (allSelected) {
-                // Tüm grid'i kes
+                // Tüm grid'i kes (sadece anlamlı veri; sondaki boş yok)
                 const type = (getActiveType() || 'hex') as GridFormat;
-                const textToCopy = formatBytesToText(data, type, ' ');
+                const textToCopy = formatBytesToText(effective, type, ' ');
                 navigator.clipboard.writeText(textToCopy);
                 clearAllCells();
             } else if (activeIndex !== -1) {
@@ -187,11 +187,9 @@ const handleContextMenuAction = (action: string): void => {
             } else if (activeIndex !== -1) {
                 stateManager.setByte(activeIndex, 0);
                 updateAllViews();
-                // Clear single cell - focus on current cell
-                const currentInput = document.querySelector(`[data-index="${activeIndex}"]`) as HTMLElement;
+                const currentInput = getActiveInput(activeIndex);
                 if (currentInput) {
                     currentInput.focus();
-                    (currentInput as HTMLInputElement).select();
                 }
             }
             break;
@@ -199,9 +197,8 @@ const handleContextMenuAction = (action: string): void => {
             if (activeIndex !== -1) {
                 stateManager.setByte(activeIndex, 13); // CR character
                 updateAllViews();
-                // Move to next input
                 setTimeout(() => {
-                    const input = document.querySelector(`[data-index="${activeIndex}"]`) as HTMLElement;
+                    const input = getActiveInput(activeIndex);
                     if (input) {
                         focusNextInput(activeIndex, input.dataset.type || '');
                     }
@@ -212,9 +209,8 @@ const handleContextMenuAction = (action: string): void => {
             if (activeIndex !== -1) {
                 stateManager.setByte(activeIndex, 10); // LF character
                 updateAllViews();
-                // Move to next input
                 setTimeout(() => {
-                    const input = document.querySelector(`[data-index="${activeIndex}"]`) as HTMLElement;
+                    const input = getActiveInput(activeIndex);
                     if (input) {
                         focusNextInput(activeIndex, input.dataset.type || '');
                     }
@@ -225,11 +221,9 @@ const handleContextMenuAction = (action: string): void => {
             if (activeIndex !== -1) {
                 stateManager.setByte(activeIndex, 0); // Reset to 0
                 updateAllViews();
-                // Focus on current cell
-                const currentInput = document.querySelector(`[data-index="${activeIndex}"]`) as HTMLElement;
+                const currentInput = getActiveInput(activeIndex);
                 if (currentInput) {
                     currentInput.focus();
-                    (currentInput as HTMLInputElement).select();
                 }
             }
             break;

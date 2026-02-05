@@ -32,9 +32,6 @@ body {
 }
 
 .theme-toggle-btn {
-    position: absolute;
-    top: 1rem;
-    right: 1rem;
     display: flex;
     align-items: center;
     gap: 0.5rem;
@@ -62,6 +59,58 @@ body {
 
 .theme-text {
     font-size: 0.875rem;
+}
+
+/* App Toolbar */
+.app-toolbar {
+    position: relative;
+}
+
+.toolbar-actions .jump-to-index-input:focus {
+    outline: none;
+    border-color: var(--theme-borderFocus);
+    box-shadow: 0 0 0 2px var(--theme-borderFocus);
+}
+
+.jump-to-index-btn:hover,
+.file-open-btn:hover,
+.file-save-btn:hover {
+    filter: brightness(1.1);
+}
+
+.file-save-btn:hover {
+    background-color: var(--theme-successHover) !important;
+}
+
+.file-open-btn:hover {
+    background-color: var(--theme-secondaryHover) !important;
+}
+
+/* Klavye kısayolları - açılır/kapanır panel */
+.keyboard-shortcuts-details summary::-webkit-details-marker,
+.keyboard-shortcuts-details summary::marker {
+    display: none;
+}
+
+.keyboard-shortcuts-details .details-marker {
+    transition: transform 0.2s ease;
+}
+
+.keyboard-shortcuts-details[open] .details-marker {
+    transform: rotate(-180deg);
+}
+
+/* Screen reader only (Tailwind sr-only benzeri) */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
 }
 
 .tab-content {
@@ -686,4 +735,147 @@ table thead th.dec-header {
     #ptp-textareas-container {
         grid-template-columns: 1fr !important;
     }
+}
+
+/* Toolbar ve kontroller - mobil */
+@media (max-width: 768px) {
+    .app-toolbar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .toolbar-actions {
+        flex-wrap: wrap;
+        justify-content: flex-start;
+    }
+    
+    .jump-to-index-input {
+        min-width: 4rem;
+    }
+}
+
+/* Ayarlar modalı */
+.settings-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s ease, visibility 0.2s ease;
+}
+.settings-modal.is-open {
+    opacity: 1;
+    visibility: visible;
+}
+.settings-modal-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    cursor: pointer;
+}
+.settings-modal-box {
+    position: relative;
+    width: 100%;
+    max-width: 24rem;
+    border-radius: 0.75rem;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+.settings-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--theme-border);
+}
+.settings-modal-title {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+.settings-modal-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0.25rem;
+    border-radius: 0.25rem;
+    transition: background-color 0.2s;
+}
+.settings-modal-close:hover {
+    background-color: var(--theme-surfaceHover);
+}
+.settings-modal-body {
+    padding: 1.25rem;
+}
+.settings-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.75rem 0;
+}
+.settings-row:not(:last-child) {
+    border-bottom: 1px solid var(--theme-border);
+}
+.settings-label {
+    font-size: 0.875rem;
+    flex: 1;
+}
+
+/* iOS tarzı switch (basılma hissi) */
+.settings-switch {
+    position: relative;
+    display: inline-block;
+    width: 2.75rem;
+    height: 1.5rem;
+    flex-shrink: 0;
+}
+.settings-switch-input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+.settings-switch-slider {
+    position: absolute;
+    cursor: pointer;
+    inset: 0;
+    background-color: var(--theme-border);
+    border-radius: 1.5rem;
+    transition: background-color 0.2s ease, box-shadow 0.2s ease;
+}
+.settings-switch-slider::before {
+    content: '';
+    position: absolute;
+    height: 1.25rem;
+    width: 1.25rem;
+    left: 0.125rem;
+    bottom: 0.125rem;
+    background-color: white;
+    border-radius: 50%;
+    transition: transform 0.2s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+.settings-switch-input:checked + .settings-switch-slider {
+    background-color: var(--theme-primary);
+}
+.settings-switch-input:checked + .settings-switch-slider::before {
+    transform: translateX(1.25rem);
+}
+.settings-switch-input:focus-visible + .settings-switch-slider {
+    outline: 2px solid var(--theme-primary);
+    outline-offset: 2px;
+}
+.settings-switch-input:active + .settings-switch-slider::before {
+    width: 1.5rem;
+}
+.settings-btn:hover {
+    background-color: var(--theme-surfaceHover) !important;
+}
+.settings-btn:active {
+    transform: scale(0.98);
 }

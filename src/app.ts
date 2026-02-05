@@ -10,7 +10,7 @@ interface AppConfig {
 }
 
 let APP_CONFIG: AppConfig = {
-    version: '1.0.2', // fallback version
+    version: '1.0.3', // fallback version
     name: 'ByteSync Editor'
 };
 
@@ -21,7 +21,7 @@ async function loadAppConfig(): Promise<AppConfig> {
         const manifest = await response.json();
         
         APP_CONFIG = {
-            version: manifest.version || '1.0.2',
+            version: manifest.version || '1.0.3',
             name: manifest.name || 'ByteSync Editor'
         };
         
@@ -46,7 +46,9 @@ import {
     initializeGrids,
     updatePositionIndicator,
     clearAllCells,
-    selectAllCells
+    selectAllCells,
+    jumpToIndex,
+    recreateAllGrids
 } from './grid-manager.js';
 
 // Import tab manager
@@ -80,6 +82,19 @@ import { FeedbackForm } from './components/feedback-form.js';
 import {
     initializeDocklightPTPMode
 } from './docklight-ptp-parser.js';
+
+// Import tabs config (tek kaynak: butonlar ve kısayollar buradan)
+import {
+    renderTabButtons,
+    renderKeyboardShortcutsTabs,
+    getTabIdByShortcut
+} from './tabs-config.js';
+
+// Import file handler (binary open/save)
+import { openBinaryFileDialog, downloadBytes } from './file-handler.js';
+
+// Import ayarlar (modal ve grid davranışı)
+import { getSettings, setSettings } from './settings.js';
 
 // Handle URL mode parameters
 const handleUrlMode = (): void => {
@@ -118,7 +133,11 @@ window.onload = async (): Promise<void> => {
     
     // Populate ASCII reference table
     initializeAsciiTable();
-    
+
+    // Sekme butonları ve kısayol listesini config'den üret
+    renderTabButtons(document.getElementById('tab-buttons-container'));
+    renderKeyboardShortcutsTabs(document.getElementById('keyboard-shortcuts-tabs'));
+
     // DOM elementlerini bul
     const tabButtons = document.querySelectorAll('.tab-button');
     const tabContents = document.querySelectorAll('.tab-content');
@@ -173,7 +192,7 @@ window.onload = async (): Promise<void> => {
     copyButtons.forEach(button => {
         button.addEventListener('click', () => {
             const type = (button as HTMLElement).dataset.type || 'hex';
-            const data = stateManager.getData();
+            const data = stateManager.getEffectiveData();
             const textToCopy = formatBytesToText(Array.from(data), type as any, ' ');
             
             // Use the clipboard API for modern browsers
@@ -207,34 +226,123 @@ window.onload = async (): Promise<void> => {
             }, 1500);
         });
     });
-    
+
+    // Index'e git: input + buton
+    const jumpInput = document.getElementById('jump-to-index-input') as HTMLInputElement | null;
+    const jumpBtn = document.getElementById('jump-to-index-btn');
+    const runJumpToIndex = (): void => {
+        if (!jumpInput) return;
+        const raw = jumpInput.value.trim();
+        const n = parseInt(raw, 10);
+        if (!raw || isNaN(n) || n < 0) return;
+        jumpToIndex(n);
+        if (window.NotificationHelper) {
+            window.NotificationHelper.showSuccess(`${n}. byte'a gidildi`);
+        }
+    };
+    if (jumpBtn) {
+        jumpBtn.addEventListener('click', runJumpToIndex);
+    }
+    if (jumpInput) {
+        jumpInput.addEventListener('keydown', (e: KeyboardEvent) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                runJumpToIndex();
+            }
+        });
+    }
+
+    // Show explicit zeros toggle
+    const showZerosCheckbox = document.getElementById('show-explicit-zeros') as HTMLInputElement | null;
+    if (showZerosCheckbox) {
+        showZerosCheckbox.checked = stateManager.getShowExplicitZeros();
+        showZerosCheckbox.addEventListener('change', () => {
+            stateManager.setShowExplicitZeros(showZerosCheckbox.checked);
+            recreateAllGrids();
+        });
+    }
+
+    // Dosya Aç / Kaydet
+    const fileOpenBtn = document.getElementById('file-open-btn');
+    const fileSaveBtn = document.getElementById('file-save-btn');
+    if (fileOpenBtn) {
+        fileOpenBtn.addEventListener('click', async () => {
+            try {
+                const result = await openBinaryFileDialog();
+                if (result.canceled || !result.data) return;
+                stateManager.loadData(result.data);
+                recreateAllGrids();
+                if (window.NotificationHelper) {
+                    window.NotificationHelper.showSuccess(`Dosya açıldı: ${result.fileName || ''} (${result.data.length} byte)`);
+                }
+            } catch (e) {
+                if (window.NotificationHelper) {
+                    window.NotificationHelper.showError((e as Error).message);
+                }
+            }
+        });
+    }
+    if (fileSaveBtn) {
+        fileSaveBtn.addEventListener('click', () => {
+            const data = stateManager.getEffectiveData();
+            const name = `bytesync-${Date.now()}.bin`;
+            downloadBytes(data, name);
+            if (window.NotificationHelper) {
+                window.NotificationHelper.showSuccess('Kaydedildi: ' + name);
+            }
+        });
+    }
+
+    // Ayarlar modalı
+    const settingsModal = document.getElementById('settings-modal');
+    const settingsOpenBtn = document.getElementById('settings-open-btn');
+    const settingsCloseBtn = document.getElementById('settings-modal-close');
+    const settingsOverlay = document.getElementById('settings-modal-overlay');
+    const settingAutoAdvance = document.getElementById('setting-auto-advance') as HTMLInputElement | null;
+    const settingInsertMode = document.getElementById('setting-insert-mode') as HTMLInputElement | null;
+
+    const openSettingsModal = (): void => {
+        if (!settingsModal) return;
+        const s = getSettings();
+        if (settingAutoAdvance) settingAutoAdvance.checked = s.autoAdvance;
+        if (settingInsertMode) settingInsertMode.checked = s.insertMode;
+        const settingSelectOnFocus = document.getElementById('setting-select-on-focus') as HTMLInputElement | null;
+        if (settingSelectOnFocus) settingSelectOnFocus.checked = s.selectOnFocus;
+        settingsModal.classList.add('is-open');
+        settingsModal.setAttribute('aria-hidden', 'false');
+    };
+    const closeSettingsModal = (): void => {
+        if (!settingsModal) return;
+        settingsModal.classList.remove('is-open');
+        settingsModal.setAttribute('aria-hidden', 'true');
+    };
+
+    if (settingsOpenBtn) settingsOpenBtn.addEventListener('click', openSettingsModal);
+    if (settingsCloseBtn) settingsCloseBtn.addEventListener('click', closeSettingsModal);
+    if (settingsOverlay) settingsOverlay.addEventListener('click', closeSettingsModal);
+    if (settingAutoAdvance) {
+        settingAutoAdvance.addEventListener('change', () => {
+            setSettings({ autoAdvance: settingAutoAdvance.checked });
+        });
+    }
+    if (settingInsertMode) {
+        settingInsertMode.addEventListener('change', () => {
+            setSettings({ insertMode: settingInsertMode.checked });
+        });
+    }
+    const settingSelectOnFocusEl = document.getElementById('setting-select-on-focus') as HTMLInputElement | null;
+    if (settingSelectOnFocusEl) {
+        settingSelectOnFocusEl.addEventListener('change', () => {
+            setSettings({ selectOnFocus: settingSelectOnFocusEl.checked });
+        });
+    }
+
     // Global klavye kısayolları (document seviyesinde)
     document.addEventListener('keydown', (e: KeyboardEvent) => {
-        // Command/Ctrl + 1,2,3,4,5,6 - Mod değiştirme (Mac: ⌘, Windows: Ctrl)
+        // Command/Ctrl + 1..6 - Mod değiştirme (tabs-config'deki shortcut ile eşleşir)
         if ((e.metaKey || e.ctrlKey) && !e.shiftKey) {
-            let targetTab: string | null = null;
-            // Command + sayı tuşları ile tab değiştirme
-            switch (e.code) {
-                case 'Digit1':
-                    targetTab = 'ascii';
-                    break;
-                case 'Digit2':
-                    targetTab = 'hex';
-                    break;
-                case 'Digit3':
-                    targetTab = 'decimal';
-                    break;
-                case 'Digit4':
-                    targetTab = 'binary';
-                    break;
-                case 'Digit5':
-                    targetTab = 'four-in-one';
-                    break;
-                case 'Digit6':
-                    targetTab = 'docklight-ptp';
-                    break;
-            }
-            
+            const digit = e.code.startsWith('Digit') ? parseInt(e.code.replace('Digit', ''), 10) : 0;
+            const targetTab = digit >= 1 && digit <= 6 ? getTabIdByShortcut(digit) : null;
             if (targetTab) {
                 e.preventDefault();
                 switchTab(targetTab);
