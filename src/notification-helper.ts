@@ -100,11 +100,6 @@ class NotificationHelper {
         }, duration);
     }
 
-    // Özel bildirimler
-    showExpansion(oldSize: number, newSize: number): void {
-        this.show(`Array genişletildi: ${oldSize} → ${newSize} bytes`, 'info');
-    }
-
     showSuccess(message: string): void {
         this.show(message, 'success');
     }

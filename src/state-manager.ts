@@ -167,45 +167,41 @@ class StateManager {
         const oldData = this.state.data;
         const oldSize = oldData.length;
         const newData = new Uint8Array(newSize);
-        
-        // Eski verileri kopyala
+
         for (let i = 0; i < Math.min(oldSize, newSize); i++) {
             newData[i] = oldData[i];
         }
-        
-        // Yeni alanları 0 ile doldur
+
         for (let i = oldSize; i < newSize; i++) {
             newData[i] = 0;
         }
-        
-        console.log(`Data array genişletildi: ${oldSize} → ${newSize} bytes`);
-        
+
         this.state.data = newData;
-        
-        // Callback'leri çağır
+
         if (this.onExpandCallback) {
             this.onExpandCallback(oldSize, newSize);
         }
-        
+
         if (this.onPositionUpdateCallback) {
             this.onPositionUpdateCallback();
         }
-        
+
         this.notifyDataListeners();
         this.notifyListeners();
     }
 
     checkAndExpandIfNeeded(): boolean {
-        // Son 10 byte'ı kontrol et
         const lastBytes = this.state.data.slice(-10);
         const hasData = lastBytes.some(byte => byte !== 0);
-        
-        if (hasData && this.state.data.length < 1024) { // Maksimum 1024 byte
-            const newSize = this.state.data.length * 2;
-            this.expandDataArray(newSize);
-            return true;
+
+        if (!hasData) {
+            return false;
         }
-        return false;
+
+        const newSize = this.state.data.length * 2;
+        this.expandDataArray(newSize);
+
+        return true;
     }
 
     // Set byte at index
@@ -286,12 +282,7 @@ class StateManager {
         this.state.touchedIndices.clear();
         this.state.activeIndex = -1;
         this.state.allSelected = false;
-        
-        // Array'i minimum boyuta düşür (256)
-        if (this.state.data.length > 256) {
-            this.state.data = new Uint8Array(256);
-        }
-        
+
         this.notifyDataListeners();
         this.notifyListeners();
     }

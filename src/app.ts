@@ -62,11 +62,6 @@ import {
     initializeFourInOneMode
 } from './modes/four-in-one-mode.js';
 
-// Import context menu
-import {
-    initializeContextMenu
-} from './components/context-menu.js';
-
 // Import ASCII table
 import {
     initializeAsciiTable
@@ -160,12 +155,6 @@ window.onload = async (): Promise<void> => {
     }
     
     // Initialize state manager callbacks
-    stateManager.setOnExpand((oldSize: number, newSize: number) => {
-        if (window.NotificationHelper) {
-            window.NotificationHelper.showExpansion(oldSize, newSize);
-        }
-    });
-    
     stateManager.setOnPositionUpdate(() => {
         updatePositionIndicator();
     });
@@ -185,8 +174,6 @@ window.onload = async (): Promise<void> => {
     // Initialize Docklight PTP mode
     initializeDocklightPTPMode();
     
-    // Initialize context menu
-    initializeContextMenu();
     
     // Copy all data from a specific format
     copyButtons.forEach(button => {
@@ -227,28 +214,39 @@ window.onload = async (): Promise<void> => {
         });
     });
 
-    // Index'e git: input + buton
-    const jumpInput = document.getElementById('jump-to-index-input') as HTMLInputElement | null;
-    const jumpBtn = document.getElementById('jump-to-index-btn');
-    const runJumpToIndex = (): void => {
-        if (!jumpInput) return;
-        const raw = jumpInput.value.trim();
-        const n = parseInt(raw, 10);
-        if (!raw || isNaN(n) || n < 0) return;
-        jumpToIndex(n);
-        if (window.NotificationHelper) {
-            window.NotificationHelper.showSuccess(`${n}. byte'a gidildi`);
+    // Pozisyon inputu ile index'e git (tüm grid modları için ortak)
+    const positionInput = document.getElementById('position-input') as HTMLInputElement | null;
+    const runJumpToIndexFromInput = (): void => {
+        if (!positionInput) {
+            return;
         }
+
+        const raw = positionInput.value.trim();
+        const value = parseInt(raw, 10);
+
+        if (!raw || isNaN(value)) {
+            return;
+        }
+
+        const targetIndex = value - 1;
+
+        if (targetIndex < 0) {
+            return;
+        }
+
+        jumpToIndex(targetIndex);
     };
-    if (jumpBtn) {
-        jumpBtn.addEventListener('click', runJumpToIndex);
-    }
-    if (jumpInput) {
-        jumpInput.addEventListener('keydown', (e: KeyboardEvent) => {
+
+    if (positionInput) {
+        positionInput.addEventListener('keydown', (e: KeyboardEvent) => {
             if (e.key === 'Enter') {
                 e.preventDefault();
-                runJumpToIndex();
+                runJumpToIndexFromInput();
             }
+        });
+
+        positionInput.addEventListener('change', () => {
+            runJumpToIndexFromInput();
         });
     }
 
@@ -303,11 +301,18 @@ window.onload = async (): Promise<void> => {
 
     const openSettingsModal = (): void => {
         if (!settingsModal) return;
+
         const s = getSettings();
+
         if (settingAutoAdvance) settingAutoAdvance.checked = s.autoAdvance;
         if (settingInsertMode) settingInsertMode.checked = s.insertMode;
+
         const settingSelectOnFocus = document.getElementById('setting-select-on-focus') as HTMLInputElement | null;
         if (settingSelectOnFocus) settingSelectOnFocus.checked = s.selectOnFocus;
+
+        const settingEncodingEl = document.getElementById('setting-encoding') as HTMLSelectElement | null;
+        if (settingEncodingEl) settingEncodingEl.value = s.encoding;
+
         settingsModal.classList.add('is-open');
         settingsModal.setAttribute('aria-hidden', 'false');
     };
@@ -337,6 +342,14 @@ window.onload = async (): Promise<void> => {
         });
     }
 
+    const settingEncodingEl = document.getElementById('setting-encoding') as HTMLSelectElement | null;
+    if (settingEncodingEl) {
+        settingEncodingEl.addEventListener('change', () => {
+            setSettings({ encoding: settingEncodingEl.value as 'utf-8' | 'iso-8859-9' });
+            recreateAllGrids();
+        });
+    }
+
     // Global klavye kısayolları (document seviyesinde)
     document.addEventListener('keydown', (e: KeyboardEvent) => {
         // Command/Ctrl + 1..6 - Mod değiştirme (tabs-config'deki shortcut ile eşleşir)
@@ -350,10 +363,15 @@ window.onload = async (): Promise<void> => {
             }
         }
 
-        // Ctrl+A (veya Cmd+A) - Tümünü seç (global işlem)
+        // Ctrl+A (veya Cmd+A) - Sadece bireysel grid modlarında tümünü seç
         if ((e.ctrlKey || e.metaKey) && e.key === 'a') {
-            e.preventDefault();
-            selectAllCells();
+            const activeTab = document.querySelector('.tab-content.active');
+            const tabId = activeTab?.id?.replace(/-tab$/, '') ?? '';
+            const isGridTab = ['hex', 'ascii', 'decimal', 'binary'].includes(tabId);
+            if (isGridTab) {
+                e.preventDefault();
+                selectAllCells();
+            }
             return;
         }
 

@@ -105,8 +105,7 @@
     </script>
     
     <!-- Theme and Notification Helper -->
-    <script type="module" src="./src/theme.ts"></script>
-    <script type="module" src="./src/notification-helper.ts"></script>
+    <script type="module" src="./dist/theme.js"></script>
 </head>
 <body class="min-h-screen p-8 theme-dark" style="background-color: var(--theme-background); color: var(--theme-text);">
 
@@ -118,16 +117,25 @@
                 <p class="text-sm" style="color: var(--theme-textSecondary);">Edit a byte in any view, and watch all other views update automatically. The selected cell remains highlighted across tabs. Hücreye tıklayınca metin otomatik seçilmez; imleci istediğiniz yere koyabilirsiniz.</p>
             </div>
             <div id="app-toolbar-actions" class="toolbar-actions flex items-center gap-2 flex-shrink-0 flex-wrap">
-                <!-- Index'e git -->
-                <div class="jump-to-index flex items-center gap-1">
-                    <label for="jump-to-index-input" class="sr-only">Byte index</label>
-                    <input type="number" id="jump-to-index-input" min="0" placeholder="Index" class="jump-to-index-input w-20 px-2 py-1.5 text-sm rounded border" style="background-color: var(--theme-input); color: var(--theme-text); border-color: var(--theme-border);" aria-label="Byte indexe git" title="0 ile toplam byte-1 arası değer girin">
-                    <button type="button" id="jump-to-index-btn" class="jump-to-index-btn px-3 py-1.5 text-sm rounded font-medium transition-colors" style="background-color: var(--theme-primary); color: white;" aria-label="Indexe git">Git</button>
-                </div>
                 <label class="show-zeros-toggle flex items-center gap-2 cursor-pointer select-none" title="Açıkken 0 değeri boş yerine 0 olarak gösterilir">
                     <input type="checkbox" id="show-explicit-zeros" class="rounded border" style="accent-color: var(--theme-primary);">
                     <span class="text-sm whitespace-nowrap" style="color: var(--theme-textSecondary);">0 göster</span>
                 </label>
+                <div class="flex items-center gap-1">
+                    <span class="text-xs whitespace-nowrap" style="color: var(--theme-textSecondary);">Pozisyon</span>
+                    <span class="position-indicator flex items-center gap-1" id="position-indicator">
+                        <input
+                            type="number"
+                            id="position-input"
+                            min="1"
+                            class="w-16 px-2 py-1 text-sm rounded border text-center"
+                            style="background-color: var(--theme-input); color: var(--theme-text); border-color: var(--theme-border);"
+                            aria-label="Aktif byte pozisyonu"
+                        >
+                        <span class="mx-1">/</span>
+                        <span id="position-total">256</span>
+                    </span>
+                </div>
                 <div class="file-actions flex items-center gap-1">
                     <button type="button" id="file-open-btn" class="file-open-btn px-3 py-1.5 text-sm rounded font-medium transition-colors" style="background-color: var(--theme-secondary); color: var(--theme-text); border: 1px solid var(--theme-border);" title="Binary dosya aç" aria-label="Binary dosya aç">Dosya Aç</button>
                     <button type="button" id="file-save-btn" class="file-save-btn px-3 py-1.5 text-sm rounded font-medium transition-colors" style="background-color: var(--theme-success); color: white;" title="Mevcut veriyi binary dosya olarak indir" aria-label="Mevcut veriyi dosya olarak indir">Kaydet</button>
@@ -185,7 +193,6 @@
             </div>
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-xl font-semibold">Hexadecimal View</h2>
-                <span class="position-indicator" id="hex-position-indicator">0 / 256</span>
             </div>
             <div id="hex-grid" class="grid-container hex-grid"></div>
         </div>
@@ -196,7 +203,6 @@
             </div>
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-xl font-semibold">ASCII View</h2>
-                <span class="position-indicator" id="ascii-position-indicator">0 / 256</span>
             </div>
             <div id="ascii-grid" class="grid-container ascii-grid"></div>
         </div>
@@ -207,7 +213,6 @@
             </div>
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-xl font-semibold">Decimal View</h2>
-                <span class="position-indicator" id="decimal-position-indicator">0 / 256</span>
             </div>
             <div id="decimal-grid" class="grid-container decimal-grid"></div>
         </div>
@@ -218,7 +223,6 @@
             </div>
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-xl font-semibold">Binary View</h2>
-                <span class="position-indicator" id="binary-position-indicator">0 / 256</span>
             </div>
             <div id="binary-grid" class="grid-container binary-grid"></div>
         </div>
@@ -495,11 +499,18 @@
                         <span class="settings-switch-slider"></span>
                     </label>
                 </div>
+                <div class="settings-row">
+                    <span class="settings-label" style="color: var(--theme-text);">Karakter kodlaması</span>
+                    <select id="setting-encoding" class="text-sm rounded border px-2 py-1" style="background-color: var(--theme-input); color: var(--theme-text); border-color: var(--theme-border);">
+                        <option value="utf-8">UTF-8 (ö→195,182)</option>
+                        <option value="iso-8859-9">ISO-8859-9 (ö→246)</option>
+                    </select>
+                </div>
             </div>
         </div>
     </div>
 
-    <script type="module" src="./src/notification-helper.ts"></script>
+    <script type="module" src="./dist/notification-helper.js"></script>
     <script>
         // Tab butonları ve kısayol listesi app.ts (tabs-config) ile doldurulur.
         // Diğer kısayollardaki Cmd/⌘ platforma göre güncellemek için:
@@ -514,7 +525,7 @@
         });
     </script>
     <!-- Vite entry point -->
-    <script type="module" src="./src/app.ts"></script>
+    <script type="module" src="./dist/app.js"></script>
 
 </body>
 </html>
