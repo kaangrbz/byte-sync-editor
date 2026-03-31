@@ -152,256 +152,154 @@ export const analyzeData = (data: Uint8Array | number[]): DataAnalysisResult => 
     };
 };
 
-// Basit ve anlaşılır input parser
-// Tek hücre input için optimize edilmiş, paste işlemleri için de destekler
-export const parseTextToBytes = (text: string | null | undefined, format: GridFormat): number[] => {
-  if (!text) return [];
-  
-  // ASCII için trim kullanma, diğer formatlar için trim kullan
-  const input = format === 'ascii' ? String(text) : String(text).trim();
-  if (input === '') return [];
-  
+export type ConversionMode = 'character' | 'byte';
+
+const splitTokens = (text: string): string[] => {
+  return text.split(/[,\s;]+/).map(token => token.trim()).filter(token => token !== '');
+};
+
+const parseByteMode = (text: string, format: GridFormat): number[] => {
   const result: number[] = [];
 
   switch (format) {
     case 'ascii':
-      // Unicode/UTF-8: Tüm karakterleri UTF-8 encoding ile byte dizisine çevir
-      // TextEncoder kullanarak tüm Unicode karakterlerini (Türkçe, Çince, Arapça vb.) destekle
       try {
         const encoder = new TextEncoder();
-        const utf8Bytes = encoder.encode(input);
-        result.push(...Array.from(utf8Bytes));
-      } catch (e) {
-        // Fallback: Eğer TextEncoder desteklenmiyorsa eski yöntemi kullan
-        for (let i = 0; i < input.length; i++) {
-          const codePoint = input.codePointAt(i);
-          if (codePoint !== undefined) {
-            if (codePoint < 0x80) {
-              // 1 byte: 0xxxxxxx
-              result.push(codePoint);
-            } else if (codePoint < 0x800) {
-              // 2 bytes: 110xxxxx 10xxxxxx
-              result.push(0xC0 | (codePoint >> 6));
-              result.push(0x80 | (codePoint & 0x3F));
-            } else if (codePoint < 0xD800 || codePoint >= 0xE000) {
-              // 3 bytes: 1110xxxx 10xxxxxx 10xxxxxx (BMP karakterler)
-              result.push(0xE0 | (codePoint >> 12));
-              result.push(0x80 | ((codePoint >> 6) & 0x3F));
-              result.push(0x80 | (codePoint & 0x3F));
-            } else {
-              // 4 bytes: Surrogate pair (UTF-16)
-              i++; // Bir sonraki karakteri de oku
-              if (i < input.length) {
-                const low = input.codePointAt(i);
-                if (low !== undefined && low >= 0xDC00 && low < 0xE000) {
-                  const fullCodePoint = 0x10000 + (((codePoint & 0x3FF) << 10) | (low & 0x3FF));
-                  result.push(0xF0 | (fullCodePoint >> 18));
-                  result.push(0x80 | ((fullCodePoint >> 12) & 0x3F));
-                  result.push(0x80 | ((fullCodePoint >> 6) & 0x3F));
-                  result.push(0x80 | (fullCodePoint & 0x3F));
-                }
-              }
-            }
-            // Surrogate pair ise bir sonraki karakteri atla
-            if (codePoint >= 0xD800 && codePoint < 0xDC00) {
-              // Zaten yukarıda i++ yaptık
-            } else if (codePoint > 0xFFFF) {
-              // 4 byte karakter, bir sonraki karakteri atla
-              i++;
-            }
-          }
+        result.push(...Array.from(encoder.encode(text)));
+      } catch {
+        for (let i = 0; i < text.length; i++) {
+          result.push(text.charCodeAt(i) & 0xFF);
         }
       }
-      break;
-
+      return result;
     case 'hex':
-      {
-        // Tek hücre input için optimize: direkt parse et (maksimum 2 karakter)
-        if (input.length <= 2 && /^[0-9a-fA-F]+$/.test(input)) {
-          // Tek hücre input - direkt parse
-          const padded = input.length === 1 ? '0' + input : input;
-          const byteValue = parseInt(padded, 16);
-          if (!isNaN(byteValue)) {
-            result.push(byteValue & 0xFF);
-          }
-        } else {
-          // Paste işlemi için: Virgül, boşluk, noktalı virgül ile ayrılmış değerleri işle
-          const hexParts = input.split(/[,\s;]+/).filter(part => part.trim() !== '');
-          
-          for (const part of hexParts) {
-            const cleanHex = part.trim().replace(/[^0-9a-fA-F]/g, '');
-            if (cleanHex) {
-              // 0x prefix varsa kaldır
-              const hexValue = cleanHex.replace(/^0x/i, '');
-              
-              // Tek karakter ise 0 ile başlat
-              const padded = hexValue.length % 2 ? '0' + hexValue : hexValue;
-              
-              // 2'şer karakter grupla
-              for (let i = 0; i < padded.length; i += 2) {
-                const hexPair = padded.substring(i, i + 2);
-                const byteValue = parseInt(hexPair, 16);
-                if (!isNaN(byteValue)) {
-                  result.push(byteValue & 0xFF);
-                }
-              }
-            }
+      splitTokens(text).forEach(token => {
+        const normalizedToken = token.replace(/^0x/i, '').replace(/[^0-9a-fA-F]/g, '');
+        if (normalizedToken === '') {
+          return;
+        }
+        const paddedToken = normalizedToken.length % 2 === 1 ? `0${normalizedToken}` : normalizedToken;
+        for (let i = 0; i < paddedToken.length; i += 2) {
+          const value = parseInt(paddedToken.slice(i, i + 2), 16);
+          if (!isNaN(value)) {
+            result.push(value & 0xFF);
           }
         }
-      }
-      break;
-
+      });
+      return result;
     case 'decimal':
-      {
-        // Tek hücre input için optimize: direkt parse et (maksimum 3 karakter, 0-255)
-        if (input.length <= 3 && /^\d+$/.test(input)) {
-          const num = parseInt(input, 10);
-          if (!isNaN(num) && num >= 0 && num <= 255) {
-            result.push(num);
-          }
-        } else {
-          // Paste işlemi için: Boşluk, virgül ile ayrılmış sayıları işle
-          const decParts = input.split(/[,\s]+/).filter(part => part.trim() !== '');
-          
-          for (const part of decParts) {
-            const num = parseInt(part.trim(), 10);
-            if (!isNaN(num) && num >= 0 && num <= 255) {
-              result.push(num);
-            }
-          }
+      splitTokens(text).forEach(token => {
+        const value = parseInt(token, 10);
+        if (!isNaN(value) && value >= 0 && value <= 255) {
+          result.push(value);
         }
-      }
-      break;
-
+      });
+      return result;
     case 'binary':
-      {
-        // Tek hücre input için optimize: direkt parse et (maksimum 8 karakter)
-        if (input.length <= 8 && /^[01]+$/.test(input)) {
-          // Tek hücre input - direkt parse (8 karaktere kadar)
-          const padded = input.padStart(8, '0');
-          const byteValue = parseInt(padded, 2);
-          if (!isNaN(byteValue)) {
-            result.push(byteValue & 0xFF);
-          }
-        } else {
-          // Paste işlemi için: 0/1 karakterlerini 8'li gruplar halinde işle
-          const binaryStr = input.replace(/[^01]/g, '');
-          
-          // 8'li gruplar halinde böl
-          for (let i = 0; i < binaryStr.length; i += 8) {
-            const binaryGroup = binaryStr.substring(i, i + 8);
-            if (binaryGroup.length === 8) {
-              const byteValue = parseInt(binaryGroup, 2);
-              if (!isNaN(byteValue)) {
-                result.push(byteValue);
-              }
-            }
-          }
+      splitTokens(text).forEach(token => {
+        const normalizedToken = token.replace(/[^01]/g, '');
+        if (normalizedToken === '') {
+          return;
         }
-      }
-      break;
-
+        const paddedToken = normalizedToken.padStart(8, '0');
+        const value = parseInt(paddedToken, 2);
+        if (!isNaN(value)) {
+          result.push(value & 0xFF);
+        }
+      });
+      return result;
     default:
-      break;
+      return result;
   }
-
-  return result;
 };
 
-// Format bytes -> text
+const parseCharacterMode = (text: string, format: GridFormat): number[] => {
+  switch (format) {
+    case 'ascii':
+      return Array.from(text).map(char => char.codePointAt(0)).filter((value): value is number => value !== undefined);
+    case 'hex':
+      return splitTokens(text).map(token => token.replace(/^0x/i, '')).map(token => parseInt(token, 16)).filter(value => !isNaN(value));
+    case 'decimal':
+      return splitTokens(text).map(token => parseInt(token, 10)).filter(value => !isNaN(value));
+    case 'binary':
+      return splitTokens(text).map(token => parseInt(token, 2)).filter(value => !isNaN(value));
+    default:
+      return [];
+  }
+};
+
+export const parseTextToBytes = (
+  text: string | null | undefined,
+  format: GridFormat,
+  mode: ConversionMode = 'character'
+): number[] => {
+  if (!text) {
+    return [];
+  }
+
+  const input = format === 'ascii' ? String(text) : String(text).trim();
+  if (input === '') {
+    return [];
+  }
+
+  if (mode === 'byte') {
+    return parseByteMode(input, format);
+  }
+
+  return parseCharacterMode(input, format);
+};
+
+const formatByteMode = (values: number[], format: GridFormat, delimiter: string): string => {
+  switch (format) {
+    case 'ascii':
+      try {
+        const decoder = new TextDecoder('utf-8', { fatal: false });
+        return decoder.decode(new Uint8Array(values.map(value => Number(value) & 0xFF)));
+      } catch {
+        return values.map(value => String.fromCharCode(Number(value) & 0xFF)).join('');
+      }
+    case 'hex':
+      return values.map(value => (Number(value) & 0xFF).toString(16).toUpperCase().padStart(2, '0')).join(delimiter);
+    case 'decimal':
+      return values.map(value => String(Number(value) & 0xFF)).join(delimiter);
+    case 'binary':
+      return values.map(value => (Number(value) & 0xFF).toString(2).padStart(8, '0')).join(delimiter);
+    default:
+      return '';
+  }
+};
+
+const formatCharacterMode = (values: number[], format: GridFormat, delimiter: string): string => {
+  switch (format) {
+    case 'ascii':
+      return values.map(value => String.fromCodePoint(Math.max(0, Number(value) || 0))).join('');
+    case 'hex':
+      return values.map(value => (Number(value) >>> 0).toString(16).toUpperCase()).join(delimiter);
+    case 'decimal':
+      return values.map(value => String(Number(value))).join(delimiter);
+    case 'binary':
+      return values.map(value => (Number(value) >>> 0).toString(2)).join(delimiter);
+    default:
+      return '';
+  }
+};
+
 export const formatBytesToText = (
   bytes: Uint8Array | number[] | ArrayLike<number>,
   format: GridFormat,
-  delimiter: string = ' '
+  delimiter: string = ' ',
+  mode: ConversionMode = 'character'
 ): string => {
   if (!bytes || (!Array.isArray(bytes) && !(bytes instanceof Uint8Array) && typeof (bytes as any)[Symbol.iterator] !== 'function')) {
     return '';
   }
-  const arr = Array.isArray(bytes) ? bytes : Array.from(bytes);
+  const values = Array.isArray(bytes) ? bytes : Array.from(bytes);
 
-  switch (format) {
-    case 'ascii':
-      // Unicode/UTF-8: Byte dizisini UTF-8 decoding ile Unicode string'e çevir
-      // TextDecoder kullanarak tüm Unicode karakterlerini (Türkçe, Çince, Arapça vb.) destekle
-      try {
-        const decoder = new TextDecoder('utf-8', { fatal: false });
-        const uint8Array = new Uint8Array(arr.map(b => Number(b) & 0xFF));
-        return decoder.decode(uint8Array);
-      } catch (e) {
-        // Fallback: Eğer TextDecoder desteklenmiyorsa veya geçersiz UTF-8 ise
-        // Geçerli UTF-8 byte dizilerini manuel olarak decode et
-        const bytes = arr.map(b => Number(b) & 0xFF);
-        let result = '';
-        let i = 0;
-        
-        while (i < bytes.length) {
-          const byte1 = bytes[i];
-          
-          if (byte1 < 0x80) {
-            // 1 byte: 0xxxxxxx
-            result += String.fromCharCode(byte1);
-            i++;
-          } else if ((byte1 & 0xE0) === 0xC0 && i + 1 < bytes.length) {
-            // 2 bytes: 110xxxxx 10xxxxxx
-            const byte2 = bytes[i + 1];
-            if ((byte2 & 0xC0) === 0x80) {
-              const codePoint = ((byte1 & 0x1F) << 6) | (byte2 & 0x3F);
-              result += String.fromCodePoint(codePoint);
-              i += 2;
-            } else {
-              // Geçersiz UTF-8, raw byte göster
-              result += String.fromCharCode(byte1);
-              i++;
-            }
-          } else if ((byte1 & 0xF0) === 0xE0 && i + 2 < bytes.length) {
-            // 3 bytes: 1110xxxx 10xxxxxx 10xxxxxx
-            const byte2 = bytes[i + 1];
-            const byte3 = bytes[i + 2];
-            if ((byte2 & 0xC0) === 0x80 && (byte3 & 0xC0) === 0x80) {
-              const codePoint = ((byte1 & 0x0F) << 12) | ((byte2 & 0x3F) << 6) | (byte3 & 0x3F);
-              result += String.fromCodePoint(codePoint);
-              i += 3;
-            } else {
-              // Geçersiz UTF-8, raw byte göster
-              result += String.fromCharCode(byte1);
-              i++;
-            }
-          } else if ((byte1 & 0xF8) === 0xF0 && i + 3 < bytes.length) {
-            // 4 bytes: 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx
-            const byte2 = bytes[i + 1];
-            const byte3 = bytes[i + 2];
-            const byte4 = bytes[i + 3];
-            if ((byte2 & 0xC0) === 0x80 && (byte3 & 0xC0) === 0x80 && (byte4 & 0xC0) === 0x80) {
-              const codePoint = ((byte1 & 0x07) << 18) | ((byte2 & 0x3F) << 12) | ((byte3 & 0x3F) << 6) | (byte4 & 0x3F);
-              result += String.fromCodePoint(codePoint);
-              i += 4;
-            } else {
-              // Geçersiz UTF-8, raw byte göster
-              result += String.fromCharCode(byte1);
-              i++;
-            }
-          } else {
-            // Geçersiz UTF-8 veya tek byte, raw byte göster
-            result += String.fromCharCode(byte1);
-            i++;
-          }
-        }
-        
-        return result;
-      }
-
-    case 'hex':
-      return arr.map(b => (Number(b) & 0xFF).toString(16).toUpperCase().padStart(2, '0')).join(delimiter);
-
-    case 'decimal':
-      return arr.map(b => String(Number(b) & 0xFF)).join(delimiter);
-
-    case 'binary':
-      return arr.map(b => (Number(b) & 0xFF).toString(2).padStart(8, '0')).join(delimiter);
-
-    default:
-      return '';
+  if (mode === 'byte') {
+    return formatByteMode(values, format, delimiter);
   }
+
+  return formatCharacterMode(values, format, delimiter);
 };
 
 export const getDelimiter = (delimiterOption: DelimiterOption, customDelimiter: string = ''): string => {

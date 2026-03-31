@@ -37,6 +37,11 @@ const getActiveInput = (index: number): HTMLElement | null => {
 
 // Tamamlanmış değer kontrolü (referans: decimal 3 rakam ve 0-255)
 const isCompleteValue = (value: string, type: string): boolean => {
+    const conversionMode = getSettings().conversionMode;
+    if (conversionMode === 'character') {
+        return value.trim().length > 0;
+    }
+
     const patterns: Record<string, RegExp> = {
         hex: /^[0-9a-fA-F]{2}$/,
         decimal: /^\d{3}$/,
@@ -53,6 +58,10 @@ const isCompleteValue = (value: string, type: string): boolean => {
 
 // Tek karakter validasyonu
 const validateInputChar = (type: GridFormat, char: string, currentValue: string): boolean => {
+    if (getSettings().conversionMode === 'character') {
+        return char.length > 0;
+    }
+
     switch (type) {
         case 'hex':
             // Hex: Sadece 0-9, a-f, A-F karakterleri, maksimum 2 karakter
@@ -73,6 +82,10 @@ const validateInputChar = (type: GridFormat, char: string, currentValue: string)
 
 // Decimal için 0-255 aralığı kontrolü
 const validateDecimalValue = (value: string): boolean => {
+    if (getSettings().conversionMode === 'character') {
+        return true;
+    }
+
     if (value === '') return true; // Boş değer geçerli
     const num = parseInt(value, 10);
     return !isNaN(num) && num >= 0 && num <= 255;
@@ -200,7 +213,7 @@ const handleBlur = (event: Event): void => {
         return;
     }
 
-    const bytes = parseTextToBytes(value, type);
+    const bytes = parseTextToBytes(value, type, getSettings().conversionMode);
     if (bytes.length === 1) {
         stateManager.setByte(index, bytes[0]);
         updateAllViews(true);
@@ -265,7 +278,7 @@ const handleInput = (event: Event): void => {
     const inputCountBefore = stateManager.getInputCount();
 
     // Parse - beforeinput ile zaten validasyon yapıldı
-    const bytes = parseTextToBytes(value, type);
+    const bytes = parseTextToBytes(value, type, getSettings().conversionMode);
 
     if (bytes.length > 0) {
         const settings = getSettings();
@@ -376,11 +389,12 @@ const handlePaste = (event: ClipboardEvent): void => {
     const target = event.target as HTMLElement;
     const startIndex = parseInt(target.dataset.index || '0', 10);
     const type = target.dataset.type || '';
-    let valuesToParse = parseTextToBytes(pastedText, type as any);
+    const conversionMode = getSettings().conversionMode;
+    let valuesToParse = parseTextToBytes(pastedText, type as any, conversionMode);
     const data = stateManager.getData();
 
     // 256 byte sınırı (referans: parse + uyarı + kesim)
-    if (valuesToParse.length > 256) {
+    if (conversionMode === 'byte' && valuesToParse.length > 256) {
         if (typeof window !== 'undefined' && window.NotificationHelper) {
             window.NotificationHelper.showWarning('En fazla 256 byte yapıştırılabilir; fazlası yok sayıldı.');
         }
@@ -865,11 +879,12 @@ const clearAllSelection = (): void => {
 // Tüm seçili hücrelere paste yapma
 const pasteToAllSelected = (pastedText: string): void => {
     const type = getActiveType() || '';
-    let valuesToParse = parseTextToBytes(pastedText, type as any);
+    const conversionMode = getSettings().conversionMode;
+    let valuesToParse = parseTextToBytes(pastedText, type as any, conversionMode);
     const data = stateManager.getData();
 
     // 256 byte sınırı (referans: uyarı + kesim)
-    if (valuesToParse.length > 256) {
+    if (conversionMode === 'byte' && valuesToParse.length > 256) {
         if (typeof window !== 'undefined' && window.NotificationHelper) {
             window.NotificationHelper.showWarning('En fazla 256 byte yapıştırılabilir; fazlası yok sayıldı.');
         }

@@ -5,6 +5,8 @@
 
 const STORAGE_KEY = 'bytesync-settings';
 
+export type ConversionMode = 'character' | 'byte';
+
 export interface AppSettings {
     /** Değer tamamlanınca sonraki hücreye otomatik geç */
     autoAdvance: boolean;
@@ -12,12 +14,15 @@ export interface AppSettings {
     insertMode: boolean;
     /** Hücreye odaklanınca metni otomatik seç */
     selectOnFocus: boolean;
+    /** Dönüşüm modu: karakter bazlı (varsayılan) veya legacy byte */
+    conversionMode: ConversionMode;
 }
 
 const DEFAULTS: AppSettings = {
     autoAdvance: true,
     insertMode: false,
     selectOnFocus: false,
+    conversionMode: 'character',
 };
 
 let cache: AppSettings | null = null;
@@ -31,6 +36,7 @@ function loadFromStorage(): AppSettings {
                 autoAdvance: typeof parsed.autoAdvance === 'boolean' ? parsed.autoAdvance : DEFAULTS.autoAdvance,
                 insertMode: typeof parsed.insertMode === 'boolean' ? parsed.insertMode : DEFAULTS.insertMode,
                 selectOnFocus: typeof parsed.selectOnFocus === 'boolean' ? parsed.selectOnFocus : DEFAULTS.selectOnFocus,
+                conversionMode: parsed.conversionMode === 'byte' ? 'byte' : 'character',
             };
         }
     } catch {
@@ -60,6 +66,7 @@ export function setSettings(partial: Partial<AppSettings>): void {
         autoAdvance: partial.autoAdvance ?? current.autoAdvance,
         insertMode: partial.insertMode ?? current.insertMode,
         selectOnFocus: partial.selectOnFocus ?? current.selectOnFocus,
+        conversionMode: partial.conversionMode ?? current.conversionMode,
     };
     saveToStorage(cache);
 }

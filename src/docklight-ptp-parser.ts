@@ -6,6 +6,7 @@
 import type { GridFormat, DelimiterOption } from './types/index.js';
 import stateManager from './state-manager.js';
 import { parseTextToBytes, formatBytesToText, getDelimiter } from './utils.js';
+import { getSettings } from './settings.js';
 import { recreateAllGrids } from './grid-manager.js';
 import { switchTab } from './tab-manager.js';
 
@@ -265,7 +266,7 @@ const createPTPBlockCard = (block: PTPSendBlock, index: number): HTMLElement => 
     
     // Hex önizleme oluştur (maksimum 16 byte göster)
     const previewBytes = Array.from(block.bytes.slice(0, 16));
-    const hexPreview = formatBytesToText(previewBytes, 'hex', ' ');
+    const hexPreview = formatBytesToText(previewBytes, 'hex', ' ', getSettings().conversionMode);
     const previewText = block.bytes.length > 16 ? `${hexPreview}...` : hexPreview;
     
     card.innerHTML = `
@@ -336,7 +337,7 @@ const updatePTPTextareas = (block: PTPSendBlock): void => {
     formats.forEach(format => {
         const textarea = document.getElementById(`ptp-textarea-${format}`) as HTMLTextAreaElement;
         if (textarea) {
-            textarea.value = formatBytesToText(Array.from(block.bytes), format as GridFormat, delimiter);
+            textarea.value = formatBytesToText(Array.from(block.bytes), format as GridFormat, delimiter, getSettings().conversionMode);
         }
     });
     
@@ -355,7 +356,7 @@ const handlePTPTextareaInput = (sourceFormat: string, text: string): void => {
     const block = ptpParsedData.sendBlocks[ptpSelectedBlockIndex];
     
     // Parse the input text to bytes
-    const parsedBytes = parseTextToBytes(text, sourceFormat as GridFormat);
+    const parsedBytes = parseTextToBytes(text, sourceFormat as GridFormat, getSettings().conversionMode);
     block.bytes = new Uint8Array(parsedBytes);
     
     // Update hex string
@@ -367,7 +368,7 @@ const handlePTPTextareaInput = (sourceFormat: string, text: string): void => {
         if (format !== sourceFormat) {
             const textarea = document.getElementById(`ptp-textarea-${format}`) as HTMLTextAreaElement;
             if (textarea) {
-                textarea.value = formatBytesToText(parsedBytes, format as GridFormat, delimiter);
+                textarea.value = formatBytesToText(parsedBytes, format as GridFormat, delimiter, getSettings().conversionMode);
             }
         }
     });

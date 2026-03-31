@@ -7,8 +7,9 @@ import type { GridFormat, DelimiterOption } from '../types/index.js';
 import stateManager from '../state-manager.js';
 import { parseTextToBytes, formatBytesToText, getDelimiter } from '../utils.js';
 import { recreateAllGrids } from '../grid-manager.js';
+import { getSettings } from '../settings.js';
 
-let fourInOneData = new Uint8Array(0);
+let fourInOneData: number[] = [];
 let isUpdatingFourInOne = false;
 
 // Delimiter ayarlarını al
@@ -26,13 +27,14 @@ const updateFourInOneMode = (): void => {
     
     // Get current delimiter setting
     const delimiter = getDelimiterSettings();
+    const conversionMode = getSettings().conversionMode;
     
     // Update all textareas
     const formats = ['ascii', 'hex', 'decimal', 'binary'];
     formats.forEach(format => {
         const textarea = document.getElementById(`four-in-one-${format}`) as HTMLTextAreaElement;
         if (textarea) {
-            textarea.value = formatBytesToText(fourInOneData, format as GridFormat, delimiter);
+            textarea.value = formatBytesToText(fourInOneData, format as GridFormat, delimiter, conversionMode);
         }
     });
     
@@ -47,23 +49,26 @@ const handleFourInOneInput = (sourceFormat: string, text: string): void => {
     
     // Get current delimiter setting
     const delimiter = getDelimiterSettings();
+    const conversionMode = getSettings().conversionMode;
     
     // Parse the input text to bytes
-    const parsedBytes = parseTextToBytes(text, sourceFormat as GridFormat);
-    fourInOneData = new Uint8Array(parsedBytes);
+    const parsedBytes = parseTextToBytes(text, sourceFormat as GridFormat, conversionMode);
+    fourInOneData = [...parsedBytes];
     
     // Ana data array'ini de güncelle ve genişletme kontrolü yap
-    const data = stateManager.getData();
-    if (parsedBytes.length > data.length) {
-        const newSize = Math.max(data.length * 2, parsedBytes.length);
-        stateManager.expandDataArray(newSize);
-        recreateAllGrids();
-    }
-    
-    // Ana data'ya kopyala
-    const currentData = stateManager.getData();
-    for (let i = 0; i < Math.min(parsedBytes.length, currentData.length); i++) {
-        stateManager.setByte(i, parsedBytes[i]);
+    if (conversionMode === 'byte') {
+        const data = stateManager.getData();
+        if (parsedBytes.length > data.length) {
+            const newSize = Math.max(data.length * 2, parsedBytes.length);
+            stateManager.expandDataArray(newSize);
+            recreateAllGrids();
+        }
+        
+        // Ana data'ya kopyala
+        const currentData = stateManager.getData();
+        for (let i = 0; i < Math.min(parsedBytes.length, currentData.length); i++) {
+            stateManager.setByte(i, parsedBytes[i]);
+        }
     }
     
     // Update all other textareas
@@ -72,7 +77,7 @@ const handleFourInOneInput = (sourceFormat: string, text: string): void => {
         if (format !== sourceFormat) {
             const textarea = document.getElementById(`four-in-one-${format}`) as HTMLTextAreaElement;
             if (textarea) {
-                textarea.value = formatBytesToText(fourInOneData, format as GridFormat, delimiter);
+                textarea.value = formatBytesToText(fourInOneData, format as GridFormat, delimiter, conversionMode);
             }
         }
     });
@@ -82,7 +87,7 @@ const handleFourInOneInput = (sourceFormat: string, text: string): void => {
 
 // 4-in-1 mode'u temizle
 const clearFourInOneMode = (): void => {
-    fourInOneData = new Uint8Array(0);
+    fourInOneData = [];
     const formats = ['ascii', 'hex', 'decimal', 'binary'];
     formats.forEach(format => {
         const textarea = document.getElementById(`four-in-one-${format}`) as HTMLTextAreaElement;

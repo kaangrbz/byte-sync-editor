@@ -94,7 +94,7 @@ import {
 import { openBinaryFileDialog, downloadBytes } from './file-handler.js';
 
 // Import ayarlar (modal ve grid davranışı)
-import { getSettings, setSettings } from './settings.js';
+import { getSettings, setSettings, type ConversionMode } from './settings.js';
 
 // Handle URL mode parameters
 const handleUrlMode = (): void => {
@@ -193,7 +193,7 @@ window.onload = async (): Promise<void> => {
         button.addEventListener('click', () => {
             const type = (button as HTMLElement).dataset.type || 'hex';
             const data = stateManager.getEffectiveData();
-            const textToCopy = formatBytesToText(Array.from(data), type as any, ' ');
+            const textToCopy = formatBytesToText(Array.from(data), type as any, ' ', getSettings().conversionMode);
             
             // Use the clipboard API for modern browsers
             navigator.clipboard.writeText(textToCopy).then(() => {
@@ -300,6 +300,7 @@ window.onload = async (): Promise<void> => {
     const settingsOverlay = document.getElementById('settings-modal-overlay');
     const settingAutoAdvance = document.getElementById('setting-auto-advance') as HTMLInputElement | null;
     const settingInsertMode = document.getElementById('setting-insert-mode') as HTMLInputElement | null;
+    const settingConversionMode = document.getElementById('setting-conversion-mode') as HTMLSelectElement | null;
 
     const openSettingsModal = (): void => {
         if (!settingsModal) return;
@@ -308,6 +309,7 @@ window.onload = async (): Promise<void> => {
         if (settingInsertMode) settingInsertMode.checked = s.insertMode;
         const settingSelectOnFocus = document.getElementById('setting-select-on-focus') as HTMLInputElement | null;
         if (settingSelectOnFocus) settingSelectOnFocus.checked = s.selectOnFocus;
+        if (settingConversionMode) settingConversionMode.value = s.conversionMode;
         settingsModal.classList.add('is-open');
         settingsModal.setAttribute('aria-hidden', 'false');
     };
@@ -334,6 +336,13 @@ window.onload = async (): Promise<void> => {
     if (settingSelectOnFocusEl) {
         settingSelectOnFocusEl.addEventListener('change', () => {
             setSettings({ selectOnFocus: settingSelectOnFocusEl.checked });
+        });
+    }
+    if (settingConversionMode) {
+        settingConversionMode.addEventListener('change', () => {
+            const conversionMode = settingConversionMode.value === 'byte' ? 'byte' : 'character';
+            setSettings({ conversionMode: conversionMode as ConversionMode });
+            recreateAllGrids();
         });
     }
 
